@@ -24,9 +24,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
+// Catch-all route for debugging
+app.get('*', (req, res) => {
+  res.json({ 
+    message: 'Catch-all route hit',
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    nodeEnv: process.env.NODE_ENV
+  });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🌐 Environment: ${process.env.NODE_ENV}`);
+  console.log(`🔗 Server should be accessible at: http://0.0.0.0:${PORT}`);
+}).on('error', (error) => {
+  console.error('❌ Server failed to start:', error.message);
+  process.exit(1);
 });
 
 // Handle errors
