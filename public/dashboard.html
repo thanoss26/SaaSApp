@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>EmployeeHub - Employee Management Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/shared.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-bg">
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo" id="sidebarToggle">
+          <span class="sidebar-logo-icon"><i class="fas fa-bars"></i></span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" title="Dashboard">
+          <i class="fas fa-home"></i>
+          <span class="sidebar-link-text">Dashboard</span>
+        </a>
+        <a href="/users" class="sidebar-link" title="Users">
+          <i class="fas fa-users"></i>
+          <span class="sidebar-link-text">Users</span>
+        </a>
+        <a href="/analytics" class="sidebar-link" title="Analytics">
+          <i class="fas fa-chart-line"></i>
+          <span class="sidebar-link-text">Analytics</span>
+        </a>
+        <a href="/payroll" class="sidebar-link" title="Payroll">
+          <i class="fas fa-euro-sign"></i>
+          <span class="sidebar-link-text">Payroll</span>
+        </a>
+                        <a href="/settings" class="sidebar-link" title="Settings">
+                    <i class="fas fa-cog"></i>
+                    <span class="sidebar-link-text">Settings</span>
+                </a>
+                <a href="/organizations.html" class="sidebar-link" title="Organizations" id="organizationsSidebarLink">
+            <i class="fas fa-building"></i>
+            <span class="sidebar-link-text">Organizations</span>
+        </a>
+        <button id="organizationBtn" class="sidebar-link" style="display:none;">
+            <i class="fas fa-building"></i>
+            <span class="sidebar-link-text">Organization Management</span>
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <a href="#" class="sidebar-link" id="logoutBtn" title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="sidebar-link-text">Logout</span>
+        </a>
+      </div>
+    </aside>
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Topbar -->
+      <header class="dashboard-topbar">
+        <h1 class="dashboard-title">Employee Management Dashboard</h1>
+        <div class="dashboard-search">
+          <input type="text" placeholder="Search employees, departments..." />
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="dashboard-user">
+          <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="user-avatar" />
+          <div class="user-info">
+            <span class="user-name">Thanos Vako</span>
+            <span class="user-role">Super Admin</span>
+          </div>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </header>
+      <!-- Stat Cards -->
+      <section class="dashboard-stats">
+        <div class="stat-card">
+          <div class="stat-label">Total Employees</div>
+          <div class="stat-value" id="totalEmployees">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Employees</div>
+          <div class="stat-value" id="activeEmployees">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Departments</div>
+          <div class="stat-value" id="departments">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg. Attendance</div>
+          <div class="stat-value" id="attendanceRate">0%</div>
+        </div>
+      </section>
+      <!-- Organization Setup Section (for admins without organization) -->
+      <section id="orgSetupSection" class="dashboard-content hidden">
+        <div class="card setup-card">
+          <div class="card-header">
+            <h2>Welcome to EmployeeHub!</h2>
+            <p>Create your organization to get started</p>
+          </div>
+          <form id="createOrgForm" class="setup-form">
+            <div class="form-group">
+              <label for="orgName">Organization Name</label>
+              <input type="text" id="orgName" placeholder="Enter your organization name" required>
+            </div>
+            <div class="form-group">
+              <label for="orgDescription">Description (Optional)</label>
+              <textarea id="orgDescription" placeholder="Brief description of your organization"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Organization</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Organization Management Section -->
+      <section id="organizationSection" class="dashboard-content hidden">
+        <div class="card organization-card">
+          <div class="card-header">
+            <h2>Organization Management</h2>
+            <p id="orgStatusText">Manage your organization settings</p>
+          </div>
+          
+          <!-- No Organization State -->
+          <div id="noOrgState" class="org-state hidden">
+            <div class="no-org-content">
+              <div class="no-org-icon">
+                <i class="fas fa-building"></i>
+              </div>
+              <h3>You have no organization</h3>
+              <p>Please create one to get started with EmployeeHub</p>
+              <button id="createOrgBtn" class="btn btn-primary">Create Organization</button>
+            </div>
+          </div>
+
+          <!-- Create Organization Form -->
+          <div id="createOrgForm" class="org-form hidden">
+            <form id="newOrgForm">
+              <div class="form-group">
+                <label for="orgName">Organization Name *</label>
+                <input type="text" id="orgName" placeholder="Enter your organization name" required>
+              </div>
+              <div class="form-group">
+                <label for="orgDescription">Description</label>
+                <textarea id="orgDescription" placeholder="Brief description of your organization (optional)"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="orgIndustry">Industry</label>
+                <select id="orgIndustry">
+                  <option value="">Select industry</option>
+                  <option value="technology">Technology</option>
+                  <option value="healthcare">Healthcare</option>
+                  <option value="finance">Finance</option>
+                  <option value="education">Education</option>
+                  <option value="retail">Retail</option>
+                  <option value="manufacturing">Manufacturing</option>
+                  <option value="consulting">Consulting</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="orgSize">Company Size</label>
+                <select id="orgSize">
+                  <option value="">Select size</option>
+                  <option value="1-10">1-10 employees</option>
+                  <option value="11-50">11-50 employees</option>
+                  <option value="51-200">51-200 employees</option>
+                  <option value="201-500">201-500 employees</option>
+                  <option value="500+">500+ employees</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="orgWebsite">Website</label>
+                <input type="url" id="orgWebsite" placeholder="https://yourcompany.com">
+              </div>
+              <div class="form-group">
+                <label for="orgAddress">Address</label>
+                <textarea id="orgAddress" placeholder="Enter your organization address"></textarea>
+              </div>
+              <div class="form-actions">
+                <button type="button" id="cancelCreateOrg" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Create Organization</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Organization Details (when organization exists) -->
+          <div id="orgDetails" class="org-details hidden">
+            <div class="org-info">
+              <div class="org-header">
+                <div class="org-logo">
+                  <i class="fas fa-building"></i>
+                </div>
+                <div class="org-meta">
+                  <h3 id="orgNameDisplay">Organization Name</h3>
+                  <p id="orgDescriptionDisplay">Organization description</p>
+                </div>
+              </div>
+              <div class="org-stats">
+                <div class="org-stat">
+                  <span class="stat-label">Members</span>
+                  <span class="stat-value" id="orgMemberCount">0</span>
+                </div>
+                <div class="org-stat">
+                  <span class="stat-label">Join Code</span>
+                  <span class="stat-value" id="orgJoinCode">000000</span>
+                </div>
+                <div class="org-stat">
+                  <span class="stat-label">Created</span>
+                  <span class="stat-value" id="orgCreatedDate">-</span>
+                </div>
+              </div>
+            </div>
+            <div class="org-actions">
+              <button id="editOrgBtn" class="btn btn-secondary">Edit Organization</button>
+              <button id="regenerateJoinCodeBtn" class="btn btn-outline">Regenerate Join Code</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Invite Management Section -->
+      <section id="inviteSection" class="dashboard-content hidden">
+        <div class="card invite-card">
+          <div class="card-header">
+            <h2>Invite Employees</h2>
+            <p>Generate invitation links for new employees</p>
+          </div>
+          <form id="generateInviteForm" class="invite-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="inviteFirstName">First Name</label>
+                <input type="text" id="inviteFirstName" placeholder="Employee's first name" required>
+              </div>
+              <div class="form-group">
+                <label for="inviteLastName">Last Name</label>
+                <input type="text" id="inviteLastName" placeholder="Employee's last name" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="inviteEmail">Email Address</label>
+              <input type="email" id="inviteEmail" placeholder="Employee's email address" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Generate Invite Link</button>
+          </form>
+          <div id="inviteResult" class="invite-result hidden">
+            <h3>Invitation Generated!</h3>
+            <p>Share this link with your employee:</p>
+            <div class="invite-link-container">
+              <input type="text" id="inviteLink" readonly>
+              <button id="copyInviteLink" class="btn btn-secondary">Copy</button>
+            </div>
+            <p class="invite-note">This link will expire in 24 hours</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Main Panel -->
+      <section id="mainDashboard" class="dashboard-content">
+        <div class="dashboard-left">
+          <!-- Line Chart Card -->
+          <div class="card chart-card">
+            <div class="card-header">
+              <span>Employee Growth Trend</span>
+              <div class="chart-tabs">
+                <button class="tab active">Month</button>
+                <button class="tab">Week</button>
+              </div>
+            </div>
+            <canvas id="mainLineChart" height="80"></canvas>
+          </div>
+          <!-- Activity List Card -->
+          <div class="card activity-card">
+            <div class="card-header">
+              <span>Recent Employee Activity</span>
+              <a href="#" class="view-more">View more</a>
+            </div>
+            <ul class="activity-list">
+              <li class="activity-item">
+                <div style="text-align: center; color: #b0b8c9; padding: 20px;">
+                  Loading activity...
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div class="dashboard-right">
+          <!-- Weekly Attendance Card -->
+          <div class="card attendance-card">
+            <div class="card-header">Weekly Attendance</div>
+            <div class="attendance-value">94.8%</div>
+            <canvas id="weeklyBarChart" height="40"></canvas>
+          </div>
+          <!-- Donut Chart Card -->
+          <div class="card donut-card">
+            <div class="card-header">Department Distribution</div>
+            <canvas id="donutChart" height="120"></canvas>
+            <div class="donut-label" id="totalRoles">0</div>
+            <div class="donut-meta">
+              <div>Total Roles</div>
+              <div class="donut-total" id="totalEmployeesDonut">0 Employees</div>
+            </div>
+            <div class="donut-legend">
+              <span class="dot home"></span> Members
+              <span class="dot invest"></span> Managers
+              <span class="dot saving"></span> Admins
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>

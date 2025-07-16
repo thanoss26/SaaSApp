@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EmployeeHub - Payroll Management</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/payroll.css?v=1.0.1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-bg">
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo" id="sidebarToggle">
+                    <span class="sidebar-logo-icon"><i class="fas fa-bars"></i></span>
+                </div>
+      </div>
+      <nav class="sidebar-nav">
+                <a href="dashboard.html" class="sidebar-link" title="Dashboard">
+                    <i class="fas fa-home"></i>
+                    <span class="sidebar-link-text">Dashboard</span>
+                </a>
+                <a href="users.html" class="sidebar-link" title="Users">
+                    <i class="fas fa-users"></i>
+                    <span class="sidebar-link-text">Users</span>
+                </a>
+                <a href="/organizations.html" class="sidebar-link" title="Organizations">
+                    <i class="fas fa-building"></i>
+                    <span class="sidebar-link-text">Organizations</span>
+                </a>
+                <a href="analytics.html" class="sidebar-link" title="Analytics">
+                    <i class="fas fa-chart-line"></i>
+                    <span class="sidebar-link-text">Analytics</span>
+                </a>
+                <a href="payroll.html" class="sidebar-link active" title="Payroll">
+                    <i class="fas fa-euro-sign"></i>
+                    <span class="sidebar-link-text">Payroll</span>
+                </a>
+                <a href="settings.html" class="sidebar-link" title="Settings">
+                    <i class="fas fa-cog"></i>
+                    <span class="sidebar-link-text">Settings</span>
+                </a>
+      </nav>
+      <div class="sidebar-bottom">
+                <a href="#" class="sidebar-link" id="logoutBtn" title="Logout">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="sidebar-link-text">Logout</span>
+                </a>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <main class="dashboard-main">
+            <!-- Top Navigation Bar -->
+            <nav class="top-nav">
+                <div class="nav-left">
+                    <h1 class="page-title">Payrolls</h1>
+        </div>
+                <div class="nav-center">
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" placeholder="Search anything.." class="search-input">
+          </div>
+        </div>
+                <div class="nav-right">
+                    <div class="nav-icons">
+                        <i class="fas fa-envelope nav-icon"></i>
+                        <i class="fas fa-th nav-icon"></i>
+                        <div class="user-group">
+                            <div class="user-avatars">
+                                <div class="avatar">JD</div>
+                                <div class="avatar">SM</div>
+                                <div class="avatar">AB</div>
+                                <div class="avatar">PL</div>
+                                <div class="avatar">+10</div>
+        </div>
+            </div>
+                        <button class="invite-btn">
+                            <i class="fas fa-user-plus"></i>
+                            Invite
+                        </button>
+              </div>
+            </div>
+            </nav>
+
+            <!-- Alert Banner -->
+            <div class="alert-banner">
+                <div class="alert-content">
+                    <i class="fas fa-info-circle alert-icon"></i>
+                    <span class="alert-text">payroll submission for the current pay period is due in 2 days. review and finalize all employee payroll details.</span>
+          </div>
+                <div class="alert-actions">
+                    <button class="more-details-btn">MORE DETAILS</button>
+                    <i class="fas fa-times close-icon"></i>
+                </div>
+              </div>
+              
+            <!-- Main Content -->
+            <div class="main-content">
+                <!-- Top Section - Date Range & Actions -->
+                <div class="top-section">
+                    <div class="date-selector">
+                        <select class="date-dropdown">
+                            <option>01 July - 31 July 2024</option>
+                            <option>01 June - 30 June 2024</option>
+                            <option>01 May - 31 May 2024</option>
+                        </select>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="export-btn">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                        <button class="new-payroll-btn">
+                            <i class="fas fa-plus"></i>
+                            + New Payroll
+                        </button>
+               </div>
+               </div>
+              
+                <!-- KPI Cards -->
+                <div class="kpi-cards">
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Payroll Cost</h3>
+                   </div>
+                        <div class="kpi-value">$12.500</div>
+                        <div class="kpi-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>20%</span>
+                            <span class="trend-label">last month</span>
+                   </div>
+                 </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Total Expense</h3>
+              </div>
+                        <div class="kpi-value">$2.560</div>
+                        <div class="kpi-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>0.1%</span>
+                            <span class="trend-label">last month</span>
+                 </div>
+               </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Pending payments</h3>
+                        </div>
+                        <div class="kpi-value">$4.700</div>
+                        <div class="kpi-trend negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-50</span>
+                            <span class="trend-label">Total Employee</span>
+                     </div>
+                   </div>
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <h3>Total Payrolls</h3>
+                     </div>
+                        <div class="kpi-value">200</div>
+                        <div class="kpi-trend positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+10</span>
+                            <span class="trend-label">New Employee</span>
+                   </div>
+                 </div>
+               </div>
+               
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-card payroll-overview">
+                        <div class="chart-header">
+                            <h3>Payroll Cost Overview</h3>
+                            <a href="#" class="more-details-link">More details ></a>
+                 </div>
+                        <div class="chart-container">
+                            <canvas id="payrollChart"></canvas>
+               </div>
+                        <div class="chart-legend">
+                            <div class="legend-item">
+                                <div class="legend-color cost"></div>
+                                <span>Cost</span>
+                   </div>
+                            <div class="legend-item">
+                                <div class="legend-color expense"></div>
+                                <span>Expense</span>
+                   </div>
+                   </div>
+                 </div>
+                    <div class="chart-card bonuses-incentives">
+                        <div class="chart-header">
+                            <h3>Bonuses and Incentives</h3>
+                            <i class="fas fa-ellipsis-v more-options"></i>
+               </div>
+                        <div class="donut-chart-container">
+                            <canvas id="bonusesChart"></canvas>
+                            <div class="donut-center">
+                                <div class="donut-total">Totals</div>
+                                <div class="donut-amount">$10.500</div>
+                   </div>
+                 </div>
+                        <div class="bonuses-breakdown">
+                            <div class="breakdown-item">
+                                <div class="breakdown-bar bonuses"></div>
+                                <div class="breakdown-label">Bonuses</div>
+                                <div class="breakdown-value">$5.100</div>
+                     </div>
+                            <div class="breakdown-item">
+                                <div class="breakdown-bar incentives"></div>
+                                <div class="breakdown-label">Incentives</div>
+                                <div class="breakdown-value">$5.400</div>
+                     </div>
+                   </div>
+                        <button class="more-details-btn">More details</button>
+                 </div>
+               </div>
+              
+                <!-- Payroll List Table -->
+                <div class="payroll-list-card">
+                    <div class="table-header">
+                        <h3>Payroll list</h3>
+                        <div class="table-filters">
+                            <div class="search-filter">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Search Employee" class="filter-input">
+                            </div>
+                            <select class="filter-dropdown">
+                                <option>All Status</option>
+                                <option>Completed</option>
+                                <option>Pending</option>
+                            </select>
+                            <select class="filter-dropdown">
+                                <option>All Role</option>
+                                <option>UI/UX Designer</option>
+                                <option>Graphics Designer</option>
+                                <option>Animator</option>
+                </select>
+              </div>
+              </div>
+                    <div class="table-container">
+                        <table class="payroll-table">
+                            <thead>
+                                <tr>
+                                    <th><input type="checkbox" class="select-all"></th>
+                                    <th>Payroll ID <i class="fas fa-sort"></i></th>
+                                    <th>Employee name <i class="fas fa-sort"></i></th>
+                                    <th>Role <i class="fas fa-sort"></i></th>
+                                    <th>Date & Time <i class="fas fa-sort"></i></th>
+                                    <th>Total Salary <i class="fas fa-sort"></i></th>
+                                    <th>Reimbursement <i class="fas fa-sort"></i></th>
+                                    <th>Status <i class="fas fa-sort"></i></th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>PYRL120124</td>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="employee-avatar">HN</div>
+                                            <span>Hazel Nutt</span>
+              </div>
+                                    </td>
+                                    <td>Lead UI/UX Designer</td>
+                                    <td>21 Jun, 2024 - 05.05 pm</td>
+                                    <td>$2.500.00</td>
+                                    <td>$500.00</td>
+                                    <td><span class="status-badge completed">Completed</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <i class="fas fa-eye action-icon"></i>
+                                            <i class="fas fa-ellipsis-v action-icon"></i>
+                 </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>PYRL120124</td>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="employee-avatar">SC</div>
+                                            <span>Simon Cyrene</span>
+                 </div>
+                                    </td>
+                                    <td>Sr UI/UX Designer</td>
+                                    <td>21 Jun, 2024 - 05.03 pm</td>
+                                    <td>$2.300.00</td>
+                                    <td>$100.00</td>
+                                    <td><span class="status-badge completed">Completed</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <i class="fas fa-eye action-icon"></i>
+                                            <i class="fas fa-ellipsis-v action-icon"></i>
+                 </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>PYRL120124</td>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="employee-avatar">AB</div>
+                                            <span>Aida Bugg</span>
+                 </div>
+                                    </td>
+                                    <td>Jr Graphics Designer</td>
+                                    <td>21 Jun, 2024 - 05.01 pm</td>
+                                    <td>$2.000.00</td>
+                                    <td>$1.000.00</td>
+                                    <td><span class="status-badge pending">Pending</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <i class="fas fa-eye action-icon"></i>
+                                            <i class="fas fa-ellipsis-v action-icon"></i>
+                 </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>PYRL120124</td>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="employee-avatar">PL</div>
+                                            <span>Peg Legge</span>
+                 </div>
+                                    </td>
+                                    <td>Jr Animator</td>
+                                    <td>21 Jun, 2024 - 05.00 pm</td>
+                                    <td>$2.100.00</td>
+                                    <td>$500.00</td>
+                                    <td><span class="status-badge pending">Pending</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <i class="fas fa-eye action-icon"></i>
+                                            <i class="fas fa-ellipsis-v action-icon"></i>
+                 </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><input type="checkbox"></td>
+                                    <td>PYRL120124</td>
+                                    <td>
+                                        <div class="employee-info">
+                                            <div class="employee-avatar">SC</div>
+                                            <span>Simon Cyrene</span>
+                 </div>
+                                    </td>
+                                    <td>Sr UI/UX Designer</td>
+                                    <td>21 Jun, 2024 - 05.03 pm</td>
+                                    <td>$2.300.00</td>
+                                    <td>$100.00</td>
+                                    <td><span class="status-badge completed">Completed</span></td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <i class="fas fa-eye action-icon"></i>
+                                            <i class="fas fa-ellipsis-v action-icon"></i>
+               </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+    <script src="js/dashboard.js"></script>
+  <script src="js/payroll.js"></script>
+</body>
+</html>
