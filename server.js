@@ -610,6 +610,47 @@ app.get('/test', (req, res) => {
   });
 });
 
+// Redirects and rewrites
+app.get('/home', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/login', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/register', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/signin', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/signup', (req, res) => {
+  res.redirect('/');
+});
+
+app.get('/app', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+app.get('/main', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+app.get('/admin', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+// Remove trailing slashes
+app.use((req, res, next) => {
+  if (req.path.length > 1 && req.path.endsWith('/')) {
+    return res.redirect(req.path.slice(0, -1));
+  }
+  next();
+});
+
 // Serve the main application
 app.get('/', (req, res) => {
   console.log('🔍 Root path (/) route hit');
@@ -639,9 +680,34 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// SPA catch-all route - serve index.html for all non-API routes
+app.get('*', (req, res, next) => {
+  // Skip API routes
+  if (req.path.startsWith('/api/')) {
+    return next();
+  }
+  
+  // Skip static file requests
+  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    return next();
+  }
+  
+  console.log('🔄 SPA route hit:', req.path);
+  console.log('🔄 Serving index.html for SPA routing');
+  
+  // Check if file exists
+  const fs = require('fs');
+  const filePath = __dirname + '/public/index.html';
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).send('index.html not found');
+  }
+});
+
+// 404 handler for API routes
+app.use('/api/*', (req, res) => {
+  res.status(404).json({ error: 'API route not found' });
 });
 
 app.listen(PORT, '0.0.0.0', () => {
