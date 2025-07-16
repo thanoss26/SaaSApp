@@ -112,7 +112,7 @@ class EmployeeHub {
     }
 
     setupNavigationActiveState() {
-        const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+        const currentPage = window.location.pathname.split('/').pop() || 'dashboard';
         const navItems = document.querySelectorAll('.nav-item');
         
         navItems.forEach(item => {

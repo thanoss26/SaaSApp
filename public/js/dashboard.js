@@ -974,7 +974,7 @@ class Dashboard {
     }
 
     handleManageOrg() {
-        window.location.href = 'organization.html';
+        window.location.href = '/organizations';
     }
 
     async handleExportData() {

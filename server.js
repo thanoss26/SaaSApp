@@ -186,85 +186,77 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 
-// Serve dashboard page
-app.get('/dashboard', (req, res) => {
+// Clean URL routes (no .html extensions)
+app.get('/dashboard', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/dashboard.html');
 });
 
-// Serve dashboard.html directly
-app.get('/dashboard.html', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/dashboard.html');
-});
-
-// Serve users page
 app.get('/users', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/users.html');
 });
 
-// Serve users.html directly
-app.get('/users.html', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/users.html');
-});
-
-// Serve organizations page (public)
 app.get('/organizations', (req, res) => {
-    console.log('🔍 /organizations route hit');
-    console.log('🔍 Request URL:', req.url);
-    console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-    res.sendFile(__dirname + '/public/organizations.html');
+  console.log('🔍 /organizations route hit');
+  console.log('🔍 Request URL:', req.url);
+  console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
+  res.sendFile(__dirname + '/public/organizations.html');
 });
 
-// Serve organizations.html directly (public)
-app.get('/organizations.html', (req, res) => {
-    console.log('🔍 /organizations.html route hit');
-    console.log('🔍 Request URL:', req.url);
-    console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-    res.sendFile(__dirname + '/public/organizations.html');
-});
-
-// Serve payroll page
 app.get('/payroll', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/payroll.html');
 });
 
-// Serve payroll page
-app.get('/payroll.html', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/payroll.html');
-});
-
-// Serve analytics page
 app.get('/analytics', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/analytics.html');
 });
 
-// Serve analytics.html directly
-app.get('/analytics.html', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/analytics.html');
-});
-
-// Serve settings page
 app.get('/settings', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/settings.html');
 });
 
-// Serve settings.html directly
-app.get('/settings.html', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/settings.html');
-});
-
-// Serve test dashboard page
 app.get('/test-dashboard', (req, res) => {
   res.sendFile(__dirname + '/public/test-dashboard.html');
 });
 
-// Serve debug dashboard page
 app.get('/dashboard-debug', (req, res) => {
   res.sendFile(__dirname + '/public/dashboard-debug.html');
 });
 
-// Serve invite page
 app.get('/invite/:inviteCode', (req, res) => {
   res.sendFile(__dirname + '/public/invite.html');
+});
+
+// Redirects from .html URLs to clean URLs (for backward compatibility)
+app.get('/dashboard.html', (req, res) => {
+  res.redirect('/dashboard');
+});
+
+app.get('/users.html', (req, res) => {
+  res.redirect('/users');
+});
+
+app.get('/organizations.html', (req, res) => {
+  res.redirect('/organizations');
+});
+
+app.get('/payroll.html', (req, res) => {
+  res.redirect('/payroll');
+});
+
+app.get('/analytics.html', (req, res) => {
+  res.redirect('/analytics');
+});
+
+app.get('/settings.html', (req, res) => {
+  res.redirect('/settings');
+});
+
+app.get('/test-dashboard.html', (req, res) => {
+  res.redirect('/test-dashboard');
+});
+
+app.get('/dashboard-debug.html', (req, res) => {
+  res.redirect('/dashboard-debug');
 });
 
 // Dashboard API endpoints
