@@ -13,6 +13,9 @@ const { authenticateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy for Render deployment (fixes rate limiting)
+app.set('trust proxy', 1);
+
 // Dynamic configuration based on environment
 const config = {
   isProduction: process.env.NODE_ENV === 'production',
@@ -53,7 +56,11 @@ const limiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   skipSuccessfulRequests: true, // Don't count successful requests
-  skipFailedRequests: false // Count failed requests
+  skipFailedRequests: false, // Count failed requests
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For header if available (for proxy environments like Render)
+    return req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress;
+  }
 });
 app.use(limiter);
 
@@ -128,7 +135,14 @@ app.use(express.static('public', {
   setHeaders: (res, path) => {
     // Set cache headers for static assets
     if (path.endsWith('.css') || path.endsWith('.js')) {
-      res.setHeader('Cache-Control', 'public, max-age=3600');
+      // Add cache busting for development and force refresh for production
+      if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+      }
     }
   }
 }));
@@ -177,7 +191,11 @@ const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
-  skipFailedRequests: false
+  skipFailedRequests: false,
+  keyGenerator: (req) => {
+    // Use X-Forwarded-For header if available (for proxy environments like Render)
+    return req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress;
+  }
 });
 
 // API routes with specific rate limiting
@@ -686,7 +704,9 @@ app.get('/api/config', (req, res) => {
     environment: config.environment,
     baseUrl: config.baseUrl,
     isProduction: config.isProduction,
-    corsOrigins: allowedOrigins
+    corsOrigins: allowedOrigins,
+    version: process.env.npm_package_version || '1.0.0',
+    buildTime: new Date().toISOString()
   });
 });
 
@@ -747,6 +767,14 @@ app.get('/', (req, res) => {
   if (fs.existsSync(filePath)) {
     console.log('✅ index.html file exists');
     console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
+    
+    // Add cache busting headers for production
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+    
     res.sendFile(filePath);
   } else {
     console.log('❌ index.html file not found');
