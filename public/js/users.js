@@ -93,8 +93,8 @@ class UsersPage {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('🔐 No authentication token found, running in demo mode...');
-                this.currentUser = { role: 'demo', organization_id: 'demo' };
+                console.log('🔐 No authentication token found, redirecting to login...');
+                window.location.href = '/';
                 return;
             }
 
@@ -112,10 +112,13 @@ class UsersPage {
 
             const data = await response.json();
             this.currentUser = data.user;
+            console.log('✅ Authentication successful:', this.currentUser);
         } catch (error) {
             console.error('Auth check failed:', error);
-            console.log('🔐 Running in demo mode due to auth failure...');
-            this.currentUser = { role: 'demo', organization_id: 'demo' };
+            console.log('🔐 Redirecting to login due to auth failure...');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/';
         }
     }
 
@@ -124,10 +127,10 @@ class UsersPage {
             console.log('📊 Loading employees...');
             const token = localStorage.getItem('token');
             
-            // If no token, load sample data for demo
+            // Require authentication
             if (!token) {
-                console.log('📊 No authentication token found, loading sample data...');
-                this.loadSampleData();
+                console.log('📊 No authentication token found, redirecting to login...');
+                window.location.href = '/';
                 return;
             }
             
@@ -160,9 +163,17 @@ class UsersPage {
             console.error('❌ Failed to load employees:', error);
             this.showToast(error.message, 'error');
             
-            // Show sample data for demo purposes if it's a rate limit error or any other error
-            console.log('📊 Loading sample data due to error...');
-            this.loadSampleData();
+            // If it's an authentication error, redirect to login
+            if (error.message.includes('Authentication failed') || error.message.includes('Access token required')) {
+                console.log('🔐 Authentication error, redirecting to login...');
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                window.location.href = '/';
+                return;
+            }
+            
+            // For other errors, show the error message
+            this.showToast('Failed to load employees. Please try again.', 'error');
         }
     }
 

@@ -13,9 +13,9 @@ class EmployeeHub {
         setInterval(() => this.updateDateTime(), 1000);
     }
 
-    async checkAuth() {
+            async checkAuth() {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             if (!token) {
                 this.redirectToLogin();
                 return;
@@ -161,7 +161,7 @@ class EmployeeHub {
 
     async logout() {
         try {
-            const token = localStorage.getItem('authToken');
+            const token = localStorage.getItem('token');
             if (token) {
                 await fetch('/api/auth/logout', {
                     method: 'POST',
@@ -174,7 +174,8 @@ class EmployeeHub {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            localStorage.removeItem('authToken');
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
             localStorage.removeItem('userProfile');
             this.redirectToLogin();
         }
@@ -312,6 +313,29 @@ class EmployeeHub {
                 setTimeout(() => inThrottle = false, limit);
             }
         };
+    }
+
+    // Helper function to get authentication headers
+    getAuthHeaders() {
+        const token = localStorage.getItem('token');
+        return {
+            'Authorization': token ? `Bearer ${token}` : '',
+            'Content-Type': 'application/json'
+        };
+    }
+
+    // Helper function to check if user is authenticated
+    isUserAuthenticated() {
+        return !!localStorage.getItem('token');
+    }
+
+    // Helper function to redirect to login if not authenticated
+    requireAuth() {
+        if (!this.isUserAuthenticated()) {
+            this.redirectToLogin();
+            return false;
+        }
+        return true;
     }
 }
 
