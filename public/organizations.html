@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organization Dashboard - Efficio</title>
+    <link rel="stylesheet" href="/styles.css?v=1.1">
+    <link rel="stylesheet" href="/css/organizations.css?v=3.5">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Efficio</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="/dashboard.html" class="nav-link">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/users.html" class="nav-link">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/organizations.html" class="nav-link active">
+                            <i class="fas fa-building"></i>
+                            <span>Organizations</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/payroll.html" class="nav-link">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Payroll</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/analytics.html" class="nav-link">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/settings.html" class="nav-link">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <!-- User Profile Section -->
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <img id="userAvatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="User Avatar">
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebarUserName">Loading...</div>
+                        <div class="user-role" id="sidebarUserRole">Loading...</div>
+                    </div>
+                    <div class="user-actions">
+                        <button class="user-menu-btn" id="userMenuBtn">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content org-dashboard-main">
+            <!-- Top Navigation Bar -->
+            <div class="top-nav">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search...">
+                </div>
+                <div class="nav-actions">
+                    <button class="nav-action-btn" title="Keyboard shortcuts">
+                        <i class="fas fa-keyboard"></i>
+                    </button>
+                    <button class="nav-action-btn" title="Command palette">
+                        <span>K</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Info Banner -->
+            <div class="info-banner">
+                <i class="fas fa-bolt"></i>
+                <span>Optimize your Efficio experience—track attendance, manage teams, and streamline HR operations effortlessly!</span>
+            </div>
+
+            <!-- Greeting Section -->
+            <div class="greeting-section">
+                <h1 class="greeting-title">Hallo, <span id="orgUserName">Arnold Smith</span></h1>
+                <div class="greeting-date" id="orgDate">Wednesday, 06 March 2025</div>
+            </div>
+
+            <!-- Key Metric Cards Row 1 -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">
+                            <span>Total Employees</span>
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <button class="metric-menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value">173</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>1.8%</span>
+                        </div>
+                    </div>
+                    <div class="metric-subtitle">+16 from last month</div>
+                    <button class="metric-details-btn">
+                        Details
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">
+                            <span>Job Applicant</span>
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <button class="metric-menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value">983</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>2.4%</span>
+                        </div>
+                    </div>
+                    <div class="metric-subtitle">+32 from last month</div>
+                    <button class="metric-details-btn">
+                        Details
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="metric-card attendance-card">
+                    <div class="metric-header">
+                        <div class="metric-title">
+                            <span>Attendance Report</span>
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <button class="metric-menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    <div class="attendance-numbers">
+                        <div class="attendance-item">
+                            <div class="attendance-value">173</div>
+                            <div class="attendance-label">Total Employ</div>
+                        </div>
+                        <div class="attendance-item">
+                            <div class="attendance-value">128</div>
+                            <div class="attendance-label">On Time</div>
+                        </div>
+                    </div>
+                    <div class="attendance-chart">
+                        <div class="chart-container">
+                            <div class="chart-y-axis">
+                                <span>200</span>
+                                <span>100</span>
+                                <span>50</span>
+                                <span>10</span>
+                            </div>
+                            <div class="chart-grid">
+                                <div class="chart-row">
+                                    <div class="chart-cell level-1"></div>
+                                    <div class="chart-cell level-2"></div>
+                                    <div class="chart-cell level-3"></div>
+                                    <div class="chart-cell level-4"></div>
+                                </div>
+                                <div class="chart-row">
+                                    <div class="chart-cell level-2"></div>
+                                    <div class="chart-cell level-3"></div>
+                                    <div class="chart-cell level-4"></div>
+                                    <div class="chart-cell level-5"></div>
+                                </div>
+                                <div class="chart-row">
+                                    <div class="chart-cell level-3"></div>
+                                    <div class="chart-cell level-4"></div>
+                                    <div class="chart-cell level-5"></div>
+                                    <div class="chart-cell level-1"></div>
+                                </div>
+                                <div class="chart-row">
+                                    <div class="chart-cell level-4"></div>
+                                    <div class="chart-cell level-5"></div>
+                                    <div class="chart-cell level-1"></div>
+                                    <div class="chart-cell level-2"></div>
+                                </div>
+                                <div class="chart-row">
+                                    <div class="chart-cell level-5"></div>
+                                    <div class="chart-cell level-1"></div>
+                                    <div class="chart-cell level-2"></div>
+                                    <div class="chart-cell level-3"></div>
+                                </div>
+                            </div>
+                            <div class="chart-x-axis">
+                                <span>Jan</span>
+                                <span>Feb</span>
+                                <span>Mar</span>
+                                <span>Apr</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metric Cards Row 2 -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">
+                            <span>Total Revenue</span>
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <button class="metric-menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value">$4,842.00</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>4.2%</span>
+                        </div>
+                    </div>
+                    <div class="metric-subtitle">+$3,834.00 from last month</div>
+                    <button class="metric-details-btn">
+                        Details
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <div class="metric-title">
+                            <span>Attendance Rate</span>
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <button class="metric-menu">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    <div class="metric-content">
+                        <div class="metric-value">75%</div>
+                        <div class="metric-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>1.7%</span>
+                        </div>
+                    </div>
+                    <div class="metric-subtitle">-6.4% from last month</div>
+                    <button class="metric-details-btn">
+                        Details
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Task Section -->
+            <div class="task-section">
+                <div class="task-header">
+                    <div class="task-title">
+                        <span>Task</span>
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="task-view-toggles">
+                        <button class="view-toggle active" data-view="kanban">
+                            <i class="fas fa-columns"></i>
+                            <span>Kanban</span>
+                        </button>
+                        <button class="view-toggle" data-view="table">
+                            <i class="fas fa-table"></i>
+                            <span>Table</span>
+                        </button>
+                        <button class="view-toggle" data-view="list">
+                            <i class="fas fa-list"></i>
+                            <span>List View</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="kanban-board">
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="column-status">
+                                <div class="status-indicator new"></div>
+                                <span>New Request</span>
+                                <span class="task-count">3</span>
+                            </div>
+                            <button class="column-menu">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <div class="column-content">
+                            <button class="add-task-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="task-placeholder"></div>
+                        </div>
+                    </div>
+
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="column-status">
+                                <div class="status-indicator progress"></div>
+                                <span>In Progress</span>
+                                <span class="task-count">6</span>
+                            </div>
+                            <button class="column-menu">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <div class="column-content">
+                            <button class="add-task-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="task-placeholder"></div>
+                        </div>
+                    </div>
+
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="column-status">
+                                <div class="status-indicator complete"></div>
+                                <span>Complete</span>
+                                <span class="task-count">12</span>
+                            </div>
+                            <button class="column-menu">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <div class="column-content">
+                            <button class="add-task-btn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                            <div class="task-placeholder"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/organizations.js?v=3.5"></script>
+</body>
+</html> 
