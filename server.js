@@ -599,12 +599,35 @@ app.post('/api/payroll/submit', authenticateToken, async (req, res) => {
   }
 });
 
+// Test route to verify server is responding
+app.get('/test', (req, res) => {
+  console.log('🧪 Test route hit');
+  res.json({ 
+    message: 'Server is responding!',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    environment: process.env.NODE_ENV
+  });
+});
+
 // Serve the main application
 app.get('/', (req, res) => {
   console.log('🔍 Root path (/) route hit');
   console.log('🔍 Request URL:', req.url);
   console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-  res.sendFile(__dirname + '/public/index.html');
+  console.log('🔍 __dirname:', __dirname);
+  console.log('🔍 File path:', __dirname + '/public/index.html');
+  
+  // Check if file exists
+  const fs = require('fs');
+  const filePath = __dirname + '/public/index.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ index.html file exists');
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ index.html file not found');
+    res.status(404).send('index.html not found');
+  }
 });
 
 // Error handling middleware
