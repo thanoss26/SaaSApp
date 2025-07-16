@@ -95,7 +95,13 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
-    version: process.version
+    version: process.version,
+    environment: process.env.NODE_ENV,
+    supabase: {
+      url: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+      anonKey: process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING'
+    }
   });
 });
 
