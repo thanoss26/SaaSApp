@@ -85,8 +85,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files
-app.use(express.static('public'));
+// Serve static files with explicit configuration
+app.use(express.static('public', {
+  etag: true,
+  lastModified: true,
+  setHeaders: (res, path) => {
+    // Set cache headers for static assets
+    if (path.endsWith('.css') || path.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+    }
+  }
+}));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -677,15 +686,19 @@ app.get('/', (req, res) => {
   console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
   console.log('🔍 __dirname:', __dirname);
   console.log('🔍 File path:', __dirname + '/public/index.html');
+  console.log('🔍 User Agent:', req.headers['user-agent']);
+  console.log('🔍 Accept:', req.headers.accept);
   
   // Check if file exists
   const fs = require('fs');
   const filePath = __dirname + '/public/index.html';
   if (fs.existsSync(filePath)) {
     console.log('✅ index.html file exists');
+    console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
     res.sendFile(filePath);
   } else {
     console.log('❌ index.html file not found');
+    console.log('❌ Available files in public:', fs.readdirSync(__dirname + '/public'));
     res.status(404).send('index.html not found');
   }
 });
