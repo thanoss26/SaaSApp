@@ -108,6 +108,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Cache busting middleware
+app.use((req, res, next) => {
+  // Force no-cache for all HTML requests
+  if (req.path.endsWith('.html') || req.path === '/' || req.path === '/dashboard' || req.path === '/users' || req.path === '/settings' || req.path === '/payroll' || req.path === '/analytics') {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+  }
+  next();
+});
+
 // Request logging middleware (for debugging rate limiting)
 app.use((req, res, next) => {
   const start = Date.now();
@@ -130,20 +142,18 @@ app.use((req, res, next) => {
 
 // Serve static files with explicit configuration
 app.use(express.static('public', {
-  etag: true,
-  lastModified: true,
+  etag: false,
+  lastModified: false,
   setHeaders: (res, path) => {
-    // Set cache headers for static assets
-    if (path.endsWith('.css') || path.endsWith('.js')) {
-      // Add cache busting for development and force refresh for production
-      if (process.env.NODE_ENV === 'production') {
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=3600');
-      }
-    }
+    // Force no-cache for ALL files to prevent old design from loading
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    
+    // Add version header for debugging
+    res.setHeader('X-App-Version', '2.0.0');
+    res.setHeader('X-Design-Version', 'new-spa-design');
   }
 }));
 
@@ -204,12 +214,20 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 
-// Clean URL routes (no .html extensions)
+// Clean URL routes (no .html extensions) with cache busting
 app.get('/dashboard', authenticateToken, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/dashboard.html');
 });
 
 app.get('/users', authenticateToken, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/users.html');
 });
 
@@ -217,30 +235,58 @@ app.get('/organizations', (req, res) => {
   console.log('🔍 /organizations route hit');
   console.log('🔍 Request URL:', req.url);
   console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/organizations.html');
 });
 
 app.get('/payroll', authenticateToken, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/payroll.html');
 });
 
 app.get('/analytics', authenticateToken, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/analytics.html');
 });
 
 app.get('/settings', authenticateToken, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/settings.html');
 });
 
 app.get('/test-dashboard', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/test-dashboard.html');
 });
 
 app.get('/dashboard-debug', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/dashboard-debug.html');
 });
 
 app.get('/invite/:inviteCode', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/invite.html');
 });
 
