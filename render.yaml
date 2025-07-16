@@ -4,7 +4,7 @@ services:
     env: node
     plan: starter
     buildCommand: npm install
-    startCommand: node debug-server.js
+    startCommand: node minimal-server.js
     envVars:
       - key: NODE_ENV
         value: production
