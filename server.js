@@ -144,6 +144,13 @@ app.use(express.static('public', {
         res.setHeader('Cache-Control', 'public, max-age=3600');
       }
     }
+    // Force no-cache for HTML files to prevent old design from loading
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('ETag', `"${Date.now()}"`);
+    }
   }
 }));
 
@@ -161,6 +168,15 @@ app.get('/api/health', (req, res) => {
       anonKey: process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
       serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING'
     }
+  });
+});
+
+// Version endpoint for cache busting
+app.get('/api/version', (req, res) => {
+  res.json({ 
+    version: '2.0.0',
+    timestamp: new Date().toISOString(),
+    design: 'new-spa-design'
   });
 });
 
@@ -204,13 +220,13 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 
-// Clean URL routes (no .html extensions)
-app.get('/dashboard', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/dashboard.html');
+// Client-side routing - serve main app for all routes except API and static files
+app.get('/dashboard', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
-app.get('/users', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/users.html');
+app.get('/users', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 app.get('/organizations', (req, res) => {
@@ -220,61 +236,20 @@ app.get('/organizations', (req, res) => {
   res.sendFile(__dirname + '/public/organizations.html');
 });
 
-app.get('/payroll', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/payroll.html');
+app.get('/payroll', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
-app.get('/analytics', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/analytics.html');
+app.get('/analytics', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
-app.get('/settings', authenticateToken, (req, res) => {
-  res.sendFile(__dirname + '/public/settings.html');
-});
-
-app.get('/test-dashboard', (req, res) => {
-  res.sendFile(__dirname + '/public/test-dashboard.html');
-});
-
-app.get('/dashboard-debug', (req, res) => {
-  res.sendFile(__dirname + '/public/dashboard-debug.html');
+app.get('/settings', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
 });
 
 app.get('/invite/:inviteCode', (req, res) => {
   res.sendFile(__dirname + '/public/invite.html');
-});
-
-// Redirects from .html URLs to clean URLs (for backward compatibility)
-app.get('/dashboard.html', (req, res) => {
-  res.redirect('/dashboard');
-});
-
-app.get('/users.html', (req, res) => {
-  res.redirect('/users');
-});
-
-app.get('/organizations.html', (req, res) => {
-  res.redirect('/organizations');
-});
-
-app.get('/payroll.html', (req, res) => {
-  res.redirect('/payroll');
-});
-
-app.get('/analytics.html', (req, res) => {
-  res.redirect('/analytics');
-});
-
-app.get('/settings.html', (req, res) => {
-  res.redirect('/settings');
-});
-
-app.get('/test-dashboard.html', (req, res) => {
-  res.redirect('/test-dashboard');
-});
-
-app.get('/dashboard-debug.html', (req, res) => {
-  res.redirect('/dashboard-debug');
 });
 
 // Dashboard API endpoints
@@ -801,6 +776,11 @@ app.get('*', (req, res, next) => {
   
   // Skip static file requests
   if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
+    return next();
+  }
+  
+  // Skip specific files that should be served directly
+  if (req.path === '/organizations.html' || req.path.startsWith('/invite/')) {
     return next();
   }
   

@@ -1,5 +1,5 @@
-// Shared JavaScript for EmployeeHub
-class EmployeeHub {
+// Shared JavaScript for Chronos HR
+class ChronosHR {
     constructor() {
         this.currentUser = null;
         this.isAuthenticated = false;
@@ -340,7 +340,7 @@ class EmployeeHub {
 }
 
 // Initialize the app
-const app = new EmployeeHub();
+const app = new ChronosHR();
 
 // Export for use in other modules
-window.EmployeeHub = app;
+window.ChronosHR = app;
