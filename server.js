@@ -710,15 +710,20 @@ app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API route not found' });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV}`);
   console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
   console.log(`🔗 Server bound to 0.0.0.0:${PORT}`);
+  console.log(`✅ Server is ready to accept connections`);
 }).on('error', (error) => {
   console.error('❌ Server failed to start:', error.message);
   process.exit(1);
 });
+
+// Keep the server alive
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
