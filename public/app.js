@@ -244,7 +244,7 @@ const updateRecentActivity = () => {
     activityList.innerHTML = `
         <div class="activity-item">
             <i class="fas fa-info-circle"></i>
-            <span>Welcome to EmployeeHub! Your dashboard is ready.</span>
+                            <span>Welcome to Chronos HR! Your dashboard is ready.</span>
         </div>
     `;
 };
