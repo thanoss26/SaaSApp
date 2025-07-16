@@ -20,5 +20,5 @@ services:
         sync: false
       - key: CORS_ORIGIN
         value: https://chronoshr.onrender.com
-    healthCheckPath: /api/health
+    # healthCheckPath: /api/health
     autoDeploy: true 
