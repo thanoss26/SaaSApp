@@ -616,8 +616,10 @@ router.post('/generate-invite', [
       return res.status(500).json({ error: 'Failed to create invite: ' + inviteError.message });
     }
 
-    // Generate invite link
-    const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${inviteCode}`;
+    // Generate invite link - use dynamic base URL
+    const baseUrl = process.env.FRONTEND_URL || 
+                   (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000');
+    const inviteLink = `${baseUrl}/invite/${inviteCode}`;
 
     res.status(201).json({
       message: 'Invite generated successfully',
