@@ -13,6 +13,21 @@ const { authenticateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Dynamic configuration based on environment
+const config = {
+  isProduction: process.env.NODE_ENV === 'production',
+  baseUrl: process.env.FRONTEND_URL || 
+           (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000'),
+  port: PORT,
+  environment: process.env.NODE_ENV || 'development'
+};
+
+console.log('🔧 Environment Configuration:');
+console.log(`   Environment: ${config.environment}`);
+console.log(`   Base URL: ${config.baseUrl}`);
+console.log(`   Port: ${config.port}`);
+console.log(`   Production: ${config.isProduction}`);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
@@ -42,9 +57,30 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - support both localhost and Render
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://chronoshr.onrender.com',
+  'https://www.chronoshr.onrender.com'
+];
+
+// Add custom origin from environment if provided
+if (process.env.CORS_ORIGIN) {
+  allowedOrigins.push(process.env.CORS_ORIGIN);
+}
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('🚫 CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 
@@ -634,7 +670,31 @@ app.get('/render-test', (req, res) => {
     environment: process.env.NODE_ENV,
     publicDir: __dirname + '/public',
     indexExists: require('fs').existsSync(__dirname + '/public/index.html'),
-    files: require('fs').readdirSync(__dirname + '/public').slice(0, 10) // First 10 files
+    files: require('fs').readdirSync(__dirname + '/public').slice(0, 10), // First 10 files
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch
+  });
+});
+
+// Simple startup test endpoint
+app.get('/startup-test', (req, res) => {
+  console.log('🚀 Startup test endpoint hit');
+  res.json({
+    status: 'Server is running',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    environment: process.env.NODE_ENV
+  });
+});
+
+// Configuration endpoint for frontend
+app.get('/api/config', (req, res) => {
+  res.json({
+    environment: config.environment,
+    baseUrl: config.baseUrl,
+    isProduction: config.isProduction,
+    corsOrigins: allowedOrigins
   });
 });
 
@@ -745,11 +805,15 @@ app.use('/api/*', (req, res) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV}`);
-  console.log(`🌐 CORS Origin: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+  console.log(`🌐 Allowed CORS Origins: ${allowedOrigins.join(', ')}`);
   console.log(`🔗 Server bound to 0.0.0.0:${PORT}`);
   console.log(`✅ Server is ready to accept connections`);
+  console.log(`🌍 Public directory: ${__dirname}/public`);
+  console.log(`📄 Index file exists: ${require('fs').existsSync(__dirname + '/public/index.html')}`);
+  console.log(`📁 Files in public: ${require('fs').readdirSync(__dirname + '/public').length} files`);
 }).on('error', (error) => {
   console.error('❌ Server failed to start:', error.message);
+  console.error('❌ Error details:', error);
   process.exit(1);
 });
 
