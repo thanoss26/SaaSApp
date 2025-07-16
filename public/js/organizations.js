@@ -28,7 +28,7 @@ class OrganizationsManager {
         const isAuthenticated = await this.checkAuthentication();
         if (!isAuthenticated) {
             console.log('❌ Not authenticated, redirecting to main app');
-            window.location.href = '/index.html';
+            window.location.href = '/';
             return;
         }
         
@@ -137,7 +137,7 @@ class OrganizationsManager {
                         </form>
                         
                         <div class="auth-links">
-                            <a href="/index.html">Go to Main App</a>
+                            <a href="/">Go to Main App</a>
                         </div>
                     </div>
                 </div>
@@ -253,7 +253,7 @@ class OrganizationsManager {
                 console.log('❌ Token expired for organizations request');
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
-                window.location.href = '/index.html';
+                window.location.href = '/';
                 return;
             } else {
                 console.error('❌ Failed to load organizations:', response.status);
@@ -598,11 +598,11 @@ class OrganizationsManager {
         const menu = document.createElement('div');
         menu.className = 'user-menu-dropdown';
         menu.innerHTML = `
-            <div class="user-menu-item" onclick="window.location.href='/settings.html'">
+            <div class="user-menu-item" onclick="window.location.href='/settings'">
                 <i class="fas fa-user"></i>
                 <span>Profile</span>
             </div>
-            <div class="user-menu-item" onclick="window.location.href='/settings.html'">
+            <div class="user-menu-item" onclick="window.location.href='/settings'">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </div>
@@ -647,13 +647,13 @@ class OrganizationsManager {
             }
             
             // Always redirect to login page
-            window.location.href = '/index.html';
+            window.location.href = '/';
         } catch (error) {
             console.error('❌ Logout error:', error);
             // Clear tokens and redirect to login page
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
-            window.location.href = '/index.html';
+            window.location.href = '/';
         }
     }
 
