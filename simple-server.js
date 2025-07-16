@@ -8,9 +8,9 @@ console.log('🔧 PORT:', port);
 console.log('🌐 NODE_ENV:', process.env.NODE_ENV);
 
 // Serve static files from the public directory
-app.use(express.static('public'));
+app.use(express.static('public'));dasdas
 
-// Health check endpoint
+// Health check endpointdsadsad
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
