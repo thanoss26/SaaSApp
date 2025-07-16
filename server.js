@@ -606,7 +606,26 @@ app.get('/test', (req, res) => {
     message: 'Server is responding!',
     timestamp: new Date().toISOString(),
     port: PORT,
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    supabase: {
+      url: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+      anonKey: process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
+      serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING'
+    }
+  });
+});
+
+// Render deployment test endpoint
+app.get('/render-test', (req, res) => {
+  console.log('🔍 Render test endpoint hit');
+  res.json({
+    message: 'Render deployment is working!',
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    environment: process.env.NODE_ENV,
+    publicDir: __dirname + '/public',
+    indexExists: require('fs').existsSync(__dirname + '/public/index.html'),
+    files: require('fs').readdirSync(__dirname + '/public').slice(0, 10) // First 10 files
   });
 });
 
