@@ -28,7 +28,7 @@ class Dashboard {
         }
         
         try {
-            // Check authentication but don't redirect if it fails
+            // Check authentication - this will redirect if it fails
             const authSuccess = await this.checkAuth();
             console.log('✅ Auth check completed, success:', authSuccess);
             
@@ -49,14 +49,14 @@ class Dashboard {
                 this.updateUserInfo();
                 console.log('✅ Dashboard initialization complete');
             } else {
-                console.log('⚠️ Auth failed, but sidebar functionality should still work');
-                // Show the no organization state since we're not authenticated
-                this.showNoOrganizationState();
+                console.log('⚠️ Auth failed, redirecting to login...');
+                // checkAuth should have already redirected, but just in case
+                window.location.href = '/';
             }
         } catch (error) {
             console.error('❌ Dashboard initialization failed:', error);
-            // Even if auth fails, sidebar should still work
-            console.log('⚠️ Auth failed, but sidebar functionality should still work');
+            console.log('⚠️ Redirecting to login due to initialization error...');
+            window.location.href = '/';
         }
     }
 
@@ -64,8 +64,8 @@ class Dashboard {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('❌ No token found in checkAuth');
-                // Don't redirect, just return false to indicate auth failed
+                console.log('❌ No token found in checkAuth, redirecting to login...');
+                window.location.href = '/';
                 return false;
             }
 
@@ -79,6 +79,9 @@ class Dashboard {
 
             if (!response.ok) {
                 console.log('❌ Auth verification failed with status:', response.status);
+                localStorage.removeItem('token');
+                localStorage.removeItem('refreshToken');
+                window.location.href = '/';
                 return false;
             }
 
@@ -88,7 +91,9 @@ class Dashboard {
             return true;
         } catch (error) {
             console.error('❌ Auth check failed:', error);
-            // Don't redirect, just return false
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            window.location.href = '/';
             return false;
         }
     }
