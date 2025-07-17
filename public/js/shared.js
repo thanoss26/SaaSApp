@@ -102,6 +102,13 @@ class EmployeeHub {
                 return;
             }
             
+            // If we're on a protected page, load the appropriate script
+            if (window.location.pathname === '/dashboard') {
+                this.loadDashboardScript();
+            } else if (window.location.pathname === '/users') {
+                this.loadUsersScript();
+            }
+            
             console.log('✅ Showing app container');
             this.updateUserInfo();
             this.showAppContainer();
@@ -390,6 +397,7 @@ class EmployeeHub {
                 
                 // Redirect to dashboard after successful login
                 setTimeout(() => {
+                    console.log('🔄 Redirecting to dashboard after login...');
                     window.location.replace('/dashboard');
                 }, 1000);
             } else {
@@ -618,6 +626,30 @@ class EmployeeHub {
             return false;
         }
         return true;
+    }
+    
+    // Load dashboard script dynamically
+    loadDashboardScript() {
+        if (!document.querySelector('script[src*="dashboard.js"]')) {
+            console.log('📦 Loading dashboard script...');
+            const script = document.createElement('script');
+            script.src = '/js/dashboard.js?v=1.0.4';
+            script.onload = () => console.log('✅ Dashboard script loaded');
+            script.onerror = () => console.error('❌ Failed to load dashboard script');
+            document.head.appendChild(script);
+        }
+    }
+    
+    // Load users script dynamically
+    loadUsersScript() {
+        if (!document.querySelector('script[src*="users.js"]')) {
+            console.log('📦 Loading users script...');
+            const script = document.createElement('script');
+            script.src = '/js/users.js?v=1.0.4';
+            script.onload = () => console.log('✅ Users script loaded');
+            script.onerror = () => console.error('❌ Failed to load users script');
+            document.head.appendChild(script);
+        }
     }
 }
 
