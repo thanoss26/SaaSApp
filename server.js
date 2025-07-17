@@ -798,9 +798,9 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-// Serve main app (after login)
-app.get('/app', (req, res) => {
-  console.log('🔍 Main app route hit');
+// Serve dashboard page as main app
+app.get('/dashboard', (req, res) => {
+  console.log('🔍 Dashboard route hit');
   const fs = require('fs');
   const filePath = __dirname + '/public/index.html';
   if (fs.existsSync(filePath)) {
@@ -812,20 +812,6 @@ app.get('/app', (req, res) => {
     res.sendFile(filePath);
   } else {
     console.log('❌ index.html file not found');
-    res.status(404).send('Main app not found');
-  }
-});
-
-// Serve dashboard page
-app.get('/dashboard', (req, res) => {
-  console.log('🔍 Dashboard route hit');
-  const fs = require('fs');
-  const filePath = __dirname + '/public/dashboard.html';
-  if (fs.existsSync(filePath)) {
-    console.log('✅ dashboard.html file exists');
-    res.sendFile(filePath);
-  } else {
-    console.log('❌ dashboard.html file not found');
     res.status(404).send('Dashboard page not found');
   }
 });

@@ -339,7 +339,7 @@ class EmployeeHub {
     }
 
     showAppContainer() {
-        console.log('🔍 [DEBUG] showAppContainer called. Should show dashboard/app and hide login form.');
+        console.log('🔍 [DEBUG] showAppContainer called. Should show dashboard and hide login form.');
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
@@ -408,10 +408,10 @@ class EmployeeHub {
                 
                 this.showToast('Login successful!', 'success');
                 
-                // Redirect to main app after successful login
+                // Redirect to dashboard after successful login
                 setTimeout(() => {
-                    console.log('🔄 Redirecting to main app after login...');
-                    window.location.replace('/app');
+                    console.log('🔄 Redirecting to dashboard after login...');
+                    window.location.replace('/dashboard');
                 }, 1000);
             } else {
                 console.log('❌ Login failed:', data.message);
