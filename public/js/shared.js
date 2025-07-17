@@ -671,6 +671,11 @@ class EmployeeHub {
     }
 }
 
+// Fallback: If loaded at /app, redirect to /dashboard
+if (window.location.pathname === '/app') {
+    window.location.replace('/dashboard');
+}
+
 // Initialize the app
 const app = new EmployeeHub();
 
