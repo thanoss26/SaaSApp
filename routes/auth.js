@@ -65,11 +65,17 @@ router.post('/register', [
     });
 
     if (authError) {
+      console.error('❌ User creation failed:', authError);
       return res.status(400).json({ error: authError.message });
     }
 
     const user = authData.user;
     const role = determineUserRole(email);
+    
+    console.log('✅ New user created successfully:');
+    console.log('User ID:', user.id);
+    console.log('User Email:', user.email);
+    console.log('Assigned Role:', role);
 
     // Create profile record
     const profileData = {
@@ -94,8 +100,12 @@ router.post('/register', [
     // Admin users can create organizations later
     // They start without an organization and can create one from the dashboard
 
-    // Sign in the user to get a session token
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    // Sign in the user to get a session token using a fresh client instance
+    // This prevents session conflicts on the server
+    const { createClient } = require('@supabase/supabase-js');
+    const freshSupabaseClient = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
+    
+    const { data: signInData, error: signInError } = await freshSupabaseClient.auth.signInWithPassword({
       email,
       password
     });
@@ -116,10 +126,11 @@ router.post('/register', [
       });
     }
 
-    // Fetch the complete user profile from the database
+    // Fetch the complete user profile from the database using admin client
+    // This ensures no session conflicts with the sign-in operation
     console.log('🔍 Fetching profile for newly registered user ID:', user.id);
     
-    const { data: newUserProfile, error: newProfileError } = await supabase
+    const { data: newUserProfile, error: newProfileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('id', user.id)
@@ -127,6 +138,19 @@ router.post('/register', [
 
     console.log('New user profile fetch result - Data:', newUserProfile);
     console.log('New user profile fetch result - Error:', newProfileError);
+    
+    // Security check: Ensure the profile belongs to the newly created user
+    if (newUserProfile && newUserProfile.id !== user.id) {
+      console.error('🚨 SECURITY ALERT: Profile ID mismatch!');
+      console.error('Expected user ID:', user.id);
+      console.error('Received profile ID:', newUserProfile.id);
+      console.error('This indicates a serious session or database issue!');
+      
+      return res.status(500).json({ 
+        error: 'Registration failed - security check failed',
+        message: 'Please try again or contact support'
+      });
+    }
     
     if (newProfileError) {
       console.log('❌ New user profile fetch failed:', newProfileError.message);
