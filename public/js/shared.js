@@ -472,7 +472,7 @@ class EmployeeHub {
 
     // API helper
     async apiRequest(endpoint, options = {}) {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token');
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
