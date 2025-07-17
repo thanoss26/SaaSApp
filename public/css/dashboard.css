@@ -195,11 +195,36 @@
 
 .sidebar.collapsed .sidebar-bottom {
   justify-content: center;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  max-height: none;
+  overflow: visible;
+}
+
+/* Special styling for logout button */
+.sidebar-bottom .sidebar-link {
+  color: #ff6b6b;
+  background: #fff5f5;
+  border: 1px solid #ffebeb;
+}
+
+.sidebar-bottom .sidebar-link:hover {
+  background: #ffe5e5;
+  color: #ff5252;
+  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.15);
+}
+
+.sidebar.collapsed .sidebar-bottom .sidebar-link {
+  justify-content: center;
+  transform: none;
+  opacity: 1;
+}
+
+.sidebar.collapsed .sidebar-bottom .sidebar-link-text {
   opacity: 0;
-  visibility: hidden;
-  transform: translateY(-20px) scale(0.8);
-  max-height: 0;
-  overflow: hidden;
+  transform: translateX(-10px);
+  pointer-events: none;
 }
 
 /* Main */
