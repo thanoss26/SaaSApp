@@ -1,64 +1,4 @@
-// Global redirect: Force any /app redirects to /dashboard
-(function() {
-    // Check current URL
-    if (window.location.pathname === '/app') {
-        console.log('🚫 BLOCKED: Attempted to access /app - redirecting to /');
-        window.location.replace('/');
-        return;
-    }
-    
-    // Intercept any future redirects to /app
-    const originalPushState = history.pushState;
-    const originalReplaceState = history.replaceState;
-    
-    history.pushState = function(...args) {
-        if (args[2] && args[2].includes('/app')) {
-            console.log('🚫 BLOCKED: pushState to /app - redirecting to /');
-            return originalPushState.call(this, args[0], args[1], '/');
-        }
-        return originalPushState.apply(this, args);
-    };
-    
-    history.replaceState = function(...args) {
-        if (args[2] && args[2].includes('/app')) {
-            console.log('🚫 BLOCKED: replaceState to /app - redirecting to /dashboard');
-            return originalReplaceState.call(this, args[0], args[1], '/');
-        }
-        return originalReplaceState.apply(this, args);
-    };
-    
-    // Intercept window.location changes
-    const originalAssign = window.location.assign;
-    const originalReplace = window.location.replace;
-    const originalHref = Object.getOwnPropertyDescriptor(window.location, 'href');
-    
-    window.location.assign = function(url) {
-        if (url && url.includes('/app')) {
-            console.log('🚫 BLOCKED: location.assign to /app - redirecting to /dashboard');
-            return originalAssign.call(this, '/dashboard');
-        }
-        return originalAssign.apply(this, arguments);
-    };
-    
-    window.location.replace = function(url) {
-        if (url && url.includes('/app')) {
-            console.log('🚫 BLOCKED: location.replace to /app - redirecting to /dashboard');
-            return originalReplace.call(this, '/dashboard');
-        }
-        return originalReplace.apply(this, arguments);
-    };
-    
-    Object.defineProperty(window.location, 'href', {
-        set: function(url) {
-            if (url && url.includes('/app')) {
-                console.log('🚫 BLOCKED: location.href to /app - redirecting to /dashboard');
-                return originalHref.set.call(this, '/dashboard');
-            }
-            return originalHref.set.call(this, url);
-        },
-        get: originalHref.get
-    });
-})();
+
 
 // Shared JavaScript for EmployeeHub
 class EmployeeHub {
@@ -113,13 +53,7 @@ class EmployeeHub {
             }
             this.isCheckingAuth = true;
             
-            // Always show login form first when visiting the root page
-            if (window.location.pathname === '/') {
-                console.log('🏠 On root page, showing login form first');
-                this.showAuthContainer();
-                this.isCheckingAuth = false;
-                return;
-            }
+
             
             const token = localStorage.getItem('token');
             console.log('🔍 Token exists:', !!token);
