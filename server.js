@@ -140,17 +140,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files with explicit configuration
+// Serve static files with explicit configuration (excluding index.html)
 app.use(express.static('public', {
   etag: false,
   lastModified: false,
+  index: false, // Disable automatic index.html serving
   setHeaders: (res, path) => {
     // Different cache strategies for different file types
     if (path.endsWith('.css') || path.endsWith('.js')) {
       // CSS and JS files - cache for 1 hour but with version
       res.setHeader('Cache-Control', 'public, max-age=3600');
       res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
-    } else if (path.endsWith('.html') || path === '/') {
+    } else if (path.endsWith('.html')) {
       // HTML files - no cache
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.setHeader('Pragma', 'no-cache');
@@ -804,13 +805,13 @@ app.get('/', (req, res) => {
     console.log('✅ index.html file exists');
     console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
     
-    // Add cache busting headers for production
-    if (process.env.NODE_ENV === 'production') {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
+    // Add cache busting headers
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
     
+    console.log('📤 Sending index.html file');
     res.sendFile(filePath);
   } else {
     console.log('❌ index.html file not found');

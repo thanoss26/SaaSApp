@@ -24,6 +24,9 @@ class EmployeeHub {
         console.log('🚀 Initializing EmployeeHub...');
         console.log('🔍 Current pathname:', window.location.pathname);
         
+        // Clear any URL parameters to prevent credential exposure
+        this.clearUrlParameters();
+        
         // Show loading screen initially
         this.showLoadingScreen();
         
@@ -48,6 +51,14 @@ class EmployeeHub {
             }
             this.isCheckingAuth = true;
             
+            // Always show login form first when visiting the root page
+            if (window.location.pathname === '/') {
+                console.log('🏠 On root page, showing login form first');
+                this.showAuthContainer();
+                this.isCheckingAuth = false;
+                return;
+            }
+            
             const token = localStorage.getItem('token');
             console.log('🔍 Token exists:', !!token);
             
@@ -55,63 +66,53 @@ class EmployeeHub {
                 console.log('❌ No token found, showing auth container');
                 this.showAuthContainer();
                 this.isCheckingAuth = false;
-                // Don't make any API calls if no token - just show the login form
                 return;
             }
             
-            // If we're on a protected page and have a token, don't redirect
+            // If we're on a protected page and have a token, verify and show app
             const protectedPages = ['/dashboard', '/users', '/organizations', '/payroll', '/analytics', '/settings'];
             if (protectedPages.includes(window.location.pathname) && token) {
-                console.log('✅ On protected page with token, showing app container');
-                this.currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                this.isAuthenticated = true;
-                this.updateUserInfo();
-                this.showAppContainer();
+                console.log('🔍 Verifying token for protected page...');
+                
+                try {
+                    const response = await fetch('/api/auth/verify', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Token verified, showing app container');
+                        this.currentUser = data.user;
+                        this.isAuthenticated = true;
+                        this.updateUserInfo();
+                        this.showAppContainer();
+                        
+                        // Load appropriate script for the page
+                        if (window.location.pathname === '/dashboard') {
+                            this.loadDashboardScript();
+                        } else if (window.location.pathname === '/users') {
+                            this.loadUsersScript();
+                        }
+                    } else {
+                        throw new Error('Token verification failed');
+                    }
+                } catch (error) {
+                    console.error('❌ Token verification failed:', error);
+                    this.showAuthContainer();
+                }
+                
                 this.isCheckingAuth = false;
                 return;
             }
 
-            console.log('🔍 Verifying token with server...');
-            const response = await fetch('/api/auth/verify', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            console.log('🔍 Auth verification response status:', response.status);
-
-            if (!response.ok) {
-                throw new Error('Authentication failed');
-            }
-
-            const data = await response.json();
-            console.log('✅ Authentication successful:', data.user?.email);
+            // For any other pages, show auth container
+            console.log('❌ Not on protected page, showing auth container');
+            this.showAuthContainer();
             
-            this.currentUser = data.user;
-            this.isAuthenticated = true;
-            
-            // If we're on the main page and authenticated, redirect to dashboard
-            if (window.location.pathname === '/' && !this.isRedirecting) {
-                console.log('🔄 Redirecting to dashboard from main page');
-                this.isRedirecting = true;
-                
-                // Use replace instead of href to prevent back button issues
-                window.location.replace('/dashboard');
-                return;
-            }
-            
-            // If we're on a protected page, load the appropriate script
-            if (window.location.pathname === '/dashboard') {
-                this.loadDashboardScript();
-            } else if (window.location.pathname === '/users') {
-                this.loadUsersScript();
-            }
-            
-            console.log('✅ Showing app container');
-            this.updateUserInfo();
-            this.showAppContainer();
         } catch (error) {
             console.error('❌ Auth check failed:', error);
             this.showAuthContainer();
@@ -181,16 +182,11 @@ class EmployeeHub {
     }
 
     setupEventListeners() {
-        // Logout buttons
+        // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
-        const topLogoutBtn = document.getElementById('topLogoutBtn');
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
-        }
-        
-        if (topLogoutBtn) {
-            topLogoutBtn.addEventListener('click', () => this.logout());
         }
 
         // Auth form switching
@@ -310,8 +306,16 @@ class EmployeeHub {
         }
     }
 
+    clearUrlParameters() {
+        // Remove any URL parameters to prevent credential exposure
+        if (window.location.search && window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            console.log('🔒 Cleared URL parameters for security');
+        }
+    }
+
     showAuthContainer() {
-        console.log('🔍 Showing auth container...');
+        console.log('🔍 [DEBUG] showAuthContainer called. Should show login form and hide app container.');
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
@@ -327,11 +331,15 @@ class EmployeeHub {
         if (appContainer) {
             appContainer.style.display = 'none';
         }
-        console.log('✅ Auth container shown');
+        
+        // Automatically show login form first
+        this.showLoginForm();
+        
+        console.log('✅ Auth container shown with login form');
     }
 
     showAppContainer() {
-        console.log('🔍 Showing app container...');
+        console.log('🔍 [DEBUG] showAppContainer called. Should show dashboard/app and hide login form.');
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
@@ -369,6 +377,11 @@ class EmployeeHub {
     async handleLogin(e) {
         e.preventDefault();
         console.log('🔍 Login form submitted');
+        
+        // Clear any URL parameters to prevent credential exposure
+        if (window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
@@ -412,6 +425,11 @@ class EmployeeHub {
 
     async handleSignup(e) {
         e.preventDefault();
+        
+        // Clear any URL parameters to prevent credential exposure
+        if (window.history.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
         
         const firstName = document.getElementById('signupFirstName').value;
         const lastName = document.getElementById('signupLastName').value;
