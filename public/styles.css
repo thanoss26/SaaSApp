@@ -449,6 +449,19 @@ body {
     color: white;
 }
 
+.logout-nav-item {
+    margin-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+    color: #ff6b6b;
+    transition: all 0.3s ease;
+}
+
+.logout-nav-item:hover {
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff5252;
+}
+
 .nav-user {
     display: flex;
     align-items: center;
