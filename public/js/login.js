@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Redirect to dashboard
                     window.location.href = '/dashboard';
+                    setTimeout(() => { window.location.replace('/dashboard'); }, 1000); // Fallback in case of cache issues
                 } else {
                     throw new Error(data.message || 'Login failed');
                 }
