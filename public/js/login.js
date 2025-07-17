@@ -2,8 +2,8 @@
 (function() {
     // Check current URL
     if (window.location.pathname === '/app') {
-        console.log('🚫 BLOCKED: Attempted to access /app - redirecting to /dashboard');
-        window.location.replace('/dashboard');
+        console.log('🚫 BLOCKED: Attempted to access /app - redirecting to /');
+        window.location.replace('/');
         return;
     }
     
@@ -13,16 +13,16 @@
     
     history.pushState = function(...args) {
         if (args[2] && args[2].includes('/app')) {
-            console.log('🚫 BLOCKED: pushState to /app - redirecting to /dashboard');
-            return originalPushState.call(this, args[0], args[1], '/dashboard');
+            console.log('🚫 BLOCKED: pushState to /app - redirecting to /');
+            return originalPushState.call(this, args[0], args[1], '/');
         }
         return originalPushState.apply(this, args);
     };
     
     history.replaceState = function(...args) {
         if (args[2] && args[2].includes('/app')) {
-            console.log('🚫 BLOCKED: replaceState to /app - redirecting to /dashboard');
-            return originalReplaceState.call(this, args[0], args[1], '/dashboard');
+            console.log('🚫 BLOCKED: replaceState to /app - redirecting to /');
+            return originalReplaceState.call(this, args[0], args[1], '/');
         }
         return originalReplaceState.apply(this, args);
     };
@@ -34,16 +34,16 @@
     
     window.location.assign = function(url) {
         if (url && url.includes('/app')) {
-            console.log('🚫 BLOCKED: location.assign to /app - redirecting to /dashboard');
-            return originalAssign.call(this, '/dashboard');
+            console.log('🚫 BLOCKED: location.assign to /app - redirecting to /');
+            return originalAssign.call(this, '/');
         }
         return originalAssign.apply(this, arguments);
     };
     
     window.location.replace = function(url) {
         if (url && url.includes('/app')) {
-            console.log('🚫 BLOCKED: location.replace to /app - redirecting to /dashboard');
-            return originalReplace.call(this, '/dashboard');
+            console.log('🚫 BLOCKED: location.replace to /app - redirecting to /');
+            return originalReplace.call(this, '/');
         }
         return originalReplace.apply(this, arguments);
     };
@@ -51,8 +51,8 @@
     Object.defineProperty(window.location, 'href', {
         set: function(url) {
             if (url && url.includes('/app')) {
-                console.log('🚫 BLOCKED: location.href to /app - redirecting to /dashboard');
-                return originalHref.set.call(this, '/dashboard');
+                console.log('🚫 BLOCKED: location.href to /app - redirecting to /');
+                return originalHref.set.call(this, '/');
             }
             return originalHref.set.call(this, url);
         },
@@ -60,6 +60,7 @@
     });
 })();
 
+// Login form functionality
 // Login form functionality
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
@@ -97,9 +98,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('userEmail', data.userEmail);
                     
-                    // Redirect to dashboard
+                    // ✅ Redirect to dashboard
                     window.location.href = '/dashboard';
-                    setTimeout(() => { window.location.replace('/dashboard'); }, 1000); // Fallback in case of cache issues
+                    setTimeout(() => { window.location.replace('/dashboard'); }, 1000); // Fallback
                 } else {
                     throw new Error(data.message || 'Login failed');
                 }
@@ -113,4 +114,4 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
+});

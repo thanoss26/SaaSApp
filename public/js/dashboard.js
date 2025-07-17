@@ -48,7 +48,7 @@ class Dashboard {
             // If there's an error, it might be an auth issue, redirect to login
             if (error.message.includes('401') || error.message.includes('403')) {
                 console.log('⚠️ Auth error detected, redirecting to login...');
-                window.location.href = '/';
+                window.location.href = '/login';
             } else {
                 this.showToast('Failed to load dashboard data', 'error');
             }
@@ -65,7 +65,7 @@ class Dashboard {
             // Check if user is authenticated
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
-                window.location.href = '/';
+                window.location.href = '/login';
                 return;
             }
             
@@ -90,7 +90,7 @@ class Dashboard {
                     console.log('✅ User data fetched from server:', this.currentUser.email);
                 } else {
                     console.log('❌ Failed to get user data, redirecting to login');
-                    window.location.href = '/';
+                    window.location.href = '/login';
                     return;
                 }
             }
@@ -1033,7 +1033,7 @@ class Dashboard {
             localStorage.removeItem('refreshToken');
             this.showToast('Logged out successfully', 'success');
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/login';
             }, 1000);
         }
     }

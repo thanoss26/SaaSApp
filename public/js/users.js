@@ -36,7 +36,7 @@ class UsersPage {
             // If there's an auth error, redirect to login
             if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Authentication failed')) {
                 console.log('⚠️ Auth error detected, redirecting to login...');
-                window.location.href = '/';
+                window.location.href = '/login';
             } else {
                 this.showToast('Failed to load employees', 'error');
             }
@@ -103,7 +103,7 @@ class UsersPage {
             // Check if user is authenticated
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
-                window.location.href = '/';
+                window.location.href = '/login';
                 return;
             }
             
@@ -128,7 +128,7 @@ class UsersPage {
                     console.log('✅ User data fetched from server:', this.currentUser.email);
                 } else {
                     console.log('❌ Failed to get user data, redirecting to login');
-                    window.location.href = '/';
+                    window.location.href = '/login';
                     return;
                 }
             }
@@ -167,7 +167,7 @@ class UsersPage {
                 console.log('🔐 Authentication error, redirecting to login...');
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
-                window.location.href = '/';
+                window.location.href = '/login';
                 return;
             }
             
@@ -1737,7 +1737,7 @@ class UsersPage {
             localStorage.removeItem('refreshToken');
             this.showToast('Logged out successfully', 'success');
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/login';
             }, 1000);
         }
     }
