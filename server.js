@@ -792,21 +792,19 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve main app (root route)
+// Redirect root to login page
 app.get('/', (req, res) => {
-  console.log('🔍 Root path (/) route hit');
-  console.log('🔍 Request URL:', req.url);
-  console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-  console.log('🔍 __dirname:', __dirname);
-  console.log('🔍 File path:', __dirname + '/public/index.html');
-  console.log('🔍 User Agent:', req.headers['user-agent']);
-  console.log('🔍 Accept:', req.headers.accept);
+  console.log('🔍 Root path (/) route hit - redirecting to login');
+  res.redirect('/login');
+});
+
+// Serve main app (after login)
+app.get('/app', (req, res) => {
+  console.log('🔍 Main app route hit');
   const fs = require('fs');
   const filePath = __dirname + '/public/index.html';
   if (fs.existsSync(filePath)) {
     console.log('✅ index.html file exists');
-    console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
-    console.log('📤 Sending index.html file');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
