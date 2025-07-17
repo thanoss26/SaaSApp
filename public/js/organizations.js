@@ -27,8 +27,8 @@ class OrganizationsManager {
         // Check authentication before proceeding
         const isAuthenticated = await this.checkAuthentication();
         if (!isAuthenticated) {
-            console.log('❌ Not authenticated, redirecting to main app');
-            window.location.href = '/';
+            console.log('❌ Not authenticated, redirecting to login');
+            window.location.href = '/login';
             return;
         }
         
@@ -253,7 +253,7 @@ class OrganizationsManager {
                 console.log('❌ Token expired for organizations request');
                 localStorage.removeItem('token');
                 localStorage.removeItem('refreshToken');
-                window.location.href = '/';
+                window.location.href = '/login';
                 return;
             } else {
                 console.error('❌ Failed to load organizations:', response.status);
@@ -647,13 +647,13 @@ class OrganizationsManager {
             }
             
             // Always redirect to login page
-            window.location.href = '/';
+            window.location.href = '/login';
         } catch (error) {
             console.error('❌ Logout error:', error);
             // Clear tokens and redirect to login page
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
-            window.location.href = '/';
+            window.location.href = '/login';
         }
     }
 

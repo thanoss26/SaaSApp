@@ -2,8 +2,8 @@
 (function() {
     // Check current URL
     if (window.location.pathname === '/app') {
-        console.log('🚫 BLOCKED: Attempted to access /app - redirecting to /dashboard');
-        window.location.replace('/dashboard');
+        console.log('🚫 BLOCKED: Attempted to access /app - redirecting to /');
+        window.location.replace('/');
         return;
     }
     
@@ -13,8 +13,8 @@
     
     history.pushState = function(...args) {
         if (args[2] && args[2].includes('/app')) {
-            console.log('🚫 BLOCKED: pushState to /app - redirecting to /dashboard');
-            return originalPushState.call(this, args[0], args[1], '/dashboard');
+            console.log('🚫 BLOCKED: pushState to /app - redirecting to /');
+            return originalPushState.call(this, args[0], args[1], '/');
         }
         return originalPushState.apply(this, args);
     };
@@ -22,7 +22,7 @@
     history.replaceState = function(...args) {
         if (args[2] && args[2].includes('/app')) {
             console.log('🚫 BLOCKED: replaceState to /app - redirecting to /dashboard');
-            return originalReplaceState.call(this, args[0], args[1], '/dashboard');
+            return originalReplaceState.call(this, args[0], args[1], '/');
         }
         return originalReplaceState.apply(this, args);
     };
@@ -547,7 +547,7 @@ class EmployeeHub {
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('userProfile');
             sessionStorage.removeItem('employeeHubInitialized');
-            window.location.href = '/';
+            window.location.href = '/login';
         }
     }
 
