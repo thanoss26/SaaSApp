@@ -394,6 +394,50 @@
 .card:not(:last-child) {
   margin-bottom: 0;
 }
+
+/* Chart container constraints */
+.chart-card {
+  overflow: hidden !important;
+  position: relative;
+  height: 200px !important;
+  max-height: 200px !important;
+  min-height: 200px !important;
+}
+
+.chart-card canvas {
+  max-height: 150px !important;
+  height: 150px !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.donut-card {
+  overflow: hidden !important;
+  height: 180px !important;
+  max-height: 180px !important;
+  min-height: 180px !important;
+}
+
+.donut-card canvas {
+  max-height: 120px !important;
+  height: 120px !important;
+  width: 100% !important;
+  display: block !important;
+}
+
+.attendance-card {
+  overflow: hidden !important;
+  height: 120px !important;
+  max-height: 120px !important;
+  min-height: 120px !important;
+}
+
+.attendance-card canvas {
+  max-height: 60px !important;
+  height: 60px !important;
+  width: 100% !important;
+  display: block !important;
+}
 .card-header {
   display: flex;
   align-items: center;

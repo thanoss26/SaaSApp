@@ -6,6 +6,7 @@
           <title>Chronos HR - Employee Management Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="css/shared.css">
+  <link rel="stylesheet" href="css/enhanced-sidebar.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,49 +14,60 @@
 <body class="dashboard-bg">
   <div class="dashboard-layout">
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-      <div class="sidebar-header">
-        <div class="sidebar-logo" id="sidebarToggle">
-          <span class="sidebar-logo-icon"><i class="fas fa-bars"></i></span>
+    <aside class="enhanced-sidebar" id="enhanced-sidebar">
+      <div class="enhanced-sidebar-header">
+        <div class="enhanced-sidebar-logo">
+          <div class="logo-icon">⏱️</div>
+          <span class="logo-text">Chronos HR</span>
+        </div>
+        <div class="enhanced-sidebar-controls">
+          <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <button class="enhanced-theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon" id="theme-icon"></i>
+          </button>
         </div>
       </div>
-      <nav class="sidebar-nav">
-        <a href="#" class="sidebar-link active" title="Dashboard">
-          <i class="fas fa-home"></i>
-          <span class="sidebar-link-text">Dashboard</span>
+
+      <nav class="enhanced-sidebar-nav">
+        <a href="/dashboard" class="nav-item active" data-page="dashboard">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
         </a>
-        <a href="/users" class="sidebar-link" title="Users">
-          <i class="fas fa-users"></i>
-          <span class="sidebar-link-text">Users</span>
+        <a href="/analytics" class="nav-item" data-page="analytics">
+          <i class="fas fa-chart-bar"></i>
+          <span>Analytics</span>
         </a>
-        <a href="/analytics" class="sidebar-link" title="Analytics">
-          <i class="fas fa-chart-line"></i>
-          <span class="sidebar-link-text">Analytics</span>
+        <a href="/payroll" class="nav-item" data-page="payroll">
+          <i class="fas fa-money-bill-wave"></i>
+          <span>Payrolls</span>
         </a>
-        <a href="/payroll" class="sidebar-link" title="Payroll">
-          <i class="fas fa-euro-sign"></i>
-          <span class="sidebar-link-text">Payroll</span>
+        <a href="/organizations" class="nav-item" data-page="organizations">
+          <i class="fas fa-building"></i>
+          <span>Organizations</span>
         </a>
-                        <a href="/settings" class="sidebar-link" title="Settings">
-                    <i class="fas fa-cog"></i>
-                    <span class="sidebar-link-text">Settings</span>
-                </a>
-                <a href="/organizations" class="sidebar-link" title="Organizations" id="organizationsSidebarLink">
-            <i class="fas fa-building"></i>
-            <span class="sidebar-link-text">Organizations</span>
+        <a href="/settings" class="nav-item" data-page="settings">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
         </a>
-        <button id="organizationBtn" class="sidebar-link" style="display:none;">
-            <i class="fas fa-building"></i>
-            <span class="sidebar-link-text">Organization Management</span>
-        </button>
       </nav>
-      <div class="sidebar-bottom">
-        <a href="#" class="sidebar-link" id="logoutBtn" title="Logout">
+
+      <div class="enhanced-sidebar-footer">
+        <div class="enhanced-sidebar-user">
+          <div class="user-avatar">TV</div>
+          <div class="user-details">
+            <div class="user-name">Thanos Vako</div>
+            <div class="user-email">thanosvako23@gmail.com</div>
+          </div>
+        </div>
+        <button class="enhanced-logout-btn" onclick="logout()">
           <i class="fas fa-sign-out-alt"></i>
-          <span class="sidebar-link-text">Logout</span>
-        </a>
+          <span>Log out</span>
+        </button>
       </div>
     </aside>
+
     <!-- Main Content -->
     <main class="dashboard-main">
       <!-- Topbar -->
@@ -268,7 +280,7 @@
                 <button class="tab">Week</button>
               </div>
             </div>
-            <canvas id="mainLineChart" height="80"></canvas>
+            <canvas id="mainLineChart" height="150" style="height: 150px !important; max-height: 150px !important; min-height: 150px !important;"></canvas>
           </div>
           <!-- Activity List Card -->
           <div class="card activity-card">
@@ -290,12 +302,12 @@
           <div class="card attendance-card">
             <div class="card-header">Weekly Attendance</div>
             <div class="attendance-value">94.8%</div>
-            <canvas id="weeklyBarChart" height="40"></canvas>
+            <canvas id="weeklyBarChart" height="60" style="height: 60px !important; max-height: 60px !important; min-height: 60px !important;"></canvas>
           </div>
           <!-- Donut Chart Card -->
           <div class="card donut-card">
             <div class="card-header">Department Distribution</div>
-            <canvas id="donutChart" height="120"></canvas>
+            <canvas id="donutChart" height="120" style="height: 120px !important; max-height: 120px !important; min-height: 120px !important;"></canvas>
             <div class="donut-label" id="totalRoles">0</div>
             <div class="donut-meta">
               <div>Total Roles</div>
@@ -311,6 +323,7 @@
       </section>
     </main>
   </div>
+  <script src="js/sidebar.js"></script>
   <script src="js/dashboard.js"></script>
 </body>
 </html>

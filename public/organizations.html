@@ -6,81 +6,65 @@
     <title>Organization Dashboard - Chronos HR</title>
     <link rel="stylesheet" href="/styles.css?v=2.0.0">
     <link rel="stylesheet" href="/css/organizations.css?v=3.5">
+    <link rel="stylesheet" href="/css/enhanced-sidebar.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fas fa-clock"></i>
-                    <span>Chronos HR</span>
-                </div>
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i class="fas fa-bars"></i>
-                </button>
+        <aside class="enhanced-sidebar" id="enhanced-sidebar">
+          <div class="enhanced-sidebar-header">
+            <div class="enhanced-sidebar-logo">
+              <div class="logo-icon">⏱️</div>
+              <span class="logo-text">Chronos HR</span>
             </div>
-            
-            <nav class="sidebar-nav">
-                <ul>
-                    <li>
-                        <a href="/dashboard" class="nav-link">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/users" class="nav-link">
-                            <i class="fas fa-users"></i>
-                            <span>Users</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/organizations" class="nav-link active">
-                            <i class="fas fa-building"></i>
-                            <span>Organizations</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/payroll" class="nav-link">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span>Payroll</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/analytics" class="nav-link">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Analytics</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/settings" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            <span>Settings</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-            
-            <!-- User Profile Section -->
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        <img id="userAvatar" src="https://randomuser.me/api/portraits/men/32.jpg" alt="User Avatar">
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name" id="sidebarUserName">Loading...</div>
-                        <div class="user-role" id="sidebarUserRole">Loading...</div>
-                    </div>
-                    <div class="user-actions">
-                        <button class="user-menu-btn" id="userMenuBtn">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                </div>
+            <div class="enhanced-sidebar-controls">
+              <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
+                <i class="fas fa-bars"></i>
+              </button>
+              <button class="enhanced-theme-toggle" id="theme-toggle">
+                <i class="fas fa-moon" id="theme-icon"></i>
+              </button>
             </div>
+          </div>
+
+          <nav class="enhanced-sidebar-nav">
+            <a href="/dashboard" class="nav-item" data-page="dashboard">
+              <i class="fas fa-tachometer-alt"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="/analytics" class="nav-item" data-page="analytics">
+              <i class="fas fa-chart-bar"></i>
+              <span>Analytics</span>
+            </a>
+            <a href="/payroll" class="nav-item" data-page="payroll">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Payrolls</span>
+            </a>
+            <a href="/organizations" class="nav-item active" data-page="organizations">
+              <i class="fas fa-building"></i>
+              <span>Organizations</span>
+            </a>
+            <a href="/settings" class="nav-item" data-page="settings">
+              <i class="fas fa-cog"></i>
+              <span>Settings</span>
+            </a>
+          </nav>
+
+          <div class="enhanced-sidebar-footer">
+            <div class="enhanced-sidebar-user">
+              <div class="user-avatar">TV</div>
+              <div class="user-details">
+                <div class="user-name">Thanos Vako</div>
+                <div class="user-email">thanosvako23@gmail.com</div>
+              </div>
+            </div>
+            <button class="enhanced-logout-btn" onclick="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Log out</span>
+            </button>
+          </div>
         </aside>
 
         <main class="main-content org-dashboard-main">
@@ -369,6 +353,7 @@
         </main>
     </div>
 
+    <script src="/js/sidebar.js"></script>
     <script src="/js/organizations.js?v=3.5"></script>
 </body>
 </html> 
