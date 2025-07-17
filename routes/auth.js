@@ -169,7 +169,7 @@ router.post('/login', [
         role: profile.role,
         organization_id: profile.organization_id
       },
-      access_token: data.session.access_token,
+      token: data.session.access_token,
       refresh_token: data.session.refresh_token
     });
 
