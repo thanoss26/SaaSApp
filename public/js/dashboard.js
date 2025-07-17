@@ -35,6 +35,13 @@ class Dashboard {
             try {
                 this.initializeCharts();
                 console.log('✅ Charts initialized');
+                
+                // Enforce size constraints and set up observers
+                this.enforceChartSizeConstraints();
+                this.setupChartSizeObserver();
+                this.setupMutationObserver();
+                this.startChartSizeMonitoring();
+                console.log('✅ Chart size constraints enforced');
             } catch (chartError) {
                 console.error('❌ Chart initialization failed:', chartError);
                 console.log('⚠️ Continuing without charts');
@@ -68,6 +75,13 @@ class Dashboard {
                 window.location.href = '/login';
                 return;
             }
+
+            // Prevent multiple simultaneous data loads
+            if (this.isLoadingData) {
+                console.log('⚠️ Data load already in progress, skipping...');
+                return;
+            }
+            this.isLoadingData = true;
             
             // Get current user from localStorage
             const userData = localStorage.getItem('user');
@@ -142,6 +156,8 @@ class Dashboard {
         } catch (error) {
             console.error('❌ Failed to load dashboard data:', error);
             this.showToast('Failed to load dashboard data', 'error');
+        } finally {
+            this.isLoadingData = false;
         }
     }
 
@@ -263,19 +279,28 @@ class Dashboard {
                     data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Will be updated with real data
                     borderColor: '#667eea',
                     backgroundColor: gradient,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
+                    borderWidth: 2,
+                    fill: false,
+                    tension: 0.1,
                     pointBackgroundColor: '#667eea',
                     pointBorderColor: '#ffffff',
-                    pointBorderWidth: 3,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
+                    pointBorderWidth: 2,
+                    pointRadius: 3,
+                    pointHoverRadius: 4
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                aspectRatio: 4,
+                animation: false,
+                responsiveAnimationDuration: 0,
+                layout: {
+                    padding: {
+                        top: 5,
+                        bottom: 5
+                    }
+                },
                 plugins: {
                     legend: { display: false },
                     tooltip: {
@@ -347,7 +372,16 @@ class Dashboard {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
+                aspectRatio: 2,
+                animation: false,
+                responsiveAnimationDuration: 0,
+                layout: {
+                    padding: {
+                        top: 5,
+                        bottom: 5
+                    }
+                },
                 plugins: {
                     legend: {
                         position: 'bottom',
@@ -377,14 +411,38 @@ class Dashboard {
     }
 
     updateCharts(data) {
-        if (this.charts.growth && data.growth) {
-            this.charts.growth.data.datasets[0].data = data.growth;
-            this.charts.growth.update('active');
+        // Check if chart containers are properly sized before updating
+        const growthCanvas = document.getElementById('mainLineChart');
+        const roleCanvas = document.getElementById('donutChart');
+        
+        if (this.charts.growth && data.growth && growthCanvas) {
+            const rect = growthCanvas.getBoundingClientRect();
+            if (rect.height > 0 && rect.width > 0) {
+                this.charts.growth.data.datasets[0].data = data.growth;
+                this.charts.growth.update('none'); // Use 'none' to prevent animation that might cause expansion
+                
+                // Enforce size constraints after update
+                setTimeout(() => {
+                    this.enforceChartSizeConstraints();
+                }, 50);
+            } else {
+                console.log('⚠️ Growth chart container not properly sized, skipping update');
+            }
         }
 
-        if (this.charts.role && data.roles) {
-            this.charts.role.data.datasets[0].data = data.roles;
-            this.charts.role.update('active');
+        if (this.charts.role && data.roles && roleCanvas) {
+            const rect = roleCanvas.getBoundingClientRect();
+            if (rect.height > 0 && rect.width > 0) {
+                this.charts.role.data.datasets[0].data = data.roles;
+                this.charts.role.update('none'); // Use 'none' to prevent animation that might cause expansion
+                
+                // Enforce size constraints after update
+                setTimeout(() => {
+                    this.enforceChartSizeConstraints();
+                }, 50);
+            } else {
+                console.log('⚠️ Role chart container not properly sized, skipping update');
+            }
         }
     }
 
@@ -1094,6 +1152,312 @@ class Dashboard {
                 chart.resize();
             }
         });
+    }
+
+    // Method to destroy charts to prevent memory leaks
+    destroyCharts() {
+        Object.values(this.charts).forEach(chart => {
+            if (chart && chart.destroy) {
+                chart.destroy();
+            }
+        });
+        this.charts = {};
+    }
+
+    // Method to reinitialize charts if they get corrupted
+    reinitializeCharts() {
+        console.log('🔄 Reinitializing charts...');
+        this.destroyCharts();
+        setTimeout(() => {
+            this.initializeCharts();
+        }, 100);
+    }
+
+    // Method to force chart size constraints
+    enforceChartSizeConstraints() {
+        const growthCanvas = document.getElementById('mainLineChart');
+        const roleCanvas = document.getElementById('donutChart');
+        const attendanceCanvas = document.getElementById('weeklyBarChart');
+        
+        if (growthCanvas) {
+            // Force canvas size with !important equivalent
+            growthCanvas.style.setProperty('height', '150px', 'important');
+            growthCanvas.style.setProperty('max-height', '150px', 'important');
+            growthCanvas.style.setProperty('min-height', '150px', 'important');
+            growthCanvas.height = 150;
+            growthCanvas.width = growthCanvas.offsetWidth;
+            
+            // Force parent container size
+            const parent = growthCanvas.closest('.chart-card');
+            if (parent) {
+                parent.style.setProperty('height', '200px', 'important');
+                parent.style.setProperty('max-height', '200px', 'important');
+                parent.style.setProperty('min-height', '200px', 'important');
+                parent.style.setProperty('overflow', 'hidden', 'important');
+            }
+        }
+        
+        if (roleCanvas) {
+            // Force canvas size with !important equivalent
+            roleCanvas.style.setProperty('height', '120px', 'important');
+            roleCanvas.style.setProperty('max-height', '120px', 'important');
+            roleCanvas.style.setProperty('min-height', '120px', 'important');
+            roleCanvas.height = 120;
+            roleCanvas.width = roleCanvas.offsetWidth;
+            
+            // Force parent container size
+            const parent = roleCanvas.closest('.donut-card');
+            if (parent) {
+                parent.style.setProperty('height', '180px', 'important');
+                parent.style.setProperty('max-height', '180px', 'important');
+                parent.style.setProperty('min-height', '180px', 'important');
+                parent.style.setProperty('overflow', 'hidden', 'important');
+            }
+        }
+        
+        if (attendanceCanvas) {
+            // Force canvas size with !important equivalent
+            attendanceCanvas.style.setProperty('height', '60px', 'important');
+            attendanceCanvas.style.setProperty('max-height', '60px', 'important');
+            attendanceCanvas.style.setProperty('min-height', '60px', 'important');
+            attendanceCanvas.height = 60;
+            attendanceCanvas.width = attendanceCanvas.offsetWidth;
+            
+            // Force parent container size
+            const parent = attendanceCanvas.closest('.attendance-card');
+            if (parent) {
+                parent.style.setProperty('height', '120px', 'important');
+                parent.style.setProperty('max-height', '120px', 'important');
+                parent.style.setProperty('min-height', '120px', 'important');
+                parent.style.setProperty('overflow', 'hidden', 'important');
+            }
+        }
+        
+        // Additional global container enforcement
+        const chartCard = document.querySelector('.chart-card');
+        const donutCard = document.querySelector('.donut-card');
+        const attendanceCard = document.querySelector('.attendance-card');
+        
+        if (chartCard) {
+            chartCard.style.setProperty('height', '200px', 'important');
+            chartCard.style.setProperty('max-height', '200px', 'important');
+            chartCard.style.setProperty('min-height', '200px', 'important');
+            chartCard.style.setProperty('overflow', 'hidden', 'important');
+        }
+        
+        if (donutCard) {
+            donutCard.style.setProperty('height', '180px', 'important');
+            donutCard.style.setProperty('max-height', '180px', 'important');
+            donutCard.style.setProperty('min-height', '180px', 'important');
+            donutCard.style.setProperty('overflow', 'hidden', 'important');
+        }
+        
+        if (attendanceCard) {
+            attendanceCard.style.setProperty('height', '120px', 'important');
+            attendanceCard.style.setProperty('max-height', '120px', 'important');
+            attendanceCard.style.setProperty('min-height', '120px', 'important');
+            attendanceCard.style.setProperty('overflow', 'hidden', 'important');
+        }
+    }
+
+    // Set up resize observer to prevent chart expansion
+    setupChartSizeObserver() {
+        const growthCanvas = document.getElementById('mainLineChart');
+        const roleCanvas = document.getElementById('donutChart');
+        const attendanceCanvas = document.getElementById('weeklyBarChart');
+        
+        if (growthCanvas) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 150) {
+                        console.log('🚫 Preventing chart expansion - forcing height to 150px');
+                        entry.target.style.setProperty('height', '150px', 'important');
+                        entry.target.style.setProperty('max-height', '150px', 'important');
+                        entry.target.style.setProperty('min-height', '150px', 'important');
+                        entry.target.height = 150;
+                        if (this.charts.growth) {
+                            this.charts.growth.resize();
+                        }
+                        // Force immediate re-enforcement
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(growthCanvas);
+        }
+        
+        if (roleCanvas) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 120) {
+                        console.log('🚫 Preventing donut chart expansion - forcing height to 120px');
+                        entry.target.style.setProperty('height', '120px', 'important');
+                        entry.target.style.setProperty('max-height', '120px', 'important');
+                        entry.target.style.setProperty('min-height', '120px', 'important');
+                        entry.target.height = 120;
+                        if (this.charts.role) {
+                            this.charts.role.resize();
+                        }
+                        // Force immediate re-enforcement
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(roleCanvas);
+        }
+        
+        if (attendanceCanvas) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 60) {
+                        console.log('🚫 Preventing attendance chart expansion - forcing height to 60px');
+                        entry.target.style.setProperty('height', '60px', 'important');
+                        entry.target.style.setProperty('max-height', '60px', 'important');
+                        entry.target.style.setProperty('min-height', '60px', 'important');
+                        entry.target.height = 60;
+                        // Force immediate re-enforcement
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(attendanceCanvas);
+        }
+        
+        // Also observe the chart containers themselves
+        const chartCard = document.querySelector('.chart-card');
+        const donutCard = document.querySelector('.donut-card');
+        const attendanceCard = document.querySelector('.attendance-card');
+        
+        if (chartCard) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 200) {
+                        console.log('🚫 Preventing chart card expansion - forcing height to 200px');
+                        entry.target.style.setProperty('height', '200px', 'important');
+                        entry.target.style.setProperty('max-height', '200px', 'important');
+                        entry.target.style.setProperty('min-height', '200px', 'important');
+                        entry.target.style.setProperty('overflow', 'hidden', 'important');
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(chartCard);
+        }
+        
+        if (donutCard) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 180) {
+                        console.log('🚫 Preventing donut card expansion - forcing height to 180px');
+                        entry.target.style.setProperty('height', '180px', 'important');
+                        entry.target.style.setProperty('max-height', '180px', 'important');
+                        entry.target.style.setProperty('min-height', '180px', 'important');
+                        entry.target.style.setProperty('overflow', 'hidden', 'important');
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(donutCard);
+        }
+        
+        if (attendanceCard) {
+            const observer = new ResizeObserver((entries) => {
+                for (let entry of entries) {
+                    if (entry.contentRect.height > 120) {
+                        console.log('🚫 Preventing attendance card expansion - forcing height to 120px');
+                        entry.target.style.setProperty('height', '120px', 'important');
+                        entry.target.style.setProperty('max-height', '120px', 'important');
+                        entry.target.style.setProperty('min-height', '120px', 'important');
+                        entry.target.style.setProperty('overflow', 'hidden', 'important');
+                        setTimeout(() => this.enforceChartSizeConstraints(), 10);
+                    }
+                }
+            });
+            observer.observe(attendanceCard);
+        }
+    }
+
+    // Set up mutation observer to catch any DOM changes that might affect chart sizes
+    setupMutationObserver() {
+        const dashboardContent = document.querySelector('.dashboard-content');
+        if (dashboardContent) {
+            const observer = new MutationObserver((mutations) => {
+                let shouldEnforce = false;
+                
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                        // Check if any chart-related elements were modified
+                        const target = mutation.target;
+                        if (target && (
+                            target.classList.contains('chart-card') ||
+                            target.classList.contains('donut-card') ||
+                            target.classList.contains('attendance-card') ||
+                            target.id === 'mainLineChart' ||
+                            target.id === 'donutChart' ||
+                            target.id === 'weeklyBarChart'
+                        )) {
+                            shouldEnforce = true;
+                        }
+                        
+                        // Check if any added nodes are chart-related
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.nodeType === Node.ELEMENT_NODE) {
+                                if (node.classList && (
+                                    node.classList.contains('chart-card') ||
+                                    node.classList.contains('donut-card') ||
+                                    node.classList.contains('attendance-card')
+                                )) {
+                                    shouldEnforce = true;
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                if (shouldEnforce) {
+                    console.log('🔍 DOM mutation detected - enforcing chart size constraints');
+                    setTimeout(() => this.enforceChartSizeConstraints(), 50);
+                }
+            });
+            
+            observer.observe(dashboardContent, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+        }
+    }
+
+    // Continuous monitoring to prevent expansion
+    startChartSizeMonitoring() {
+        // Check every 100ms for immediate response
+        setInterval(() => {
+            this.enforceChartSizeConstraints();
+        }, 100);
+        
+        // Also check every 500ms for additional safety
+        setInterval(() => {
+            this.enforceChartSizeConstraints();
+        }, 500);
+        
+        // And every second for comprehensive monitoring
+        setInterval(() => {
+            this.enforceChartSizeConstraints();
+        }, 1000);
+        
+        // Force initial constraints
+        setTimeout(() => {
+            this.enforceChartSizeConstraints();
+        }, 100);
+        
+        setTimeout(() => {
+            this.enforceChartSizeConstraints();
+        }, 500);
+        
+        setTimeout(() => {
+            this.enforceChartSizeConstraints();
+        }, 1000);
     }
 }
 
