@@ -23,9 +23,7 @@ class UsersPage {
         this.setupEventListeners();
         
         try {
-            await this.checkAuth();
-            console.log('✅ Auth check completed');
-            
+            // Load employees directly - server middleware handles auth
             await this.loadEmployees();
             console.log('✅ Employees loaded');
             
@@ -35,7 +33,13 @@ class UsersPage {
             console.log('✅ Users page initialization complete');
         } catch (error) {
             console.error('❌ Users page initialization failed:', error);
-            this.showToast('Failed to load employees', 'error');
+            // If there's an auth error, redirect to login
+            if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Authentication failed')) {
+                console.log('⚠️ Auth error detected, redirecting to login...');
+                window.location.href = '/';
+            } else {
+                this.showToast('Failed to load employees', 'error');
+            }
         }
     }
 
@@ -89,49 +93,35 @@ class UsersPage {
         })();
     }
 
-    async checkAuth() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('🔐 No authentication token found, redirecting to login...');
-                window.location.href = '/';
-                return;
-            }
 
-            const response = await fetch('/api/auth/verify', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Authentication failed');
-            }
-
-            const data = await response.json();
-            this.currentUser = data.user;
-            console.log('✅ Authentication successful:', this.currentUser);
-        } catch (error) {
-            console.error('Auth check failed:', error);
-            console.log('🔐 Redirecting to login due to auth failure...');
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            window.location.href = '/';
-        }
-    }
 
     async loadEmployees() {
         try {
             console.log('📊 Loading employees...');
             const token = localStorage.getItem('token');
             
-            // Require authentication
-            if (!token) {
-                console.log('📊 No authentication token found, redirecting to login...');
-                window.location.href = '/';
-                return;
+            // Get current user from localStorage
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                this.currentUser = JSON.parse(userData);
+                console.log('✅ Current user loaded from localStorage:', this.currentUser.email);
+            } else {
+                console.log('⚠️ No user data in localStorage, attempting to fetch from server...');
+                // Try to get user data from server
+                const response = await fetch('/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    this.currentUser = userData.user;
+                    localStorage.setItem('user', JSON.stringify(userData.user));
+                    console.log('✅ User data fetched from server:', this.currentUser.email);
+                } else {
+                    throw new Error('Failed to get user data');
+                }
             }
             
             const response = await this.retryRequest(async () => {
