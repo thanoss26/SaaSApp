@@ -225,21 +225,7 @@ app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 
 // Clean URL routes (no .html extensions) with cache busting
-app.get('/dashboard', authenticateToken, (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('ETag', `"${Date.now()}"`);
-  res.sendFile(__dirname + '/public/dashboard.html');
-});
-
-app.get('/users', authenticateToken, (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('ETag', `"${Date.now()}"`);
-  res.sendFile(__dirname + '/public/users.html');
-});
+// Note: Authentication will be handled by the frontend JavaScript
 
 app.get('/organizations', (req, res) => {
   console.log('🔍 /organizations route hit');
