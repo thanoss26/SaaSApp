@@ -145,11 +145,21 @@ app.use(express.static('public', {
   etag: false,
   lastModified: false,
   setHeaders: (res, path) => {
-    // Force no-cache for ALL files to prevent old design from loading
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    // Different cache strategies for different file types
+    if (path.endsWith('.css') || path.endsWith('.js')) {
+      // CSS and JS files - cache for 1 hour but with version
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    } else if (path.endsWith('.html') || path === '/') {
+      // HTML files - no cache
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    } else {
+      // Other static files - cache for 1 day
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
     
     // Add version header for debugging
     res.setHeader('X-App-Version', '2.0.0');
