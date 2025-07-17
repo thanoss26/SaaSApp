@@ -91,12 +91,21 @@ class Dashboard {
             }
             this.isLoadingData = true;
             
+            // FORCE CLEAR all cached user data first
+            console.log('🧹 Clearing all cached user data to prevent conflicts...');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userEmail');
+            sessionStorage.clear();
+            
             // Always fetch fresh user data from server to prevent security issues
             console.log('🔍 Fetching fresh user data from server...');
             const userResponse = await fetch('/api/auth/profile', {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
                 }
             });
             
@@ -105,6 +114,8 @@ class Dashboard {
                 this.currentUser = userData.profile;
                 // Update localStorage with fresh data
                 localStorage.setItem('user', JSON.stringify(userData.profile));
+                localStorage.setItem('userEmail', userData.profile.email);
+                
                 console.log('✅ Fresh user data fetched from server:', this.currentUser.email);
                 console.log('👤 User details:', {
                     id: this.currentUser.id,
@@ -112,10 +123,13 @@ class Dashboard {
                     name: `${this.currentUser.first_name} ${this.currentUser.last_name}`,
                     role: this.currentUser.role
                 });
+                
+                // IMMEDIATELY update the UI with fresh user data
+                console.log('🔄 Force updating UI with fresh user data...');
+                this.updateUserInfo();
             } else {
                 console.log('❌ Failed to get user data, redirecting to login');
-                localStorage.clear(); // Clear all cached data
-                window.location.href = '/login';
+                this.logout();
                 return;
             }
             
@@ -457,23 +471,61 @@ class Dashboard {
     }
 
     updateUserInfo() {
-        if (!this.currentUser) return;
+        console.log('🔄 updateUserInfo called');
+        console.log('👤 Current user data:', this.currentUser);
+        
+        if (!this.currentUser) {
+            console.log('❌ No currentUser data available');
+            return;
+        }
 
-        const userNameEl = document.querySelector('.user-name');
-        const userRoleEl = document.querySelector('.user-role');
-        const userAvatarEl = document.querySelector('.user-avatar');
+        // Find ALL elements with user classes (multiple locations possible)
+        const userNameEls = document.querySelectorAll('.user-name');
+        const userRoleEls = document.querySelectorAll('.user-role');
+        const userAvatarEls = document.querySelectorAll('.user-avatar');
+        const userEmailEls = document.querySelectorAll('.user-email');
 
-        if (userNameEl) {
-            userNameEl.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
-        }
-        if (userRoleEl) {
-            userRoleEl.textContent = this.formatRole(this.currentUser.role);
-        }
-        if (userAvatarEl) {
-            // Use a placeholder avatar based on user name
-            const initials = `${this.currentUser.first_name.charAt(0)}${this.currentUser.last_name.charAt(0)}`.toUpperCase();
-            userAvatarEl.src = `https://ui-avatars.com/api/?name=${initials}&background=4e8cff&color=fff&size=48`;
-        }
+        console.log('🔍 DOM elements found:', {
+            userNameEls: userNameEls.length,
+            userRoleEls: userRoleEls.length,
+            userAvatarEls: userAvatarEls.length,
+            userEmailEls: userEmailEls.length
+        });
+
+        // Update ALL user name elements
+        const newName = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
+        userNameEls.forEach((el, index) => {
+            console.log(`📝 Updating user name element ${index + 1} to:`, newName);
+            el.textContent = newName;
+        });
+
+        // Update ALL user role elements
+        const newRole = this.formatRole(this.currentUser.role);
+        userRoleEls.forEach((el, index) => {
+            console.log(`🎭 Updating user role element ${index + 1} to:`, newRole);
+            el.textContent = newRole;
+        });
+
+        // Update ALL user email elements
+        const userEmail = this.currentUser.email;
+        userEmailEls.forEach((el, index) => {
+            console.log(`📧 Updating user email element ${index + 1} to:`, userEmail);
+            el.textContent = userEmail;
+        });
+
+        // Update ALL user avatar elements
+        const initials = `${this.currentUser.first_name.charAt(0)}${this.currentUser.last_name.charAt(0)}`.toUpperCase();
+        const avatarUrl = `https://ui-avatars.com/api/?name=${initials}&background=4e8cff&color=fff&size=48`;
+        userAvatarEls.forEach((el, index) => {
+            console.log(`🖼️ Updating user avatar element ${index + 1} to:`, avatarUrl);
+            if (el.tagName === 'IMG') {
+                el.src = avatarUrl;
+            } else {
+                el.textContent = initials;
+            }
+        });
+        
+        console.log('✅ User info update completed');
     }
 
     formatRole(role) {
