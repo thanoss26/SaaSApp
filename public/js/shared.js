@@ -205,8 +205,12 @@ class EmployeeHub {
 
         // Login form submission
         const loginForm = document.getElementById('loginFormElement');
+        console.log('🔍 Looking for login form:', loginForm);
         if (loginForm) {
+            console.log('✅ Login form found, attaching event listener');
             loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        } else {
+            console.log('❌ Login form not found');
         }
 
         // Signup form submission
@@ -217,6 +221,29 @@ class EmployeeHub {
 
         // Navigation active state
         this.setupNavigationActiveState();
+        
+        // Fallback: Try to attach event listeners again after a short delay
+        setTimeout(() => {
+            this.attachFormEventListeners();
+        }, 100);
+    }
+    
+    attachFormEventListeners() {
+        // Login form submission
+        const loginForm = document.getElementById('loginFormElement');
+        console.log('🔍 Fallback: Looking for login form:', loginForm);
+        if (loginForm && !loginForm.hasAttribute('data-listener-attached')) {
+            console.log('✅ Fallback: Login form found, attaching event listener');
+            loginForm.setAttribute('data-listener-attached', 'true');
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+        
+        // Signup form submission
+        const signupForm = document.getElementById('signupFormElement');
+        if (signupForm && !signupForm.hasAttribute('data-listener-attached')) {
+            signupForm.setAttribute('data-listener-attached', 'true');
+            signupForm.addEventListener('submit', (e) => this.handleSignup(e));
+        }
     }
 
     setupNavigationActiveState() {
@@ -333,9 +360,12 @@ class EmployeeHub {
 
     async handleLogin(e) {
         e.preventDefault();
+        console.log('🔍 Login form submitted');
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
+        
+        console.log('🔍 Login attempt for email:', email);
         
         try {
             const response = await fetch('/api/auth/login', {
@@ -346,9 +376,12 @@ class EmployeeHub {
                 body: JSON.stringify({ email, password })
             });
 
+            console.log('🔍 Login response status:', response.status);
             const data = await response.json();
+            console.log('🔍 Login response data:', data);
 
             if (response.ok) {
+                console.log('✅ Login successful, storing token');
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
@@ -359,10 +392,11 @@ class EmployeeHub {
                     window.location.replace('/dashboard');
                 }, 1000);
             } else {
+                console.log('❌ Login failed:', data.message);
                 this.showToast(data.message || 'Login failed', 'error');
             }
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('❌ Login error:', error);
             this.showToast('Network error. Please try again.', 'error');
         }
     }
