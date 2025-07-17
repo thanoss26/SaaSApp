@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
-            const inviteCode = document.getElementById('inviteCode').value;
             const signupBtn = document.querySelector('.signup-btn');
             
             // Clear previous errors
@@ -33,17 +32,16 @@ document.addEventListener('DOMContentLoaded', function() {
             signupBtn.disabled = true;
             
             try {
-                const response = await fetch('/api/auth/signup', {
+                const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ 
-                        firstName, 
-                        lastName, 
+                        first_name: firstName, 
+                        last_name: lastName, 
                         email, 
-                        password, 
-                        inviteCode 
+                        password
                     })
                 });
                 
