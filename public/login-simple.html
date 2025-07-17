@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Login - Chronos HR</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 400px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="email"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="email"]:focus, input[type="password"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 12px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .login-btn:hover {
+            background: #5a6fd8;
+        }
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .message {
+            padding: 10px;
+            margin: 15px 0;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        .success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        .loading {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>🕐 Chronos HR Login</h1>
+        
+        <div id="message" style="display: none;"></div>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="login-btn" id="loginBtn">
+                Login
+            </button>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center; color: #666;">
+            <small>Simple Login - No Complex JavaScript</small>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 Simple login page loaded');
+        
+        // Prevent any automatic redirects
+        console.log('🔒 Preventing automatic redirects');
+        
+        const form = document.getElementById('loginForm');
+        const messageDiv = document.getElementById('message');
+        const loginBtn = document.getElementById('loginBtn');
+        
+        function showMessage(text, type) {
+            messageDiv.innerHTML = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+        }
+        
+        function hideMessage() {
+            messageDiv.style.display = 'none';
+        }
+        
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('🔐 Login form submitted');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            // Disable button and show loading
+            loginBtn.disabled = true;
+            loginBtn.textContent = 'Logging in...';
+            showMessage('Logging in...', 'loading');
+            
+            try {
+                console.log('📡 Sending login request...');
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                console.log('📡 Login response status:', response.status);
+                const data = await response.json();
+                console.log('📡 Login response data:', data);
+                
+                if (response.ok && data.token) {
+                    console.log('✅ Login successful, storing token');
+                    
+                    // Store auth data
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('userEmail', data.user.email);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    showMessage('Login successful! Redirecting...', 'success');
+                    
+                    // Wait a moment then redirect
+                    setTimeout(() => {
+                        console.log('🔄 Redirecting to dashboard...');
+                        window.location.href = '/dashboard';
+                    }, 1500);
+                    
+                } else {
+                    console.log('❌ Login failed:', data.error);
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+                
+            } catch (error) {
+                console.error('❌ Login error:', error);
+                showMessage('Login failed: ' + error.message, 'error');
+            } finally {
+                // Re-enable button
+                loginBtn.disabled = false;
+                loginBtn.textContent = 'Login';
+            }
+        });
+        
+        // Auto-fill for testing
+        document.getElementById('email').value = 'thanosvako23@gmail.com';
+        console.log('🧪 Auto-filled email for testing');
+    </script>
+</body>
+</html> 

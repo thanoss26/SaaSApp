@@ -36,7 +36,7 @@ class OrganizationsManager {
         this.setGreetingAndDate();
         await this.loadOrganizations();
         this.setupEventListeners();
-        this.updateStats();
+        await this.updateStats();
         this.setupTaskManagement();
     }
     
@@ -265,34 +265,175 @@ class OrganizationsManager {
         }
     }
 
-    updateStats() {
-        // Update metric cards with real or demo data
-        const totalEmployees = this.organizations.reduce((sum, org) => sum + (org.member_count || 0), 0);
-        const totalRevenue = this.organizations.reduce((sum, org) => sum + (org.revenue || 0), 0);
-        const avgAttendanceRate = this.organizations.reduce((sum, org) => sum + (org.attendance_rate || 0), 0) / Math.max(this.organizations.length, 1);
+    async updateStats() {
+        try {
+            console.log('📊 Fetching organization dashboard metrics...');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                console.log('❌ No token available for metrics request');
+                return;
+            }
 
-        // Update Total Employees card
-        const employeesValue = document.querySelector('.metric-card:nth-child(1) .metric-value');
-        if (employeesValue) employeesValue.textContent = totalEmployees;
+            const response = await fetch('/api/organizations/dashboard-metrics', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
 
-        // Update Job Applicants card (demo data)
-        const applicantsValue = document.querySelector('.metric-card:nth-child(2) .metric-value');
-        if (applicantsValue) applicantsValue.textContent = '983';
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ Dashboard metrics loaded:', data);
+                
+                // Show admin elements
+                this.showAdminElements();
+                
+                if (data.metrics) {
+                    // Update Total Employees card
+                    this.updateMetricCard(1, {
+                        value: data.metrics.totalEmployees.value,
+                        change: data.metrics.totalEmployees.change,
+                        subtitle: data.metrics.totalEmployees.label,
+                        isPositive: data.metrics.totalEmployees.trend === 'up'
+                    });
 
-        // Update Total Revenue card
-        const revenueValue = document.querySelector('.metric-card:nth-child(4) .metric-value');
-        if (revenueValue) revenueValue.textContent = `$${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                    // Update Job Applicants card
+                    this.updateMetricCard(2, {
+                        value: data.metrics.jobApplicants.value,
+                        change: data.metrics.jobApplicants.change,
+                        subtitle: data.metrics.jobApplicants.label,
+                        isPositive: data.metrics.jobApplicants.trend === 'up'
+                    });
 
-        // Update Attendance Rate card
-        const attendanceValue = document.querySelector('.metric-card:nth-child(5) .metric-value');
-        if (attendanceValue) attendanceValue.textContent = `${Math.round(avgAttendanceRate)}%`;
+                    // Update Attendance Report card
+                    this.updateMetricCard(3, {
+                        value: data.metrics.attendanceReport.value,
+                        change: data.metrics.attendanceReport.change,
+                        subtitle: data.metrics.attendanceReport.label,
+                        isPositive: data.metrics.attendanceReport.trend === 'up'
+                    });
 
-        // Update attendance chart numbers
-        const totalEmployValue = document.querySelector('.attendance-item:nth-child(1) .attendance-value');
-        const onTimeValue = document.querySelector('.attendance-item:nth-child(2) .attendance-value');
+                    // Update Total Revenue card
+                    this.updateMetricCard(4, {
+                        value: data.metrics.totalRevenue.value,
+                        change: data.metrics.totalRevenue.change,
+                        subtitle: data.metrics.totalRevenue.label,
+                        isPositive: data.metrics.totalRevenue.trend === 'up'
+                    });
+
+                    // Update Tasks card
+                    this.updateMetricCard(5, {
+                        value: data.metrics.tasks.value,
+                        change: data.metrics.tasks.change,
+                        subtitle: data.metrics.tasks.label,
+                        isPositive: data.metrics.tasks.trend === 'up'
+                    });
+                }
+
+            } else if (response.status === 403) {
+                console.log('❌ Admin access required for dashboard metrics');
+                this.hideAdminElements();
+                this.showToast('Admin access required to view dashboard metrics', 'error');
+            } else if (response.status === 401) {
+                console.log('❌ Token expired for metrics request');
+                localStorage.removeItem('token');
+                window.location.href = '/login';
+            } else {
+                console.error('❌ Failed to load dashboard metrics:', response.status);
+                this.hideAdminElements();
+                this.showLoadingState();
+            }
+
+        } catch (error) {
+            console.error('❌ Error fetching dashboard metrics:', error);
+            this.hideAdminElements();
+            this.showLoadingState();
+        }
+    }
+
+    updateMetricCard(cardIndex, { value, change, subtitle, isPositive }) {
+        // Update metric value
+        const valueElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-value`);
+        if (valueElement) {
+            valueElement.textContent = value;
+        }
+
+        // Update change indicator
+        const changeElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-change`);
+        if (changeElement) {
+            changeElement.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
+            const icon = changeElement.querySelector('i');
+            const span = changeElement.querySelector('span');
+            
+            if (icon) {
+                icon.className = `fas fa-arrow-${isPositive ? 'up' : 'down'}`;
+            }
+            if (span) {
+                span.textContent = `${change}%`;
+            }
+        }
+
+        // Update subtitle
+        const subtitleElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-subtitle`);
+        if (subtitleElement) {
+            subtitleElement.textContent = subtitle;
+        }
+    }
+
+    showLoadingState() {
+        const metricValues = document.querySelectorAll('.metric-value');
+        metricValues.forEach(element => {
+            if (element) element.textContent = 'Loading...';
+        });
+    }
+
+    showAdminElements() {
+        // Show admin-only dashboard elements
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(element => {
+            element.style.display = 'block';
+        });
+        console.log('👁️ Admin elements shown');
+    }
+
+    hideAdminElements() {
+        // Hide admin-only dashboard elements
+        const adminElements = document.querySelectorAll('.admin-only');
+        adminElements.forEach(element => {
+            element.style.display = 'none';
+        });
         
-        if (totalEmployValue) totalEmployValue.textContent = totalEmployees;
-        if (onTimeValue) onTimeValue.textContent = Math.round(totalEmployees * (avgAttendanceRate / 100));
+        // Show non-admin message
+        const nonAdminMessage = document.querySelector('.non-admin-message');
+        if (nonAdminMessage) {
+            nonAdminMessage.style.display = 'block';
+        }
+        console.log('🚫 Admin elements hidden');
+    }
+
+    showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background: ${type === 'error' ? '#dc3545' : '#28a745'};
+            color: white;
+            border-radius: 4px;
+            z-index: 1000;
+            font-weight: 500;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
     }
 
     setupTaskManagement() {

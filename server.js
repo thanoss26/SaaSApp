@@ -36,8 +36,8 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'],
-      imgSrc: ["'self'", 'data:', 'https://randomuser.me', 'https://api.dicebear.com'],
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', "'sha256-9wF3mPmFam0b5SxsZhkDUfTOUicPsMdY547xLFPUNMo='"],
+      imgSrc: ["'self'", 'data:', 'https://randomuser.me', 'https://api.dicebear.com', 'https://ui-avatars.com'],
       styleSrc: ["'self'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', "'unsafe-inline'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
       connectSrc: ["'self'"]
@@ -795,7 +795,46 @@ app.use((req, res, next) => {
 // Redirect root to login page
 app.get('/', (req, res) => {
   console.log('🔍 Root path (/) route hit - redirecting to login');
+  console.log('🔍 Request method:', req.method);
+  console.log('🔍 Request path:', req.path);
+  console.log('🔍 Request URL:', req.url);
   res.redirect('/login');
+});
+
+// Serve test page (no JavaScript for debugging)
+app.get('/test-simple', (req, res) => {
+  console.log('🧪 Test simple route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/test-simple.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ test-simple.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ test-simple.html file not found');
+    res.status(404).send('Test page not found');
+  }
+});
+
+// Serve simple login page (minimal JavaScript for debugging)
+app.get('/login-simple', (req, res) => {
+  console.log('🔐 Simple login route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/login-simple.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ login-simple.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ login-simple.html file not found');
+    res.status(404).send('Simple login page not found');
+  }
 });
 
 // Serve dashboard page (main app with sidebar)

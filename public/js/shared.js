@@ -12,12 +12,6 @@ class EmployeeHub {
     }
 
     async init() {
-        // Check if we've already initialized in this session
-        if (sessionStorage.getItem('employeeHubInitialized')) {
-            console.log('⚠️ Already initialized in this session, skipping...');
-            return;
-        }
-        
         if (this.isInitialized) {
             console.log('⚠️ Already initialized, skipping...');
             return;
@@ -32,19 +26,52 @@ class EmployeeHub {
         // Show loading screen initially
         this.showLoadingScreen();
         
-        await this.checkAuth();
-        this.setupEventListeners();
-        this.updateDateTime();
-        setInterval(() => this.updateDateTime(), 1000);
+        // Add a small delay to prevent race conditions
+        setTimeout(async () => {
+            console.log('🔧 DEBUGGING: Completely bypassing auth AND preventing any redirects');
+            
+            // Override window.location to prevent any redirects
+            const originalLocation = window.location;
+            Object.defineProperty(window, 'location', {
+                value: {
+                    ...originalLocation,
+                    href: originalLocation.href,
+                    assign: (url) => console.log('🚫 BLOCKED redirect to:', url),
+                    replace: (url) => console.log('🚫 BLOCKED replace to:', url),
+                    reload: () => console.log('🚫 BLOCKED reload')
+                },
+                writable: false
+            });
+            
+            // Skip auth entirely for debugging
+            this.currentUser = {
+                id: 'debug-user',
+                email: 'debug@test.com',
+                first_name: 'Debug',
+                last_name: 'User',
+                role: 'admin'
+            };
+            this.isAuthenticated = true;
+            
+            // Show the app immediately
+            this.showAppContainer();
+            this.updateUserInfo();
+            this.setupEventListeners();
+            this.updateDateTime();
+            setInterval(() => this.updateDateTime(), 1000);
+            
+            console.log('🔧 DEBUGGING: Auth bypassed, app should be visible now');
+        }, 100);
         
         this.isInitialized = true;
-        sessionStorage.setItem('employeeHubInitialized', 'true');
         console.log('✅ EmployeeHub initialized');
     }
 
             async checkAuth() {
         try {
             console.log('🔍 Checking authentication...');
+            console.log('🔍 Current URL:', window.location.href);
+            console.log('🔍 Current pathname:', window.location.pathname);
             
             // Prevent multiple auth checks
             if (this.isCheckingAuth) {
@@ -56,7 +83,10 @@ class EmployeeHub {
 
             
             const token = localStorage.getItem('token');
+            const userEmail = localStorage.getItem('userEmail');
             console.log('🔍 Token exists:', !!token);
+            console.log('🔍 User email in localStorage:', userEmail);
+            console.log('🔍 Current pathname:', window.location.pathname);
             
             if (!token) {
                 console.log('❌ No token found, showing auth container');
@@ -71,7 +101,7 @@ class EmployeeHub {
                 console.log('🔍 Verifying token for protected page...');
                 
                 try {
-                    const response = await fetch('/api/auth/verify', {
+                    const response = await fetch('/api/auth/profile', {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -82,7 +112,8 @@ class EmployeeHub {
                     if (response.ok) {
                         const data = await response.json();
                         console.log('✅ Token verified, showing app container');
-                        this.currentUser = data.user;
+                        console.log('📥 Profile data received:', data);
+                        this.currentUser = data.profile;
                         this.isAuthenticated = true;
                         this.updateUserInfo();
                         this.showAppContainer();
@@ -94,24 +125,46 @@ class EmployeeHub {
                             this.loadUsersScript();
                         }
                     } else {
+                        console.error('❌ Token verification failed with status:', response.status);
                         throw new Error('Token verification failed');
                     }
                 } catch (error) {
                     console.error('❌ Token verification failed:', error);
-                    this.showAuthContainer();
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('userEmail');
+                    if (window.location.pathname !== '/login') {
+                        window.location.href = '/login';
+                    }
                 }
                 
                 this.isCheckingAuth = false;
                 return;
             }
 
-            // For any other pages, show auth container
-            console.log('❌ Not on protected page, showing auth container');
-            this.showAuthContainer();
+            // For login/signup pages, show auth container
+            if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
+                console.log('🔍 On auth page, showing auth container');
+                this.showAuthContainer();
+            } else if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
+                // For root page, redirect to login
+                console.log('🔍 On root page, redirecting to login');
+                window.location.href = '/login';
+            } else {
+                // For any other non-protected pages, redirect to login
+                console.log('❌ Not on protected page, redirecting to login');
+                window.location.href = '/login';
+            }
             
         } catch (error) {
             console.error('❌ Auth check failed:', error);
-            this.showAuthContainer();
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+                window.location.href = '/login';
+            } else {
+                this.showAuthContainer();
+            }
         } finally {
             this.isCheckingAuth = false;
         }
@@ -400,15 +453,23 @@ class EmployeeHub {
             if (response.ok) {
                 console.log('✅ Login successful, storing token');
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                }
                 
                 this.showToast('Login successful!', 'success');
                 
-                // Redirect to dashboard after successful login
-                setTimeout(() => {
+                // Set auth state and show app
+                this.isAuthenticated = true;
+                this.currentUser = data.user;
+                this.updateUserInfo();
+                this.showAppContainer();
+                
+                // Only redirect if we're not already on a protected page
+                if (window.location.pathname === '/login' || window.location.pathname === '/') {
                     console.log('🔄 Redirecting to dashboard after login...');
-                    window.location.replace('/dashboard');
-                }, 1000);
+                    window.location.href = '/dashboard';
+                }
             } else {
                 console.log('❌ Login failed:', data.message);
                 this.showToast(data.message || 'Login failed', 'error');

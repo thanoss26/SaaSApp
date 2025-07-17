@@ -45,7 +45,6 @@ if (loginForm) {
                 
                 // ✅ Redirect to dashboard
                 window.location.href = '/dashboard';
-                setTimeout(() => { window.location.replace('/dashboard'); }, 1000); // Fallback
             } else {
                 throw new Error(data.message || 'Login failed');
             }
