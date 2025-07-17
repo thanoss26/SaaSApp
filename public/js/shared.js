@@ -4,10 +4,26 @@ class EmployeeHub {
         this.currentUser = null;
         this.isAuthenticated = false;
         this.isRedirecting = false;
+        this.isInitialized = false;
+        this.isCheckingAuth = false;
         this.init();
     }
 
     async init() {
+        // Check if we've already initialized in this session
+        if (sessionStorage.getItem('employeeHubInitialized')) {
+            console.log('⚠️ Already initialized in this session, skipping...');
+            return;
+        }
+        
+        if (this.isInitialized) {
+            console.log('⚠️ Already initialized, skipping...');
+            return;
+        }
+        
+        console.log('🚀 Initializing EmployeeHub...');
+        console.log('🔍 Current pathname:', window.location.pathname);
+        
         // Show loading screen initially
         this.showLoadingScreen();
         
@@ -15,16 +31,46 @@ class EmployeeHub {
         this.setupEventListeners();
         this.updateDateTime();
         setInterval(() => this.updateDateTime(), 1000);
+        
+        this.isInitialized = true;
+        sessionStorage.setItem('employeeHubInitialized', 'true');
+        console.log('✅ EmployeeHub initialized');
     }
 
             async checkAuth() {
         try {
+            console.log('🔍 Checking authentication...');
+            
+            // Prevent multiple auth checks
+            if (this.isCheckingAuth) {
+                console.log('⚠️ Auth check already in progress, skipping...');
+                return;
+            }
+            this.isCheckingAuth = true;
+            
             const token = localStorage.getItem('token');
+            console.log('🔍 Token exists:', !!token);
+            
             if (!token) {
+                console.log('❌ No token found, showing auth container');
                 this.showAuthContainer();
+                this.isCheckingAuth = false;
+                return;
+            }
+            
+            // If we're on a protected page and have a token, don't redirect
+            const protectedPages = ['/dashboard', '/users', '/organizations', '/payroll', '/analytics', '/settings'];
+            if (protectedPages.includes(window.location.pathname) && token) {
+                console.log('✅ On protected page with token, showing app container');
+                this.currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                this.isAuthenticated = true;
+                this.updateUserInfo();
+                this.showAppContainer();
+                this.isCheckingAuth = false;
                 return;
             }
 
+            console.log('🔍 Verifying token with server...');
             const response = await fetch('/api/auth/verify', {
                 method: 'GET',
                 headers: {
@@ -33,26 +79,36 @@ class EmployeeHub {
                 }
             });
 
+            console.log('🔍 Auth verification response status:', response.status);
+
             if (!response.ok) {
                 throw new Error('Authentication failed');
             }
 
             const data = await response.json();
+            console.log('✅ Authentication successful:', data.user?.email);
+            
             this.currentUser = data.user;
             this.isAuthenticated = true;
             
             // If we're on the main page and authenticated, redirect to dashboard
             if (window.location.pathname === '/' && !this.isRedirecting) {
+                console.log('🔄 Redirecting to dashboard from main page');
                 this.isRedirecting = true;
-                window.location.href = '/dashboard';
+                
+                // Use replace instead of href to prevent back button issues
+                window.location.replace('/dashboard');
                 return;
             }
             
+            console.log('✅ Showing app container');
             this.updateUserInfo();
             this.showAppContainer();
         } catch (error) {
-            console.error('Auth check failed:', error);
+            console.error('❌ Auth check failed:', error);
             this.showAuthContainer();
+        } finally {
+            this.isCheckingAuth = false;
         }
     }
 
@@ -220,6 +276,7 @@ class EmployeeHub {
     }
 
     showAuthContainer() {
+        console.log('🔍 Showing auth container...');
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
@@ -235,9 +292,11 @@ class EmployeeHub {
         if (appContainer) {
             appContainer.style.display = 'none';
         }
+        console.log('✅ Auth container shown');
     }
 
     showAppContainer() {
+        console.log('🔍 Showing app container...');
         const loadingScreen = document.getElementById('loadingScreen');
         const authContainer = document.getElementById('authContainer');
         const appContainer = document.getElementById('appContainer');
@@ -253,6 +312,7 @@ class EmployeeHub {
         if (appContainer) {
             appContainer.style.display = 'flex';
         }
+        console.log('✅ App container shown');
     }
 
     showLoginForm() {
@@ -296,7 +356,7 @@ class EmployeeHub {
                 
                 // Redirect to dashboard after successful login
                 setTimeout(() => {
-                    window.location.href = '/dashboard';
+                    window.location.replace('/dashboard');
                 }, 1000);
             } else {
                 this.showToast(data.message || 'Login failed', 'error');
@@ -363,6 +423,7 @@ class EmployeeHub {
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('userProfile');
+            sessionStorage.removeItem('employeeHubInitialized');
             window.location.href = '/';
         }
     }
