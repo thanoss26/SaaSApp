@@ -7,6 +7,9 @@ class EmployeeHub {
     }
 
     async init() {
+        // Show loading screen initially
+        this.showLoadingScreen();
+        
         await this.checkAuth();
         this.setupEventListeners();
         this.updateDateTime();
@@ -186,6 +189,14 @@ class EmployeeHub {
                 minute: '2-digit',
                 hour12: true
             });
+        }
+    }
+
+    showLoadingScreen() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        if (loadingScreen) {
+            loadingScreen.style.display = 'flex';
+            loadingScreen.style.opacity = '1';
         }
     }
 
