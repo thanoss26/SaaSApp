@@ -276,6 +276,30 @@ body {
     text-decoration: underline;
 }
 
+.auth-message {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.auth-message p {
+    color: #718096;
+    font-size: 16px;
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.auth-message a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.auth-message a:hover {
+    color: #5a67d8;
+    text-decoration: underline;
+}
+
 .join-info {
     background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
     border: 1px solid #e2e8f0;

@@ -3,530 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronos HR</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>Chronos HR - Employee Management System</title>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <h2>Loading...</h2>
+            <h2>Chronos HR</h2>
+            <p>Loading your workspace...</p>
         </div>
     </div>
 
     <!-- Auth Container -->
-    <div id="authContainer" class="auth-container">
-        <div class="auth-background">
-            <div class="auth-pattern"></div>
-        </div>
-        
+    <div id="authContainer" class="auth-container" style="display: none;">
+        <div class="auth-background"></div>
+        <div class="auth-pattern"></div>
         <div class="auth-card">
             <div class="auth-logo">
                 <div class="logo-icon">
-                    <i class="fas fa-users"></i>
+                    <i class="fas fa-clock"></i>
                 </div>
                 <h1>Chronos HR</h1>
-                <p>Modern Employee Management</p>
+                <p>Employee Management System</p>
             </div>
             
             <!-- Login Form -->
-            <form id="loginForm" class="auth-form">
+            <div id="loginForm" class="auth-form">
                 <div class="form-header">
                     <h2>Welcome Back</h2>
-                    <p>Sign in to your account to continue</p>
+                    <p>Sign in to your account</p>
                 </div>
                 
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="loginEmail" name="email" required placeholder="Enter your email">
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="loginPassword" placeholder="Enter your password" required>
-                        <button type="button" class="password-toggle">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="loginPassword" name="password" required placeholder="Enter your password">
+                        </div>
                     </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+                </form>
+                
+                <div class="auth-switch">
+                    <p>Don't have an account? <a href="#" id="showSignup">Sign up</a></p>
                 </div>
-                
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Sign In
-                </button>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <p class="auth-switch">
-                    Don't have an account? <a href="#" id="showRegister">Create one now</a>
-                </p>
-            </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" class="auth-form hidden">
+            </div>
+            
+            <!-- Signup Form -->
+            <div id="signupForm" class="auth-form" style="display: none;">
                 <div class="form-header">
                     <h2>Create Account</h2>
-                    <p>Join Chronos HR and get started</p>
+                    <p>Join Chronos HR today</p>
                 </div>
                 
-                <div class="form-row">
-                    <div class="form-group">
-                        <div class="input-wrapper">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="registerFirstName" placeholder="First name" required>
+                <form id="signupFormElement">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="signupFirstName" name="firstName" required placeholder="First name">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="input-wrapper">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="signupLastName" name="lastName" required placeholder="Last name">
+                            </div>
                         </div>
                     </div>
+                    
                     <div class="form-group">
                         <div class="input-wrapper">
-                            <i class="fas fa-user input-icon"></i>
-                            <input type="text" id="registerLastName" placeholder="Last name" required>
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="signupEmail" name="email" required placeholder="Enter your email">
                         </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="registerEmail" placeholder="Enter your email" required>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="signupPassword" name="password" required placeholder="Create a password">
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="registerPassword" placeholder="Create a password" required>
-                        <button type="button" class="password-toggle">
-                            <i class="fas fa-eye"></i>
-                        </button>
+                    
+                    <div class="form-group">
+                        <div class="input-wrapper">
+                            <i class="fas fa-key input-icon"></i>
+                            <input type="text" id="signupInviteCode" name="inviteCode" required placeholder="Enter invite code">
+                        </div>
                     </div>
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-user-plus"></i>
-                    Create Account
-                </button>
-                
-                <div class="auth-divider">
-                    <span>or</span>
-                </div>
-                
-                <p class="auth-switch">
-                    Already have an account? <a href="#" id="showLogin">Sign in here</a>
-                </p>
-            </form>
-
-            <!-- Join Organization Form -->
-            <form id="joinOrgForm" class="auth-form hidden">
-                <div class="form-header">
-                    <h2>Join Organization</h2>
-                    <p>Enter your organization's join code</p>
-                </div>
-                
-                <div class="join-info">
-                    <i class="fas fa-info-circle"></i>
-                    <p>Ask your administrator for the 6-digit join code to access your organization.</p>
-                </div>
-                
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <i class="fas fa-key input-icon"></i>
-                        <input type="text" id="joinCode" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required>
+                    
+                    <div class="join-info">
+                        <i class="fas fa-info-circle"></i>
+                        <p>You'll need an invite code from your organization to create an account.</p>
                     </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-full">Create Account</button>
+                </form>
+                
+                <div class="auth-switch">
+                    <p>Already have an account? <a href="#" id="showLogin">Sign in</a></p>
                 </div>
-                
-                <button type="submit" class="btn btn-primary btn-full">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Join Organization
-                </button>
-                
-                <p class="auth-switch">
-                    <a href="#" id="showLogin">Back to sign in</a>
-                </p>
-            </form>
+            </div>
         </div>
     </div>
 
-    <!-- Main Application -->
-    <div id="appContainer" class="app-container hidden">
+    <!-- Main App Container -->
+    <div id="appContainer" class="app-container" style="display: none;">
         <!-- Navigation -->
         <nav class="navbar">
             <div class="nav-brand">
-                <i class="fas fa-users"></i>
+                <div class="brand-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
                 <span>Chronos HR</span>
             </div>
+            
             <div class="nav-menu">
-                <button class="nav-item active" data-view="dashboard">
+                <a href="/dashboard" class="nav-item">
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
-                </button>
-                <button class="nav-item" data-view="employees" id="employeesNav">
+                </a>
+                <a href="/users" class="nav-item" id="employeesNav">
                     <i class="fas fa-users"></i>
                     <span>Employees</span>
-                </button>
-                <button class="nav-item" data-view="organization" id="orgNav">
+                </a>
+                <a href="/organizations" class="nav-item" id="orgNav">
                     <i class="fas fa-building"></i>
-                    <span>Organization</span>
-                </button>
-                <button class="nav-item" data-view="profile">
-                    <i class="fas fa-user"></i>
-                    <span>Profile</span>
-                </button>
+                    <span>Organizations</span>
+                </a>
+                <a href="/payroll" class="nav-item">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Payroll</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/settings" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
             </div>
+            
             <div class="nav-user">
                 <div class="user-info">
-                    <span id="userName">User</span>
-                    <small id="userRole">Role</small>
+                    <span id="userFirstName">Loading...</span>
+                    <small id="userRole">Loading...</small>
                 </div>
-                <button id="logoutBtn" class="btn btn-outline">
+                <button id="logoutBtn" class="btn btn-outline btn-sm">
                     <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
             </div>
         </nav>
 
         <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard View -->
-            <div id="dashboardView" class="view active">
-                <div class="dashboard-header">
-                    <div class="welcome-section">
-                        <h1>Welcome back, <span id="userFirstName">User</span>! 👋</h1>
-                        <p>Here's what's happening in your organization today</p>
+        <div class="main-content">
+            <div class="view active" id="dashboardView">
+                <div class="view-header">
+                    <h1>Dashboard</h1>
+                    <p>Welcome back! Here's what's happening with your organization.</p>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="totalEmployees">0</h3>
+                            <p>Total Employees</p>
+                        </div>
                     </div>
-                    <div class="date-display">
-                        <div class="current-date" id="currentDate"></div>
-                        <div class="current-time" id="currentTime"></div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="activeEmployees">0</h3>
+                            <p>Active Employees</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="departments">0</h3>
+                            <p>Departments</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-content">
+                            <h3 id="attendanceRate">0%</h3>
+                            <p>Attendance Rate</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon">
-                                <i class="fas fa-users"></i>
-                            </div>
-                            <div class="stat-trend positive">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>+12%</span>
-                            </div>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="totalEmployees">-</h3>
-                            <p>Total Employees</p>
-                        </div>
-                        <div class="stat-chart">
-                            <canvas id="employeesChart" width="100" height="30"></canvas>
+                <div class="dashboard-grid">
+                    <div class="dashboard-card">
+                        <h3>Recent Activity</h3>
+                        <div class="activity-list" id="activityList">
+                            <div class="loading">Loading activity...</div>
                         </div>
                     </div>
                     
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon active">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                            <div class="stat-trend positive">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>+8%</span>
-                            </div>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="activeEmployees">-</h3>
-                            <p>Active Employees</p>
-                        </div>
-                        <div class="stat-chart">
-                            <canvas id="activeChart" width="100" height="30"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon admin">
-                                <i class="fas fa-user-shield"></i>
-                            </div>
-                            <div class="stat-trend neutral">
-                                <i class="fas fa-minus"></i>
-                                <span>0%</span>
-                            </div>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="adminCount">-</h3>
-                            <p>Administrators</p>
-                        </div>
-                        <div class="stat-chart">
-                            <canvas id="adminChart" width="100" height="30"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon recent">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="stat-trend positive">
-                                <i class="fas fa-arrow-up"></i>
-                                <span>+15%</span>
-                            </div>
-                        </div>
-                        <div class="stat-content">
-                            <h3 id="recentSignups">-</h3>
-                            <p>Recent Signups</p>
-                        </div>
-                        <div class="stat-chart">
-                            <canvas id="signupsChart" width="100" height="30"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="charts-section">
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Employee Growth</h3>
-                            <div class="chart-controls">
-                                <button class="chart-period active" data-period="7d">7D</button>
-                                <button class="chart-period" data-period="30d">30D</button>
-                                <button class="chart-period" data-period="90d">90D</button>
-                            </div>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="growthChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Role Distribution</h3>
-                        </div>
-                        <div class="chart-container">
-                            <canvas id="roleChart" width="300" height="200"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Activity and Actions -->
-                <div class="dashboard-bottom">
-                    <div class="activity-card">
-                        <div class="card-header">
-                            <h3>Recent Activity</h3>
-                            <button class="btn btn-sm btn-outline">View All</button>
-                        </div>
-                        <div id="recentActivity" class="activity-list">
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <p class="activity-text">New employee <strong>John Doe</strong> joined the organization</p>
-                                    <span class="activity-time">2 hours ago</span>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-user-edit"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <p class="activity-text"><strong>Jane Smith</strong> updated their profile</p>
-                                    <span class="activity-time">4 hours ago</span>
-                                </div>
-                            </div>
-                            <div class="activity-item">
-                                <div class="activity-icon">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div class="activity-content">
-                                    <p class="activity-text">Organization settings updated</p>
-                                    <span class="activity-time">1 day ago</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="quick-actions-card">
-                        <div class="card-header">
-                            <h3>Quick Actions</h3>
-                        </div>
-                        <div class="quick-actions-grid">
-                            <button class="action-btn" id="inviteEmployee">
-                                <div class="action-icon">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                                <span>Invite Employee</span>
-                            </button>
-                            <button class="action-btn" id="viewReports">
-                                <div class="action-icon">
-                                    <i class="fas fa-chart-bar"></i>
-                                </div>
-                                <span>View Reports</span>
-                            </button>
-                            <button class="action-btn" id="manageOrg">
-                                <div class="action-icon">
-                                    <i class="fas fa-cog"></i>
-                                </div>
+                    <div class="dashboard-card">
+                        <h3>Quick Actions</h3>
+                        <div class="quick-actions">
+                            <a href="/users" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                <span>Add Employee</span>
+                            </a>
+                            <a href="/organizations" class="btn btn-outline">
+                                <i class="fas fa-building"></i>
                                 <span>Manage Organization</span>
-                            </button>
-                            <button class="action-btn" id="exportData">
-                                <div class="action-icon">
-                                    <i class="fas fa-download"></i>
-                                </div>
-                                <span>Export Data</span>
-                            </button>
+                            </a>
+                            <a href="/payroll" class="btn btn-outline">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>View Payroll</span>
+                            </a>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Employees View -->
-            <div id="employeesView" class="view">
-                <div class="view-header">
-                    <h1>Employee Management</h1>
-                    <div class="view-actions">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="employeeSearch" placeholder="Search employees...">
-                        </div>
-                        <button class="btn btn-primary" id="addEmployee">
-                            <i class="fas fa-plus"></i>
-                            Add Employee
-                        </button>
-                    </div>
-                </div>
-
-                <div class="employees-table-container">
-                    <table class="employees-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Joined</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="employeesTableBody">
-                            <tr>
-                                <td colspan="6" class="loading">Loading employees...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Organization View -->
-            <div id="organizationView" class="view">
-                <div class="view-header">
-                    <h1>Organization Settings</h1>
-                    <p>Manage your organization's settings and join codes.</p>
-                </div>
-
-                <div class="org-grid">
-                    <div class="org-card">
-                        <h3>Organization Details</h3>
-                        <div class="org-info">
-                            <div class="info-item">
-                                <label>Organization Name:</label>
-                                <span id="orgName">Loading...</span>
-                            </div>
-                            <div class="info-item">
-                                <label>Join Code:</label>
-                                <div class="join-code-display">
-                                    <span id="orgJoinCode">------</span>
-                                    <button class="btn btn-sm btn-outline" id="regenerateCode">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                <label>Created:</label>
-                                <span id="orgCreated">Loading...</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="org-card">
-                        <h3>Organization Statistics</h3>
-                        <div class="org-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Total Members</span>
-                                <span class="stat-value" id="orgTotalMembers">-</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Active Members</span>
-                                <span class="stat-value" id="orgActiveMembers">-</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Administrators</span>
-                                <span class="stat-value" id="orgAdminCount">-</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Profile View -->
-            <div id="profileView" class="view">
-                <div class="view-header">
-                    <h1>My Profile</h1>
-                    <p>Manage your personal information and account settings.</p>
-                </div>
-
-                <div class="profile-container">
-                    <div class="profile-card">
-                        <div class="profile-header">
-                            <div class="profile-avatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="profile-info">
-                                <h3 id="profileName">Loading...</h3>
-                                <p id="profileEmail">Loading...</p>
-                                <span class="profile-role" id="profileRole">Loading...</span>
-                            </div>
-                        </div>
-
-                        <form id="profileForm" class="profile-form">
-                            <div class="form-group">
-                                <label for="profileFirstName">First Name</label>
-                                <input type="text" id="profileFirstName" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="profileLastName">Last Name</label>
-                                <input type="text" id="profileLastName" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="modalOverlay" class="modal-overlay hidden">
-        <div class="modal">
-            <div class="modal-header">
-                <h3 id="modalTitle">Modal Title</h3>
-                <button class="modal-close" id="modalClose">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Modal content will be inserted here -->
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
+    <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <script src="app.js"></script>
+    <!-- Scripts -->
+    <script src="/js/shared.js"></script>
+    <script src="/js/dashboard.js"></script>
 </body>
 </html> 

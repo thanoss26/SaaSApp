@@ -756,12 +756,10 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+
+
 // Redirects and rewrites
 app.get('/home', (req, res) => {
-  res.redirect('/');
-});
-
-app.get('/login', (req, res) => {
   res.redirect('/');
 });
 
@@ -770,10 +768,6 @@ app.get('/register', (req, res) => {
 });
 
 app.get('/signin', (req, res) => {
-  res.redirect('/');
-});
-
-app.get('/signup', (req, res) => {
   res.redirect('/');
 });
 

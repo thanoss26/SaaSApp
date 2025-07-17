@@ -17,7 +17,7 @@ class EmployeeHub {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                this.redirectToLogin();
+                this.showAuthContainer();
                 return;
             }
 
@@ -37,10 +37,10 @@ class EmployeeHub {
             this.currentUser = data.user;
             this.isAuthenticated = true;
             this.updateUserInfo();
-            this.hideLoadingScreen();
+            this.showAppContainer();
         } catch (error) {
             console.error('Auth check failed:', error);
-            this.redirectToLogin();
+            this.showAuthContainer();
         }
     }
 
@@ -50,6 +50,7 @@ class EmployeeHub {
         const userNameEl = document.getElementById('userName');
         const userRoleEl = document.getElementById('userRole');
         const userFirstNameEl = document.getElementById('userFirstName');
+        const topUserNameEl = document.getElementById('topUserName');
 
         if (userNameEl) {
             userNameEl.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
@@ -59,6 +60,9 @@ class EmployeeHub {
         }
         if (userFirstNameEl) {
             userFirstNameEl.textContent = this.currentUser.first_name;
+        }
+        if (topUserNameEl) {
+            topUserNameEl.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
         }
 
         // Show/hide navigation items based on role
@@ -101,10 +105,46 @@ class EmployeeHub {
     }
 
     setupEventListeners() {
-        // Logout button
+        // Logout buttons
         const logoutBtn = document.getElementById('logoutBtn');
+        const topLogoutBtn = document.getElementById('topLogoutBtn');
+        
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
+        }
+        
+        if (topLogoutBtn) {
+            topLogoutBtn.addEventListener('click', () => this.logout());
+        }
+
+        // Auth form switching
+        const showSignupLink = document.getElementById('showSignup');
+        const showLoginLink = document.getElementById('showLogin');
+        
+        if (showSignupLink) {
+            showSignupLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showSignupForm();
+            });
+        }
+        
+        if (showLoginLink) {
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showLoginForm();
+            });
+        }
+
+        // Login form submission
+        const loginForm = document.getElementById('loginFormElement');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+
+        // Signup form submission
+        const signupForm = document.getElementById('signupFormElement');
+        if (signupForm) {
+            signupForm.addEventListener('submit', (e) => this.handleSignup(e));
         }
 
         // Navigation active state
@@ -159,6 +199,130 @@ class EmployeeHub {
         }
     }
 
+    showAuthContainer() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        
+        if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+        }
+        
+        if (authContainer) {
+            authContainer.style.display = 'flex';
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'none';
+        }
+    }
+
+    showAppContainer() {
+        const loadingScreen = document.getElementById('loadingScreen');
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.getElementById('appContainer');
+        
+        if (loadingScreen) {
+            loadingScreen.style.display = 'none';
+        }
+        
+        if (authContainer) {
+            authContainer.style.display = 'none';
+        }
+        
+        if (appContainer) {
+            appContainer.style.display = 'flex';
+        }
+    }
+
+    showLoginForm() {
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        
+        if (loginForm) loginForm.style.display = 'block';
+        if (signupForm) signupForm.style.display = 'none';
+    }
+
+    showSignupForm() {
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        
+        if (loginForm) loginForm.style.display = 'none';
+        if (signupForm) signupForm.style.display = 'block';
+    }
+
+    async handleLogin(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        
+        try {
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                
+                this.showToast('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1000);
+            } else {
+                this.showToast(data.message || 'Login failed', 'error');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            this.showToast('Network error. Please try again.', 'error');
+        }
+    }
+
+    async handleSignup(e) {
+        e.preventDefault();
+        
+        const firstName = document.getElementById('signupFirstName').value;
+        const lastName = document.getElementById('signupLastName').value;
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const inviteCode = document.getElementById('signupInviteCode').value;
+        
+        try {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    firstName, 
+                    lastName, 
+                    email, 
+                    password, 
+                    inviteCode 
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                this.showToast('Account created successfully! Please sign in.', 'success');
+                this.showLoginForm();
+            } else {
+                this.showToast(data.message || 'Signup failed', 'error');
+            }
+        } catch (error) {
+            console.error('Signup error:', error);
+            this.showToast('Network error. Please try again.', 'error');
+        }
+    }
+
     async logout() {
         try {
             const token = localStorage.getItem('token');
@@ -177,12 +341,12 @@ class EmployeeHub {
             localStorage.removeItem('token');
             localStorage.removeItem('refreshToken');
             localStorage.removeItem('userProfile');
-            this.redirectToLogin();
+            window.location.href = '/';
         }
     }
 
     redirectToLogin() {
-        window.location.href = '/';
+        window.location.href = '/login.html';
     }
 
     // Toast notifications
