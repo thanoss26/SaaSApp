@@ -9,11 +9,31 @@ document.addEventListener('DOMContentLoaded', function() {
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const firstNameEl = document.getElementById('firstName');
+            const lastNameEl = document.getElementById('lastName');
+            const emailEl = document.getElementById('email');
+            const passwordEl = document.getElementById('password');
+            const confirmPasswordEl = document.getElementById('confirmPassword');
+            
+            // Check if all elements exist
+            if (!firstNameEl || !lastNameEl || !emailEl || !passwordEl || !confirmPasswordEl) {
+                console.error('Form elements not found:', {
+                    firstName: !!firstNameEl,
+                    lastName: !!lastNameEl,
+                    email: !!emailEl,
+                    password: !!passwordEl,
+                    confirmPassword: !!confirmPasswordEl
+                });
+                errorMessage.textContent = 'Form not properly loaded. Please refresh the page.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+            
+            const firstName = firstNameEl.value;
+            const lastName = lastNameEl.value;
+            const email = emailEl.value;
+            const password = passwordEl.value;
+            const confirmPassword = confirmPasswordEl.value;
             const signupBtn = document.querySelector('.signup-btn');
             
             // Clear previous errors
