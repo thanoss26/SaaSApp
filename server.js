@@ -777,11 +777,11 @@ app.get('/signin', (req, res) => {
 });
 
 app.get('/main', (req, res) => {
-  res.redirect('/app');
+  res.redirect('/dashboard');
 });
 
 app.get('/admin', (req, res) => {
-  res.redirect('/app');
+  res.redirect('/dashboard');
 });
 
 // Remove trailing slashes
@@ -792,19 +792,21 @@ app.use((req, res, next) => {
   next();
 });
 
-// Redirect root to login page
+// Serve main app (root route)
 app.get('/', (req, res) => {
-  console.log('🔍 Root path (/) route hit - redirecting to login');
-  res.redirect('/login');
-});
-
-// Serve main app (after login)
-app.get('/app', (req, res) => {
-  console.log('🔍 Main app route hit');
+  console.log('🔍 Root path (/) route hit');
+  console.log('🔍 Request URL:', req.url);
+  console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
+  console.log('🔍 __dirname:', __dirname);
+  console.log('🔍 File path:', __dirname + '/public/index.html');
+  console.log('🔍 User Agent:', req.headers['user-agent']);
+  console.log('🔍 Accept:', req.headers.accept);
   const fs = require('fs');
   const filePath = __dirname + '/public/index.html';
   if (fs.existsSync(filePath)) {
     console.log('✅ index.html file exists');
+    console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
+    console.log('📤 Sending index.html file');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
