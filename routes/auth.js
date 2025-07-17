@@ -90,8 +90,32 @@ router.post('/register', [
     // Admin users can create organizations later
     // They start without an organization and can create one from the dashboard
 
+    // Sign in the user to get a session token
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (signInError) {
+      console.error('Auto-login after registration failed:', signInError);
+      // Still return success, user can log in manually
+      return res.status(201).json({
+        message: 'User registered successfully',
+        user: {
+          id: user.id,
+          email,
+          first_name,
+          last_name,
+          role
+        },
+        requiresJoinCode: false
+      });
+    }
+
     res.status(201).json({
-      message: 'User registered successfully',
+      message: 'User registered and logged in successfully',
+      token: signInData.session.access_token,
+      userEmail: email,
       user: {
         id: user.id,
         email,
