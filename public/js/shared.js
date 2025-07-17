@@ -408,10 +408,10 @@ class EmployeeHub {
                 
                 this.showToast('Login successful!', 'success');
                 
-                // Redirect to dashboard after successful login
+                // Redirect to main app after successful login
                 setTimeout(() => {
-                    console.log('🔄 Redirecting to dashboard after login...');
-                    window.location.replace('/dashboard');
+                    console.log('🔄 Redirecting to main app after login...');
+                    window.location.replace('/app');
                 }, 1000);
             } else {
                 console.log('❌ Login failed:', data.message);
