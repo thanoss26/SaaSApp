@@ -64,6 +64,14 @@ class Dashboard {
 
 
 
+    // Security: Clear all user data on logout
+    logout() {
+        console.log('🚪 Logging out user...');
+        localStorage.clear(); // Clear all cached data
+        sessionStorage.clear(); // Clear session data too
+        window.location.href = '/login';
+    }
+
     async loadDashboardData() {
         try {
             console.log('📊 Loading dashboard data...');
@@ -72,7 +80,7 @@ class Dashboard {
             // Check if user is authenticated
             if (!token) {
                 console.log('❌ No token found, redirecting to login');
-                window.location.href = '/login';
+                this.logout(); // Use logout method to ensure clean state
                 return;
             }
 
@@ -83,30 +91,32 @@ class Dashboard {
             }
             this.isLoadingData = true;
             
-            // Get current user from localStorage
-            const userData = localStorage.getItem('user');
-            if (userData) {
-                this.currentUser = JSON.parse(userData);
-                console.log('✅ Current user loaded from localStorage:', this.currentUser.email);
-            } else {
-                console.log('⚠️ No user data in localStorage, attempting to fetch from server...');
-                // Try to get user data from server
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (response.ok) {
-                    const userData = await response.json();
-                    this.currentUser = userData.user;
-                    localStorage.setItem('user', JSON.stringify(userData.user));
-                    console.log('✅ User data fetched from server:', this.currentUser.email);
-                } else {
-                    console.log('❌ Failed to get user data, redirecting to login');
-                    window.location.href = '/login';
-                    return;
+            // Always fetch fresh user data from server to prevent security issues
+            console.log('🔍 Fetching fresh user data from server...');
+            const userResponse = await fetch('/api/auth/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 }
+            });
+            
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                this.currentUser = userData.profile;
+                // Update localStorage with fresh data
+                localStorage.setItem('user', JSON.stringify(userData.profile));
+                console.log('✅ Fresh user data fetched from server:', this.currentUser.email);
+                console.log('👤 User details:', {
+                    id: this.currentUser.id,
+                    email: this.currentUser.email,
+                    name: `${this.currentUser.first_name} ${this.currentUser.last_name}`,
+                    role: this.currentUser.role
+                });
+            } else {
+                console.log('❌ Failed to get user data, redirecting to login');
+                localStorage.clear(); // Clear all cached data
+                window.location.href = '/login';
+                return;
             }
             
             // Check if user has an organization
