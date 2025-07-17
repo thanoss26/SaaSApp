@@ -55,6 +55,7 @@ class EmployeeHub {
                 console.log('❌ No token found, showing auth container');
                 this.showAuthContainer();
                 this.isCheckingAuth = false;
+                // Don't make any API calls if no token - just show the login form
                 return;
             }
             

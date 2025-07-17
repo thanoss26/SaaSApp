@@ -100,6 +100,13 @@ class UsersPage {
             console.log('📊 Loading employees...');
             const token = localStorage.getItem('token');
             
+            // Check if user is authenticated
+            if (!token) {
+                console.log('❌ No token found, redirecting to login');
+                window.location.href = '/';
+                return;
+            }
+            
             // Get current user from localStorage
             const userData = localStorage.getItem('user');
             if (userData) {
@@ -120,7 +127,9 @@ class UsersPage {
                     localStorage.setItem('user', JSON.stringify(userData.user));
                     console.log('✅ User data fetched from server:', this.currentUser.email);
                 } else {
-                    throw new Error('Failed to get user data');
+                    console.log('❌ Failed to get user data, redirecting to login');
+                    window.location.href = '/';
+                    return;
                 }
             }
             
