@@ -52,8 +52,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('userEmail', data.userEmail);
                     
-                    // Redirect to main app
-                    window.location.href = '/app';
+                    // Redirect to dashboard
+                    window.location.href = '/dashboard';
                 } else {
                     throw new Error(data.message || 'Signup failed');
                 }
