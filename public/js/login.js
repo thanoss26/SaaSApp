@@ -30,9 +30,18 @@ if (loginForm) {
             const data = await response.json();
             
             if (response.ok) {
-                // Store token
+                // Clear any previous user data to prevent conflicts
+                localStorage.removeItem('user');
+                localStorage.removeItem('userEmail');
+                
+                // Store new token and user data
                 localStorage.setItem('token', data.token);
-                localStorage.setItem('userEmail', data.userEmail);
+                if (data.user) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('userEmail', data.user.email);
+                } else {
+                    localStorage.setItem('userEmail', data.userEmail);
+                }
                 
                 // ✅ Redirect to dashboard
                 window.location.href = '/dashboard';
