@@ -28,80 +28,63 @@ class Dashboard {
         }
         
         try {
-            // Check authentication - this will redirect if it fails
-            const authSuccess = await this.checkAuth();
-            console.log('✅ Auth check completed, success:', authSuccess);
+            // Load dashboard data directly - server middleware handles auth
+            await this.loadDashboardData();
+            console.log('✅ Dashboard data loaded');
             
-            if (authSuccess) {
-                // Only load dashboard data if authentication was successful
-                await this.loadDashboardData();
-                console.log('✅ Dashboard data loaded');
-                
-                try {
-                    this.initializeCharts();
-                    console.log('✅ Charts initialized');
-                } catch (chartError) {
-                    console.error('❌ Chart initialization failed:', chartError);
-                    console.log('⚠️ Continuing without charts');
-                }
-                
-                this.startDataRefresh();
-                this.updateUserInfo();
-                console.log('✅ Dashboard initialization complete');
-            } else {
-                console.log('⚠️ Auth failed, redirecting to login...');
-                // checkAuth should have already redirected, but just in case
-                window.location.href = '/';
+            try {
+                this.initializeCharts();
+                console.log('✅ Charts initialized');
+            } catch (chartError) {
+                console.error('❌ Chart initialization failed:', chartError);
+                console.log('⚠️ Continuing without charts');
             }
+            
+            this.startDataRefresh();
+            this.updateUserInfo();
+            console.log('✅ Dashboard initialization complete');
         } catch (error) {
             console.error('❌ Dashboard initialization failed:', error);
-            console.log('⚠️ Redirecting to login due to initialization error...');
-            window.location.href = '/';
+            // If there's an error, it might be an auth issue, redirect to login
+            if (error.message.includes('401') || error.message.includes('403')) {
+                console.log('⚠️ Auth error detected, redirecting to login...');
+                window.location.href = '/';
+            } else {
+                this.showToast('Failed to load dashboard data', 'error');
+            }
         }
     }
 
-    async checkAuth() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('❌ No token found in checkAuth, redirecting to login...');
-                window.location.href = '/';
-                return false;
-            }
 
-            const response = await fetch('/api/auth/verify', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (!response.ok) {
-                console.log('❌ Auth verification failed with status:', response.status);
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/';
-                return false;
-            }
-
-            const data = await response.json();
-            this.currentUser = data.user;
-            console.log('✅ Authentication successful, user:', this.currentUser);
-            return true;
-        } catch (error) {
-            console.error('❌ Auth check failed:', error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            window.location.href = '/';
-            return false;
-        }
-    }
 
     async loadDashboardData() {
         try {
             console.log('📊 Loading dashboard data...');
             const token = localStorage.getItem('token');
+            
+            // Get current user from localStorage
+            const userData = localStorage.getItem('user');
+            if (userData) {
+                this.currentUser = JSON.parse(userData);
+                console.log('✅ Current user loaded from localStorage:', this.currentUser.email);
+            } else {
+                console.log('⚠️ No user data in localStorage, attempting to fetch from server...');
+                // Try to get user data from server
+                const response = await fetch('/api/auth/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                if (response.ok) {
+                    const userData = await response.json();
+                    this.currentUser = userData.user;
+                    localStorage.setItem('user', JSON.stringify(userData.user));
+                    console.log('✅ User data fetched from server:', this.currentUser.email);
+                } else {
+                    throw new Error('Failed to get user data');
+                }
+            }
             
             // Check if user has an organization
             if (!this.currentUser.organization_id) {
@@ -891,7 +874,17 @@ class Dashboard {
             this.showToast('Organization created successfully!', 'success');
             
             // Refresh user data to get the new organization_id
-            await this.checkAuth();
+            const userResponse = await fetch('/api/auth/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (userResponse.ok) {
+                const userData = await userResponse.json();
+                this.currentUser = userData.user;
+                localStorage.setItem('user', JSON.stringify(userData.user));
+            }
             this.loadOrganizationData();
 
         } catch (error) {
