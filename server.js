@@ -776,16 +776,12 @@ app.get('/signin', (req, res) => {
   res.redirect('/');
 });
 
-app.get('/app', (req, res) => {
-  res.redirect('/dashboard');
-});
-
 app.get('/main', (req, res) => {
-  res.redirect('/dashboard');
+  res.redirect('/app');
 });
 
 app.get('/admin', (req, res) => {
-  res.redirect('/dashboard');
+  res.redirect('/app');
 });
 
 // Remove trailing slashes
@@ -796,35 +792,27 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve the main application
+// Redirect root to login page
 app.get('/', (req, res) => {
-  console.log('🔍 Root path (/) route hit');
-  console.log('🔍 Request URL:', req.url);
-  console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-  console.log('🔍 __dirname:', __dirname);
-  console.log('🔍 File path:', __dirname + '/public/index.html');
-  console.log('🔍 User Agent:', req.headers['user-agent']);
-  console.log('🔍 Accept:', req.headers.accept);
-  
-  // Check if file exists
+  console.log('🔍 Root path (/) route hit - redirecting to login');
+  res.redirect('/login');
+});
+
+// Serve main app (after login)
+app.get('/app', (req, res) => {
+  console.log('🔍 Main app route hit');
   const fs = require('fs');
   const filePath = __dirname + '/public/index.html';
   if (fs.existsSync(filePath)) {
     console.log('✅ index.html file exists');
-    console.log('✅ File size:', fs.statSync(filePath).size, 'bytes');
-    
-    // Add cache busting headers
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
-    
-    console.log('📤 Sending index.html file');
     res.sendFile(filePath);
   } else {
     console.log('❌ index.html file not found');
-    console.log('❌ Available files in public:', fs.readdirSync(__dirname + '/public'));
-    res.status(404).send('index.html not found');
+    res.status(404).send('Main app not found');
   }
 });
 
