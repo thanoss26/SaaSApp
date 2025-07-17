@@ -367,6 +367,15 @@ class UsersPage {
         // Modal event listeners
         this.setupModalEventListeners();
         
+        // Logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.handleLogout();
+            });
+        }
+        
         console.log('✅ Event listeners setup complete');
     }
 
@@ -1707,6 +1716,30 @@ class UsersPage {
                 modal.remove();
             }
         });
+    }
+    
+    async handleLogout() {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+        } finally {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            this.showToast('Logged out successfully', 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+        }
     }
 }
 
