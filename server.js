@@ -792,22 +792,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve dashboard page at root (main app with sidebar)
+// Redirect root to login page
 app.get('/', (req, res) => {
-  console.log('🔍 Root path (/) route hit - serving dashboard');
-  const fs = require('fs');
-  const filePath = __dirname + '/public/dashboard.html';
-  if (fs.existsSync(filePath)) {
-    console.log('✅ dashboard.html file exists');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
-    res.sendFile(filePath);
-  } else {
-    console.log('❌ dashboard.html file not found');
-    res.status(404).send('Dashboard page not found');
-  }
+  console.log('🔍 Root path (/) route hit - redirecting to login');
+  res.redirect('/login');
 });
 
 // Serve dashboard page (main app with sidebar)
