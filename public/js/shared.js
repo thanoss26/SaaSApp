@@ -3,6 +3,7 @@ class EmployeeHub {
     constructor() {
         this.currentUser = null;
         this.isAuthenticated = false;
+        this.isRedirecting = false;
         this.init();
     }
 
@@ -39,6 +40,14 @@ class EmployeeHub {
             const data = await response.json();
             this.currentUser = data.user;
             this.isAuthenticated = true;
+            
+            // If we're on the main page and authenticated, redirect to dashboard
+            if (window.location.pathname === '/' && !this.isRedirecting) {
+                this.isRedirecting = true;
+                window.location.href = '/dashboard';
+                return;
+            }
+            
             this.updateUserInfo();
             this.showAppContainer();
         } catch (error) {
@@ -284,6 +293,8 @@ class EmployeeHub {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 
                 this.showToast('Login successful!', 'success');
+                
+                // Redirect to dashboard after successful login
                 setTimeout(() => {
                     window.location.href = '/dashboard';
                 }, 1000);

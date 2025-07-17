@@ -832,34 +832,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// SPA catch-all route - serve index.html for all non-API routes
-app.get('*', (req, res, next) => {
-  // Skip API routes
-  if (req.path.startsWith('/api/')) {
-    return next();
-  }
-  
-  // Skip static file requests
-  if (req.path.match(/\.(css|js|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$/)) {
-    return next();
-  }
-  
-  console.log('🔄 SPA route hit:', req.path);
-  console.log('🔄 Serving index.html for SPA routing');
-  
-  // Check if file exists
-  const fs = require('fs');
-  const filePath = __dirname + '/public/index.html';
-  if (fs.existsSync(filePath)) {
-    res.sendFile(filePath);
-  } else {
-    res.status(404).send('index.html not found');
-  }
-});
+
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
   res.status(404).json({ error: 'API route not found' });
+});
+
+// 404 handler for all other routes
+app.use('*', (req, res) => {
+  console.log('❌ 404 - Route not found:', req.path);
+  res.status(404).json({ error: 'Route not found' });
 });
 
 const server = app.listen(PORT, '0.0.0.0', () => {
