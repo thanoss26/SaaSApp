@@ -833,6 +833,52 @@ app.get('/', (req, res) => {
   }
 });
 
+// Serve dashboard page
+app.get('/dashboard', (req, res) => {
+  console.log('🔍 Dashboard route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/dashboard.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ dashboard.html file exists');
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ dashboard.html file not found');
+    res.status(404).send('Dashboard page not found');
+  }
+});
+
+// Serve users page
+app.get('/users', (req, res) => {
+  console.log('🔍 Users route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/users.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ users.html file exists');
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ users.html file not found');
+    res.status(404).send('Users page not found');
+  }
+});
+
+// Serve other pages
+const pages = ['/organizations', '/payroll', '/analytics', '/settings'];
+pages.forEach(page => {
+  app.get(page, (req, res) => {
+    console.log(`🔍 ${page} route hit`);
+    const fs = require('fs');
+    const fileName = page.substring(1) + '.html';
+    const filePath = __dirname + '/public/' + fileName;
+    if (fs.existsSync(filePath)) {
+      console.log(`✅ ${fileName} file exists`);
+      res.sendFile(filePath);
+    } else {
+      console.log(`❌ ${fileName} file not found`);
+      res.status(404).send(`${page} page not found`);
+    }
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
