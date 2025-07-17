@@ -320,6 +320,14 @@ app.get('/dashboard-debug.html', (req, res) => {
   res.redirect('/dashboard-debug');
 });
 
+app.get('/login.html', (req, res) => {
+  res.redirect('/login');
+});
+
+app.get('/signup.html', (req, res) => {
+  res.redirect('/signup');
+});
+
 // Dashboard API endpoints
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
@@ -845,6 +853,42 @@ app.get('/users', (req, res) => {
   } else {
     console.log('❌ users.html file not found');
     res.status(404).send('Users page not found');
+  }
+});
+
+// Serve login page
+app.get('/login', (req, res) => {
+  console.log('🔍 Login route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/login.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ login.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ login.html file not found');
+    res.status(404).send('Login page not found');
+  }
+});
+
+// Serve signup page
+app.get('/signup', (req, res) => {
+  console.log('🔍 Signup route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/signup.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ signup.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ signup.html file not found');
+    res.status(404).send('Signup page not found');
   }
 });
 
