@@ -798,20 +798,20 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-// Serve dashboard page as main app
+// Serve dashboard page (main app with sidebar)
 app.get('/dashboard', (req, res) => {
   console.log('🔍 Dashboard route hit');
   const fs = require('fs');
-  const filePath = __dirname + '/public/index.html';
+  const filePath = __dirname + '/public/dashboard.html';
   if (fs.existsSync(filePath)) {
-    console.log('✅ index.html file exists');
+    console.log('✅ dashboard.html file exists');
     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
     res.sendFile(filePath);
   } else {
-    console.log('❌ index.html file not found');
+    console.log('❌ dashboard.html file not found');
     res.status(404).send('Dashboard page not found');
   }
 });
