@@ -6,7 +6,11 @@ const router = express.Router();
 
 // Helper function to determine user role based on email
 const determineUserRole = (email) => {
-  // Everyone who registers gets admin access
+  // Only thanosvako23@gmail.com gets super_admin access
+  if (email === 'thanosvako23@gmail.com') {
+    return 'super_admin';
+  }
+  // Everyone else gets admin access
   return 'admin';
 };
 
@@ -112,16 +116,49 @@ router.post('/register', [
       });
     }
 
+    // Fetch the complete user profile from the database
+    console.log('🔍 Fetching profile for newly registered user ID:', user.id);
+    
+    const { data: newUserProfile, error: newProfileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    console.log('New user profile fetch result - Data:', newUserProfile);
+    console.log('New user profile fetch result - Error:', newProfileError);
+    
+    if (newProfileError) {
+      console.log('❌ New user profile fetch failed:', newProfileError.message);
+      // Fallback to basic user data
+      return res.status(201).json({
+        message: 'User registered and logged in successfully',
+        token: signInData.session.access_token,
+        userEmail: email,
+        user: {
+          id: user.id,
+          email,
+          first_name,
+          last_name,
+          role
+        },
+        requiresJoinCode: false
+      });
+    }
+
+    console.log('✅ New user profile fetched successfully:', newUserProfile);
+
     res.status(201).json({
       message: 'User registered and logged in successfully',
       token: signInData.session.access_token,
       userEmail: email,
       user: {
-        id: user.id,
-        email,
-        first_name,
-        last_name,
-        role
+        id: newUserProfile.id,
+        email: newUserProfile.email,
+        first_name: newUserProfile.first_name,
+        last_name: newUserProfile.last_name,
+        role: newUserProfile.role,
+        organization_id: newUserProfile.organization_id
       },
       requiresJoinCode: false
     });
