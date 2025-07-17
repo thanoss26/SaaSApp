@@ -123,8 +123,8 @@ class UsersPage {
                 });
                 if (response.ok) {
                     const userData = await response.json();
-                    this.currentUser = userData.user;
-                    localStorage.setItem('user', JSON.stringify(userData.user));
+                            this.currentUser = userData.profile;
+        localStorage.setItem('user', JSON.stringify(userData.profile));
                     console.log('✅ User data fetched from server:', this.currentUser.email);
                 } else {
                     console.log('❌ Failed to get user data, redirecting to login');

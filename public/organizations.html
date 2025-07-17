@@ -92,12 +92,20 @@
 
             <!-- Greeting Section -->
             <div class="greeting-section">
-                <h1 class="greeting-title">Hallo, <span id="orgUserName">Arnold Smith</span></h1>
-                <div class="greeting-date" id="orgDate">Wednesday, 06 March 2025</div>
+                <h1 class="greeting-title">Hello, <span id="orgUserName">Loading...</span></h1>
+                <div class="greeting-date" id="orgDate">Loading...</div>
+            </div>
+
+            <!-- Non-Admin Message -->
+            <div class="non-admin-message" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Limited Access:</strong> Dashboard metrics are only available for Admin users. Contact your administrator for access.
+                </div>
             </div>
 
             <!-- Key Metric Cards Row 1 -->
-            <div class="metrics-grid">
+            <div class="metrics-grid admin-only">
                 <div class="metric-card">
                     <div class="metric-header">
                         <div class="metric-title">
@@ -109,13 +117,13 @@
                         </button>
                     </div>
                     <div class="metric-content">
-                        <div class="metric-value">173</div>
+                        <div class="metric-value">Loading...</div>
                         <div class="metric-change positive">
                             <i class="fas fa-arrow-up"></i>
-                            <span>1.8%</span>
+                            <span>0%</span>
                         </div>
                     </div>
-                    <div class="metric-subtitle">+16 from last month</div>
+                    <div class="metric-subtitle">Loading...</div>
                     <button class="metric-details-btn">
                         Details
                         <i class="fas fa-arrow-right"></i>
@@ -125,7 +133,7 @@
                 <div class="metric-card">
                     <div class="metric-header">
                         <div class="metric-title">
-                            <span>Job Applicant</span>
+                            <span>Job Applicants</span>
                             <i class="fas fa-info-circle"></i>
                         </div>
                         <button class="metric-menu">
@@ -133,20 +141,20 @@
                         </button>
                     </div>
                     <div class="metric-content">
-                        <div class="metric-value">983</div>
+                        <div class="metric-value">Loading...</div>
                         <div class="metric-change positive">
                             <i class="fas fa-arrow-up"></i>
-                            <span>2.4%</span>
+                            <span>0%</span>
                         </div>
                     </div>
-                    <div class="metric-subtitle">+32 from last month</div>
+                    <div class="metric-subtitle">Loading...</div>
                     <button class="metric-details-btn">
                         Details
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
 
-                <div class="metric-card attendance-card">
+                <div class="metric-card">
                     <div class="metric-header">
                         <div class="metric-title">
                             <span>Attendance Report</span>
@@ -156,69 +164,23 @@
                             <i class="fas fa-ellipsis-v"></i>
                         </button>
                     </div>
-                    <div class="attendance-numbers">
-                        <div class="attendance-item">
-                            <div class="attendance-value">173</div>
-                            <div class="attendance-label">Total Employ</div>
-                        </div>
-                        <div class="attendance-item">
-                            <div class="attendance-value">128</div>
-                            <div class="attendance-label">On Time</div>
+                    <div class="metric-content">
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>0%</span>
                         </div>
                     </div>
-                    <div class="attendance-chart">
-                        <div class="chart-container">
-                            <div class="chart-y-axis">
-                                <span>200</span>
-                                <span>100</span>
-                                <span>50</span>
-                                <span>10</span>
-                            </div>
-                            <div class="chart-grid">
-                                <div class="chart-row">
-                                    <div class="chart-cell level-1"></div>
-                                    <div class="chart-cell level-2"></div>
-                                    <div class="chart-cell level-3"></div>
-                                    <div class="chart-cell level-4"></div>
-                                </div>
-                                <div class="chart-row">
-                                    <div class="chart-cell level-2"></div>
-                                    <div class="chart-cell level-3"></div>
-                                    <div class="chart-cell level-4"></div>
-                                    <div class="chart-cell level-5"></div>
-                                </div>
-                                <div class="chart-row">
-                                    <div class="chart-cell level-3"></div>
-                                    <div class="chart-cell level-4"></div>
-                                    <div class="chart-cell level-5"></div>
-                                    <div class="chart-cell level-1"></div>
-                                </div>
-                                <div class="chart-row">
-                                    <div class="chart-cell level-4"></div>
-                                    <div class="chart-cell level-5"></div>
-                                    <div class="chart-cell level-1"></div>
-                                    <div class="chart-cell level-2"></div>
-                                </div>
-                                <div class="chart-row">
-                                    <div class="chart-cell level-5"></div>
-                                    <div class="chart-cell level-1"></div>
-                                    <div class="chart-cell level-2"></div>
-                                    <div class="chart-cell level-3"></div>
-                                </div>
-                            </div>
-                            <div class="chart-x-axis">
-                                <span>Jan</span>
-                                <span>Feb</span>
-                                <span>Mar</span>
-                                <span>Apr</span>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="metric-subtitle">Loading...</div>
+                    <button class="metric-details-btn">
+                        Details
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
                 </div>
             </div>
 
             <!-- Key Metric Cards Row 2 -->
-            <div class="metrics-grid">
+            <div class="metrics-grid admin-only">
                 <div class="metric-card">
                     <div class="metric-header">
                         <div class="metric-title">
@@ -230,13 +192,13 @@
                         </button>
                     </div>
                     <div class="metric-content">
-                        <div class="metric-value">$4,842.00</div>
+                        <div class="metric-value">Loading...</div>
                         <div class="metric-change positive">
                             <i class="fas fa-arrow-up"></i>
-                            <span>4.2%</span>
+                            <span>0%</span>
                         </div>
                     </div>
-                    <div class="metric-subtitle">+$3,834.00 from last month</div>
+                    <div class="metric-subtitle">Loading...</div>
                     <button class="metric-details-btn">
                         Details
                         <i class="fas fa-arrow-right"></i>
@@ -246,7 +208,7 @@
                 <div class="metric-card">
                     <div class="metric-header">
                         <div class="metric-title">
-                            <span>Attendance Rate</span>
+                            <span>Tasks</span>
                             <i class="fas fa-info-circle"></i>
                         </div>
                         <button class="metric-menu">
@@ -254,13 +216,13 @@
                         </button>
                     </div>
                     <div class="metric-content">
-                        <div class="metric-value">75%</div>
-                        <div class="metric-change negative">
-                            <i class="fas fa-arrow-down"></i>
-                            <span>1.7%</span>
+                        <div class="metric-value">Loading...</div>
+                        <div class="metric-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>0%</span>
                         </div>
                     </div>
-                    <div class="metric-subtitle">-6.4% from last month</div>
+                    <div class="metric-subtitle">Loading...</div>
                     <button class="metric-details-btn">
                         Details
                         <i class="fas fa-arrow-right"></i>
@@ -353,7 +315,8 @@
         </main>
     </div>
 
+    <script src="/js/shared.js?v=1.0.4"></script>
     <script src="/js/sidebar.js"></script>
-    <script src="/js/organizations.js?v=3.5"></script>
+    <script src="/js/organizations.js?v=4.0.0"></script>
 </body>
 </html> 

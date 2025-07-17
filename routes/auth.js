@@ -331,33 +331,35 @@ router.post('/join-organization', authenticateToken, [
 // Get current user profile
 router.get('/profile', authenticateToken, async (req, res) => {
   try {
+    console.log('📡 Profile endpoint hit');
     const userId = req.user?.id;
+    console.log('🔍 User ID from token:', userId);
 
     if (!userId) {
+      console.log('❌ No user ID found in token');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
+    console.log('🔍 Fetching profile for user:', userId);
     const { data: profile, error } = await supabase
       .from('profiles')
-      .select(`
-        *,
-        organizations (
-          id,
-          name,
-          join_code
-        )
-      `)
+      .select('*')
       .eq('id', userId)
       .single();
 
+    console.log('📥 Profile fetch result - Data:', profile);
+    console.log('📥 Profile fetch result - Error:', error);
+
     if (error) {
+      console.log('❌ Profile fetch failed:', error.message);
       return res.status(404).json({ error: 'Profile not found' });
     }
 
+    console.log('✅ Profile endpoint returning data');
     res.json({ profile });
 
   } catch (error) {
-    console.error('Get profile error:', error);
+    console.error('❌ Get profile error:', error);
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
 });

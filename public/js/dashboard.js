@@ -54,8 +54,8 @@ class Dashboard {
             console.error('❌ Dashboard initialization failed:', error);
             // If there's an error, it might be an auth issue, redirect to login
             if (error.message.includes('401') || error.message.includes('403')) {
-                console.log('⚠️ Auth error detected, redirecting to login...');
-                window.location.href = '/login';
+                console.log('⚠️ Auth error detected, BUT NOT REDIRECTING FOR DEBUGGING');
+                // window.location.href = '/login';
             } else {
                 this.showToast('Failed to load dashboard data', 'error');
             }
@@ -865,7 +865,7 @@ class Dashboard {
             if (!this.currentUser) {
                 console.log('🔍 Current user is null, attempting to fetch user data');
                 try {
-                    const userResponse = await fetch('/api/auth/verify', {
+                    const userResponse = await fetch('/api/auth/profile', {
                         method: 'GET',
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -875,7 +875,7 @@ class Dashboard {
                     
                     if (userResponse.ok) {
                         const userData = await userResponse.json();
-                        this.currentUser = userData.user;
+                        this.currentUser = userData.profile;
                         console.log('✅ Successfully fetched user data:', this.currentUser);
                     } else {
                         console.log('❌ Failed to fetch user data, status:', userResponse.status);
@@ -1011,8 +1011,8 @@ class Dashboard {
             });
             if (userResponse.ok) {
                 const userData = await userResponse.json();
-                this.currentUser = userData.user;
-                localStorage.setItem('user', JSON.stringify(userData.user));
+                        this.currentUser = userData.profile;
+        localStorage.setItem('user', JSON.stringify(userData.profile));
             }
             this.loadOrganizationData();
 

@@ -3,21 +3,29 @@ const { supabase } = require('../config/supabase');
 
 // Middleware to authenticate JWT tokens
 const authenticateToken = async (req, res, next) => {
+  console.log('🔐 Auth middleware hit for:', req.path);
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  console.log('🔍 Token exists:', !!token);
 
   if (!token) {
+    console.log('❌ No token provided');
     return res.status(401).json({ error: 'Access token required' });
   }
 
   try {
+    console.log('🔍 Verifying token with Supabase...');
     // Verify the JWT token with Supabase
     const { data: { user }, error } = await supabase.auth.getUser(token);
+    console.log('🔍 Token verification result - User:', !!user);
+    console.log('🔍 Token verification result - Error:', error);
     
     if (error || !user) {
+      console.log('❌ Token verification failed');
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
+    console.log('🔍 Fetching user profile for middleware...');
     // Get user profile with role and organization info
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -25,16 +33,21 @@ const authenticateToken = async (req, res, next) => {
       .eq('id', user.id)
       .single();
 
+    console.log('🔍 Profile fetch in middleware - Data:', !!profile);
+    console.log('🔍 Profile fetch in middleware - Error:', profileError);
+
     if (profileError) {
+      console.log('❌ Profile fetch failed in middleware');
       return res.status(401).json({ error: 'User profile not found' });
     }
 
+    console.log('✅ Auth middleware successful, proceeding to endpoint');
     // Attach user and profile to request object
     req.user = user;
     req.profile = profile;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('❌ Auth middleware error:', error);
     return res.status(401).json({ error: 'Authentication failed' });
   }
 };
