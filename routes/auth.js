@@ -159,7 +159,7 @@ router.post('/login', [
 
     console.log('✅ Profile fetched successfully:', profile);
 
-    res.json({
+    const responseData = {
       message: 'Login successful',
       user: {
         id: data.user.id,
@@ -171,7 +171,16 @@ router.post('/login', [
       },
       token: data.session.access_token,
       refresh_token: data.session.refresh_token
+    };
+    
+    console.log('📤 Sending login response:', {
+      message: responseData.message,
+      userEmail: responseData.user.email,
+      hasToken: !!responseData.token,
+      tokenLength: responseData.token ? responseData.token.length : 0
     });
+    
+    res.json(responseData);
 
   } catch (error) {
     console.error('Login error:', error);
