@@ -1,7 +1,15 @@
 // Analytics Page JavaScript
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeAnalytics();
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check if we have a token
+    const token = localStorage.getItem('token');
+    if (token) {
+        console.log('✅ Token exists, initializing analytics');
+        initializeAnalytics();
+    } else {
+        console.log('❌ No token found, redirecting to login');
+        window.location.href = '/login';
+    }
 });
 
 function initializeAnalytics() {
@@ -15,6 +23,8 @@ function initializeAnalytics() {
     initializeChartTabs();
     initializeAlertBanner();
     initializeTableInteractions();
+    initializeDateSelector();
+    initializeExport();
     
     // Load analytics data
     loadAnalyticsData();
@@ -425,12 +435,7 @@ function updateAnalyticsData(dateRange) {
     // and update all charts and tables accordingly
 }
 
-// Initialize all functionality
-document.addEventListener('DOMContentLoaded', function() {
-    initializeAnalytics();
-    initializeDateSelector();
-    initializeExport();
-});
+// Initialize all functionality - This is now handled in the main DOMContentLoaded event above
 
 // Add CSS for insights modal
 const modalStyles = `

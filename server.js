@@ -19,8 +19,8 @@ app.set('trust proxy', 1);
 // Dynamic configuration based on environment
 const config = {
   isProduction: process.env.NODE_ENV === 'production',
-  baseUrl: process.env.FRONTEND_URL || 
-           (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000'),
+  baseUrl: process.env.FRONTEND_URL ||
+    (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000'),
   port: PORT,
   environment: process.env.NODE_ENV || 'development'
 };
@@ -80,7 +80,7 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -123,12 +123,12 @@ app.use((req, res, next) => {
 // Request logging middleware (for debugging rate limiting)
 app.use((req, res, next) => {
   const start = Date.now();
-  
+
   // Log API requests
   if (req.path.startsWith('/api/')) {
     console.log(`📡 ${req.method} ${req.path} - ${req.ip}`);
   }
-  
+
   // Log response time
   res.on('finish', () => {
     const duration = Date.now() - start;
@@ -136,7 +136,7 @@ app.use((req, res, next) => {
       console.log(`✅ ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
     }
   });
-  
+
   next();
 });
 
@@ -161,7 +161,7 @@ app.use(express.static('public', {
       // Other static files - cache for 1 day
       res.setHeader('Cache-Control', 'public, max-age=86400');
     }
-    
+
     // Add version header for debugging
     res.setHeader('X-App-Version', '2.0.0');
     res.setHeader('X-Design-Version', 'new-spa-design');
@@ -170,8 +170,8 @@ app.use(express.static('public', {
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     memory: process.memoryUsage(),
@@ -239,7 +239,7 @@ app.get('/organizations', (req, res) => {
   res.sendFile(__dirname + '/public/organizations.html');
 });
 
-app.get('/payroll', authenticateToken, (req, res) => {
+app.get('/payroll', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -247,7 +247,7 @@ app.get('/payroll', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/payroll.html');
 });
 
-app.get('/analytics', authenticateToken, (req, res) => {
+app.get('/analytics', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -255,7 +255,7 @@ app.get('/analytics', authenticateToken, (req, res) => {
   res.sendFile(__dirname + '/public/analytics.html');
 });
 
-app.get('/settings', authenticateToken, (req, res) => {
+app.get('/settings', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
@@ -497,12 +497,12 @@ app.get('/api/dashboard/charts', authenticateToken, async (req, res) => {
     // Process growth data into monthly counts
     const monthlyCounts = new Array(12).fill(0);
     const currentDate = new Date();
-    
+
     if (growthData) {
       growthData.forEach(employee => {
         const createdDate = new Date(employee.created_at);
-        const monthDiff = currentDate.getMonth() - createdDate.getMonth() + 
-                         (currentDate.getFullYear() - createdDate.getFullYear()) * 12;
+        const monthDiff = currentDate.getMonth() - createdDate.getMonth() +
+          (currentDate.getFullYear() - createdDate.getFullYear()) * 12;
         if (monthDiff >= 0 && monthDiff < 12) {
           monthlyCounts[monthDiff]++;
         }
@@ -607,7 +607,7 @@ app.get('/api/dashboard/activity', authenticateToken, async (req, res) => {
         const isNewEmployee = new Date(employee.created_at).getTime() === new Date(employee.updated_at).getTime();
         activities.push({
           type: isNewEmployee ? 'employee_hired' : 'employee_updated',
-          message: isNewEmployee 
+          message: isNewEmployee
             ? `New employee <strong>${employee.first_name} ${employee.last_name}</strong> was hired`
             : `<strong>${employee.first_name} ${employee.last_name}</strong> profile was updated`,
           created_at: employee.updated_at
@@ -647,7 +647,7 @@ app.post('/api/dashboard/export', authenticateToken, async (req, res) => {
 app.post('/api/payroll/submit', authenticateToken, async (req, res) => {
   try {
     const { employee_id, hourly_rate, days_worked, hours_worked, amount, type, payment_method, date, notes, processed_by } = req.body;
-    
+
     // Validate required fields
     if (!employee_id || !hourly_rate || !days_worked || !hours_worked || !amount || !type || !payment_method || !date) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -708,7 +708,7 @@ app.post('/api/payroll/submit', authenticateToken, async (req, res) => {
 // Test route to verify server is responding
 app.get('/test', (req, res) => {
   console.log('🧪 Test route hit');
-  res.json({ 
+  res.json({
     message: 'Server is responding!',
     timestamp: new Date().toISOString(),
     port: PORT,
@@ -926,7 +926,7 @@ pages.forEach(page => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Something went wrong!',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
   });
