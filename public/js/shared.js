@@ -17,6 +17,9 @@ class EmployeeHub {
         // Clear URL parameters first
         this.clearUrlParameters();
         
+        // TEMPORARILY DISABLED: Immediately hide all navigation items to prevent wrong buttons from showing
+        // this.injectNavigationCSS();
+        
         // Check organization requirement immediately to prevent flickering
         this.checkOrganizationRequirement();
         
@@ -398,65 +401,34 @@ class EmployeeHub {
             return false;
         }
         
-        // Immediately hide all main content to prevent flickering
-        this.hideMainContentImmediately();
-        
-        // Show loading state
-        this.showOrganizationLoadingState();
-        
-        // Check user data with timeout
-        const checkUser = () => {
-            if (this.currentUser) {
-                console.log('👤 User data available:', this.currentUser.role, 'Org:', this.currentUser.organization_id);
-                
-                // Super admin can access everything
-                if (this.currentUser.role === 'super_admin') {
-                    console.log('✅ Super admin access granted');
-                    this.showMainContent();
-                    return false;
-                }
-                
-                // Other roles need organization
-                if (!this.currentUser.organization_id) {
-                    console.log('🚫 Organization required for role:', this.currentUser.role);
-                    this.showOrganizationRequirement();
-                    return true;
-                } else {
-                    console.log('✅ Organization found, access granted');
-                    this.showMainContent();
-                    return false;
-                }
-            } else {
-                console.log('⏳ User data not yet available, checking again...');
-                return null; // Continue checking
-            }
-        };
-        
-        // Initial check
-        const result = checkUser();
-        if (result !== null) {
-            return result;
-        }
-        
-        // If user data not available, poll with timeout
-        let attempts = 0;
-        const maxAttempts = 30; // 3 seconds total
-        
-        const pollInterval = setInterval(() => {
-            attempts++;
-            const result = checkUser();
+        // If we have user data, make instant decision
+        if (this.currentUser) {
+            console.log('👤 User data available:', this.currentUser.role, 'Org:', this.currentUser.organization_id);
             
-            if (result !== null || attempts >= maxAttempts) {
-                clearInterval(pollInterval);
-                
-                if (result === null && attempts >= maxAttempts) {
-                    console.log('⚠️ Timeout waiting for user data, showing organization requirement');
-                    this.showOrganizationRequirement();
-                }
+            // Super admin can access everything
+            if (this.currentUser.role === 'super_admin') {
+                console.log('✅ Super admin access granted - showing content instantly');
+                this.showMainContent();
+                return false;
             }
-        }, 100);
-        
-        return true; // Assume organization required while checking
+            
+            // Other roles need organization
+            if (!this.currentUser.organization_id) {
+                console.log('🚫 Organization required for role:', this.currentUser.role);
+                this.hideMainContentImmediately();
+                this.showOrganizationRequirement();
+                return true;
+            } else {
+                console.log('✅ Organization found, access granted - showing content instantly');
+                this.showMainContent();
+                return false;
+            }
+        } else {
+            console.log('⏳ User data not yet available - hiding content until auth completes');
+            this.hideMainContentImmediately();
+            // Don't show loading state - just wait for auth to complete
+            return true;
+        }
     }
 
     hideMainContentImmediately() {
@@ -472,8 +444,73 @@ class EmployeeHub {
             const elements = document.querySelectorAll(selector);
             elements.forEach(element => {
                 element.style.display = 'none';
+                element.style.visibility = 'hidden';
+                element.style.opacity = '0';
+                element.style.transition = 'none'; // Disable any CSS transitions
             });
         });
+        
+        console.log('🔒 Main content hidden immediately');
+    }
+    
+    injectNavigationCSS() {
+        // Inject CSS to specifically hide User Management button for non-super admin users
+        if (!document.getElementById('navigationAntiFlicker')) {
+            const style = document.createElement('style');
+            style.id = 'navigationAntiFlicker';
+            
+            // Check if user is super admin by looking at localStorage or making a quick check
+            const checkSuperAdmin = () => {
+                // Try to get user data from localStorage first
+                const userData = localStorage.getItem('userData');
+                if (userData) {
+                    try {
+                        const user = JSON.parse(userData);
+                        return user.role === 'super_admin';
+                    } catch (e) {
+                        // If parsing fails, continue with the check
+                    }
+                }
+                
+                // If no localStorage data, check if we have a token and make a quick request
+                const token = localStorage.getItem('token');
+                if (token) {
+                    // Make a synchronous check - this is a fallback
+                    return false; // Default to false, will be updated later
+                }
+                
+                return false; // Default to false
+            };
+            
+            const isSuperAdmin = checkSuperAdmin();
+            
+            style.textContent = `
+                /* Only hide User Management button initially for non-super admins */
+                ${!isSuperAdmin ? `
+                .enhanced-sidebar-nav a[href="/users"] {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                }
+                ` : ''}
+                
+                /* Class to permanently hide User Management for admin and below */
+                .nav-hidden-admin {
+                    display: none !important;
+                    visibility: hidden !important;
+                    opacity: 0 !important;
+                }
+                
+                /* Class to show User Management for super admin only */
+                .nav-show-super-admin {
+                    display: flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                }
+            `;
+            document.head.appendChild(style);
+            console.log('🎨 Navigation CSS injected - User Management hidden by default for non-super admins');
+        }
     }
 
     showMainContent() {
@@ -483,7 +520,13 @@ class EmployeeHub {
             orgRequired.remove();
         }
         
-        // Show main content
+        // Remove loading state if it exists
+        const loadingState = document.querySelector('#orgLoadingState');
+        if (loadingState) {
+            loadingState.remove();
+        }
+        
+        // Show main content instantly
         const selectors = [
             '.dashboard-main', '.analytics-main', '.users-main', 
             '.settings-main', '.payroll-main', '.organizations-main',
@@ -495,8 +538,12 @@ class EmployeeHub {
             const elements = document.querySelectorAll(selector);
             elements.forEach(element => {
                 element.style.display = '';
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
             });
         });
+        
+        console.log('✅ Main content shown instantly');
     }
 
     showOrganizationLoadingState() {
@@ -635,39 +682,63 @@ class EmployeeHub {
         const settingsNav = document.querySelector('a[href="/settings"]');
 
         // Hide all navigation items first
-        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(item => {
-            if (item) {
-                item.style.display = 'none';
+        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+            if (nav) {
+                nav.style.display = 'none';
+                nav.style.visibility = 'hidden';
+                nav.style.opacity = '0';
             }
         });
 
         if (this.currentUser.role === 'super_admin') {
-            // Super Admin Navigation: Dashboard → Analytics → User Management → Settings
-            console.log('🔧 Setting up super_admin navigation');
-            [dashboardNav, analyticsNav, usersNav, settingsNav].forEach(item => {
-                if (item) {
-                    item.style.display = 'flex';
+            // Super Admin sees: Dashboard, Analytics, User Management, Settings
+            [dashboardNav, analyticsNav, settingsNav].forEach(nav => {
+                if (nav) {
+                    nav.style.display = 'flex';
+                    nav.style.visibility = 'visible';
+                    nav.style.opacity = '1';
                 }
             });
-        } else if (['admin', 'manager', 'employee'].includes(this.currentUser.role)) {
-            // Admin and below Navigation: Dashboard → Analytics → Payroll → Organizations → Settings
-            console.log('🔧 Setting up admin/manager/employee navigation');
-            [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(item => {
-                if (item) {
-                    item.style.display = 'flex';
+            
+            // Show User Management for super admin
+            if (usersNav) {
+                usersNav.style.display = 'flex';
+                usersNav.style.visibility = 'visible';
+                usersNav.style.opacity = '1';
+                console.log('✅ User Management shown for super admin');
+            }
+            
+            // COMPLETELY REMOVE Payroll and Organizations for super admin
+            [payrollNav, organizationsNav].forEach(nav => {
+                if (nav) {
+                    // Remove from DOM completely
+                    nav.remove();
+                    console.log('🗑️ Completely removed navigation item from shared.js:', nav.href);
                 }
             });
+            
+            console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Settings');
         } else {
-            // Default fallback - show basic navigation
-            console.log('🔧 Setting up default navigation for role:', this.currentUser.role);
-            [dashboardNav, settingsNav].forEach(item => {
-                if (item) {
-                    item.style.display = 'flex';
+            // Admin/Manager/Employee sees: Dashboard, Analytics, Payroll, Organizations, Settings
+            [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+                if (nav) {
+                    nav.style.display = 'flex';
+                    nav.style.visibility = 'visible';
+                    nav.style.opacity = '1';
                 }
             });
+            
+            // COMPLETELY REMOVE User Management for Admin and below
+            if (usersNav) {
+                // Remove from DOM completely
+                usersNav.remove();
+                console.log('🗑️ Completely removed User Management from shared.js for Admin role and below');
+            }
+            
+            console.log('✅ Standard navigation: Dashboard, Analytics, Payroll, Organizations, Settings');
         }
 
-        console.log('✅ Navigation visibility updated for role:', this.currentUser.role);
+        console.log('✅ Navigation visibility updated');
     }
 
     setupEventListeners() {
