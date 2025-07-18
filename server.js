@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const organizationRoutes = require('./routes/organizations');
 const userRoutes = require('./routes/users');
 const employeeRoutes = require('./routes/employees');
+const dashboardRoutes = require('./routes/dashboards');
 const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
@@ -224,6 +225,7 @@ app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
+app.use('/api/dashboards', apiLimiter, authenticateToken, dashboardRoutes);
 
 // Clean URL routes (no .html extensions) with cache busting
 // Note: Authentication will be handled by the frontend JavaScript
