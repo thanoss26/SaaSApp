@@ -73,6 +73,81 @@
       color: white;
       transform: translateY(-2px);
     }
+    
+    /* CRITICAL FIX: Override the !important rules for super admin */
+    .enhanced-sidebar-nav a[href="/users"].super-admin-visible {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Hide Payroll and Organizations for super admin */
+    .enhanced-sidebar-nav a[href="/payroll"].super-admin-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    .enhanced-sidebar-nav a[href="/organizations"].super-admin-hidden {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+    }
+    
+    /* AGGRESSIVE OVERRIDE - Force show User Management button */
+    .enhanced-sidebar-nav a[href="/users"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 9999 !important;
+    }
+    
+    /* ANTI-FLICKER LOADING OVERLAY */
+    .anti-flicker-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #f8fafc;
+        z-index: 99999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+    
+    .anti-flicker-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #e2e8f0;
+        border-top: 4px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
+    
+    .anti-flicker-text {
+        color: #64748b;
+        font-size: 16px;
+        font-weight: 500;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    /* Hide main content until navigation is ready */
+    .app-container {
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+    
+    .app-container.navigation-ready {
+        opacity: 1;
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -80,6 +155,12 @@
 </head>
 
 <body class="dashboard-bg">
+  <!-- ANTI-FLICKER LOADING OVERLAY -->
+  <div class="anti-flicker-overlay" id="anti-flicker-overlay">
+    <div class="anti-flicker-spinner"></div>
+    <div class="anti-flicker-text">Setting up navigation...</div>
+  </div>
+
   <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside class="enhanced-sidebar" id="enhanced-sidebar">
@@ -124,6 +205,8 @@
           <span>Settings</span>
         </a>
       </nav>
+
+      <script src="js/anti-flicker.js"></script>
 
       <div class="enhanced-sidebar-footer">
         <div class="enhanced-sidebar-user">

@@ -54,6 +54,15 @@ class Dashboard {
       // Extract actual profile data if nested
       const profileData = profile.profile || profile;
       
+      // Update navigation visibility immediately after profile load
+      if (window.EmployeeHub && window.EmployeeHub.updateNavigationVisibility) {
+        console.log('🔧 Calling shared navigation visibility update from dashboard');
+        window.EmployeeHub.updateNavigationVisibility();
+      } else {
+        console.log('⚠️ EmployeeHub not available, trying direct navigation update');
+        this.updateNavigationVisibilityDirectly(profileData);
+      }
+      
       // Role-based dashboard logic
       switch (profileData.role) {
         case 'super_admin':
@@ -120,6 +129,12 @@ class Dashboard {
       orgRequiredSection.style.display = 'none';
       mainContent.style.display = 'block';
       console.log('✅ Super admin dashboard displayed');
+    }
+
+    // Update navigation visibility for super admin
+    if (window.EmployeeHub && window.EmployeeHub.updateNavigationVisibility) {
+      console.log('🔧 Calling shared navigation visibility update');
+      window.EmployeeHub.updateNavigationVisibility();
     }
 
     // Load super admin specific content
@@ -2031,6 +2046,69 @@ class Dashboard {
     setTimeout(() => {
       this.enforceChartSizeConstraints();
     }, 1000);
+  }
+
+  updateNavigationVisibilityDirectly(profileData) {
+    console.log('🔧 Updating navigation visibility directly for role:', profileData.role);
+
+    // Get all navigation items
+    const dashboardNav = document.querySelector('a[href="/dashboard"]');
+    const analyticsNav = document.querySelector('a[href="/analytics"]');
+    const usersNav = document.querySelector('a[href="/users"]');
+    const payrollNav = document.querySelector('a[href="/payroll"]');
+    const organizationsNav = document.querySelector('a[href="/organizations"]');
+    const settingsNav = document.querySelector('a[href="/settings"]');
+
+    // Hide all navigation items first
+    [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+      if (nav) {
+        nav.style.display = 'none';
+        nav.style.visibility = 'hidden';
+        nav.style.opacity = '0';
+      }
+    });
+
+    if (profileData.role === 'super_admin') {
+      // Super Admin sees: Dashboard, Analytics, User Management, Settings
+      [dashboardNav, analyticsNav, settingsNav].forEach(nav => {
+        if (nav) {
+          nav.style.display = 'flex';
+          nav.style.visibility = 'visible';
+          nav.style.opacity = '1';
+        }
+      });
+      
+      // Show User Management for super admin
+      if (usersNav) {
+        usersNav.style.display = 'flex';
+        usersNav.style.visibility = 'visible';
+        usersNav.style.opacity = '1';
+        console.log('✅ User Management shown for super admin (direct)');
+      }
+      
+      console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Settings');
+    } else {
+      // Admin/Manager/Employee sees: Dashboard, Analytics, Payroll, Organizations, Settings
+      [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+        if (nav) {
+          nav.style.display = 'flex';
+          nav.style.visibility = 'visible';
+          nav.style.opacity = '1';
+        }
+      });
+      
+      // Ensure User Management stays hidden for non-super admin
+      if (usersNav) {
+        usersNav.style.display = 'none';
+        usersNav.style.visibility = 'hidden';
+        usersNav.style.opacity = '0';
+        console.log('❌ User Management hidden for role:', profileData.role);
+      }
+      
+      console.log('✅ Standard navigation: Dashboard, Analytics, Payroll, Organizations, Settings');
+    }
+
+    console.log('✅ Navigation visibility updated directly');
   }
 }
 
