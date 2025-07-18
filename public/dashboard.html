@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Chronos HR - Employee Management Dashboard</title>
-  <link rel="stylesheet" href="css/dashboard.css">
-  <link rel="stylesheet" href="css/shared.css">
-  <link rel="stylesheet" href="css/enhanced-sidebar.css">
+  <title>Chronos HR - Employee Management Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
+  <link rel="stylesheet" href="css/shared.css?v=1.0.1">
+  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body class="dashboard-bg">
   <div class="dashboard-layout">
     <!-- Sidebar -->
@@ -58,7 +60,7 @@
           <div class="user-avatar">TV</div>
           <div class="user-details">
             <div class="user-name">Loading...</div>
-                          <div class="user-email">Loading...</div>
+            <div class="user-email">Loading...</div>
           </div>
         </div>
         <button class="enhanced-logout-btn" onclick="logout()">
@@ -72,13 +74,14 @@
     <main class="dashboard-main">
       <!-- Topbar -->
       <header class="dashboard-topbar">
-        <h1 class="dashboard-title">Employee Management Dashboard</h1>
+        <h1 class="dashboard-title">Dashboard</h1>
         <div class="dashboard-search">
           <input type="text" placeholder="Search employees, departments..." />
           <i class="fas fa-search"></i>
         </div>
         <div class="dashboard-user">
-          <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User" class="user-avatar" />
+          <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User"
+            class="user-avatar" />
           <div class="user-info">
             <span class="user-name">Loading...</span>
             <span class="user-role">Loading...</span>
@@ -86,245 +89,238 @@
           <i class="fas fa-chevron-down"></i>
         </div>
       </header>
-      <!-- Stat Cards -->
-      <section class="dashboard-stats">
-        <div class="stat-card">
-          <div class="stat-label">Total Employees</div>
-          <div class="stat-value" id="totalEmployees">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Active Employees</div>
-          <div class="stat-value" id="activeEmployees">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Departments</div>
-          <div class="stat-value" id="departments">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg. Attendance</div>
-          <div class="stat-value" id="attendanceRate">0%</div>
-        </div>
-      </section>
-      <!-- Organization Setup Section (for admins without organization) -->
-      <section id="orgSetupSection" class="dashboard-content hidden">
-        <div class="card setup-card">
-          <div class="card-header">
-            <h2>Welcome to Chronos HR!</h2>
-            <p>Create your organization to get started</p>
-          </div>
-          <form id="createOrgForm" class="setup-form">
-            <div class="form-group">
-              <label for="orgName">Organization Name</label>
-              <input type="text" id="orgName" placeholder="Enter your organization name" required>
-            </div>
-            <div class="form-group">
-              <label for="orgDescription">Description (Optional)</label>
-              <textarea id="orgDescription" placeholder="Brief description of your organization"></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary">Create Organization</button>
-          </form>
-        </div>
-      </section>
 
-      <!-- Organization Management Section -->
-      <section id="organizationSection" class="dashboard-content hidden">
-        <div class="card organization-card">
-          <div class="card-header">
-            <h2>Organization Management</h2>
-            <p id="orgStatusText">Manage your organization settings</p>
-          </div>
-          
-          <!-- No Organization State -->
-          <div id="noOrgState" class="org-state hidden">
-            <div class="no-org-content">
-              <div class="no-org-icon">
-                <i class="fas fa-building"></i>
-              </div>
-              <h3>You have no organization</h3>
-              <p>Please create one to get started with Chronos HR</p>
-              <button id="createOrgBtn" class="btn btn-primary">Create Organization</button>
+      <!-- Enhanced Dashboard with Charts -->
+      <section class="dashboard-content">
+        <!-- Top Row - Enhanced Stats -->
+        <div class="dashboard-stats-extended">
+          <div class="stat-card-extended">
+            <div class="stat-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="totalEmployees">0</div>
+              <div class="stat-label">Total Employees</div>
+              <div class="stat-change positive">+12% this month</div>
             </div>
           </div>
+          <div class="stat-card-extended">
+            <div class="stat-icon">
+              <i class="fas fa-user-check"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="activeEmployees">0</div>
+              <div class="stat-label">Active Employees</div>
+              <div class="stat-change positive">+8% this month</div>
+            </div>
+          </div>
+          <div class="stat-card-extended">
+            <div class="stat-icon">
+              <i class="fas fa-sitemap"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="departments">0</div>
+              <div class="stat-label">Departments</div>
+              <div class="stat-change neutral">No change</div>
+            </div>
+          </div>
+          <div class="stat-card-extended">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="attendanceRate">0%</div>
+              <div class="stat-label">Attendance Rate</div>
+              <div class="stat-change positive">+2.1% this week</div>
+            </div>
+          </div>
+        </div>
 
-          <!-- Create Organization Form -->
-          <div id="createOrgForm" class="org-form hidden">
-            <form id="newOrgForm">
-              <div class="form-group">
-                <label for="orgName">Organization Name *</label>
-                <input type="text" id="orgName" placeholder="Enter your organization name" required>
-              </div>
-              <div class="form-group">
-                <label for="orgDescription">Description</label>
-                <textarea id="orgDescription" placeholder="Brief description of your organization (optional)"></textarea>
-              </div>
-              <div class="form-group">
-                <label for="orgIndustry">Industry</label>
-                <select id="orgIndustry">
-                  <option value="">Select industry</option>
-                  <option value="technology">Technology</option>
-                  <option value="healthcare">Healthcare</option>
-                  <option value="finance">Finance</option>
-                  <option value="education">Education</option>
-                  <option value="retail">Retail</option>
-                  <option value="manufacturing">Manufacturing</option>
-                  <option value="consulting">Consulting</option>
-                  <option value="other">Other</option>
+        <!-- Main Charts Row -->
+        <div class="dashboard-charts">
+          <!-- Employee Growth Chart -->
+          <div class="chart-container large">
+            <div class="chart-header">
+              <h3>Employee Growth & Trends</h3>
+              <div class="chart-controls">
+                <select id="growthTimeframe" class="chart-select">
+                  <option value="7">Last 7 Days</option>
+                  <option value="30" selected>Last 30 Days</option>
+                  <option value="90">Last 3 Months</option>
+                  <option value="365">Last Year</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="orgSize">Company Size</label>
-                <select id="orgSize">
-                  <option value="">Select size</option>
-                  <option value="1-10">1-10 employees</option>
-                  <option value="11-50">11-50 employees</option>
-                  <option value="51-200">51-200 employees</option>
-                  <option value="201-500">201-500 employees</option>
-                  <option value="500+">500+ employees</option>
+            </div>
+            <div class="chart-body">
+              <canvas id="employeeGrowthChart" height="300"></canvas>
+            </div>
+          </div>
+
+          <!-- Department Distribution -->
+          <div class="chart-container medium">
+            <div class="chart-header">
+              <h3>Department Distribution</h3>
+              <div class="chart-controls">
+                <button class="chart-btn active" data-view="chart">Chart</button>
+                <button class="chart-btn" data-view="list">List</button>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="departmentChart" height="250"></canvas>
+              <div id="departmentList" class="department-list hidden">
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #4e8cff;"></div>
+                    <span class="dept-name">Engineering</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">24</span>
+                    <span class="dept-percentage">32%</span>
+                  </div>
+                </div>
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #ff6b6b;"></div>
+                    <span class="dept-name">Marketing</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">18</span>
+                    <span class="dept-percentage">24%</span>
+                  </div>
+                </div>
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #51cf66;"></div>
+                    <span class="dept-name">Sales</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">15</span>
+                    <span class="dept-percentage">20%</span>
+                  </div>
+                </div>
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #ffd43b;"></div>
+                    <span class="dept-name">HR</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">8</span>
+                    <span class="dept-percentage">11%</span>
+                  </div>
+                </div>
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #ae8fff;"></div>
+                    <span class="dept-name">Finance</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">6</span>
+                    <span class="dept-percentage">8%</span>
+                  </div>
+                </div>
+                <div class="department-item">
+                  <div class="dept-info">
+                    <div class="dept-color" style="background: #ff922b;"></div>
+                    <span class="dept-name">Other</span>
+                  </div>
+                  <div class="dept-stats">
+                    <span class="dept-count">4</span>
+                    <span class="dept-percentage">5%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row - Additional Charts -->
+        <div class="dashboard-charts-bottom">
+          <!-- Attendance Trend -->
+          <div class="chart-container medium">
+            <div class="chart-header">
+              <h3>Weekly Attendance Trend</h3>
+              <div class="chart-controls">
+                <span class="attendance-summary">Avg: 94.8%</span>
+              </div>
+            </div>
+            <div class="chart-body">
+              <canvas id="attendanceChart" height="200"></canvas>
+            </div>
+          </div>
+
+          <!-- Performance Metrics -->
+          <div class="chart-container medium">
+            <div class="chart-header">
+              <h3>Performance Metrics</h3>
+              <div class="chart-controls">
+                <select id="performanceMetric" class="chart-select">
+                  <option value="productivity">Productivity</option>
+                  <option value="efficiency">Efficiency</option>
+                  <option value="quality">Quality</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="orgWebsite">Website</label>
-                <input type="url" id="orgWebsite" placeholder="https://yourcompany.com">
-              </div>
-              <div class="form-group">
-                <label for="orgAddress">Address</label>
-                <textarea id="orgAddress" placeholder="Enter your organization address"></textarea>
-              </div>
-              <div class="form-actions">
-                <button type="button" id="cancelCreateOrg" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Create Organization</button>
-              </div>
-            </form>
+            </div>
+            <div class="chart-body">
+              <canvas id="performanceChart" height="200"></canvas>
+            </div>
           </div>
 
-          <!-- Organization Details (when organization exists) -->
-          <div id="orgDetails" class="org-details hidden">
-            <div class="org-info">
-              <div class="org-header">
-                <div class="org-logo">
-                  <i class="fas fa-building"></i>
+          <!-- Recent Activity -->
+          <div class="chart-container small">
+            <div class="chart-header">
+              <h3>Recent Activity</h3>
+              <a href="#" class="view-all">View all</a>
+            </div>
+            <div class="activity-feed">
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-user-plus"></i>
                 </div>
-                <div class="org-meta">
-                  <h3 id="orgNameDisplay">Organization Name</h3>
-                  <p id="orgDescriptionDisplay">Organization description</p>
-                </div>
-              </div>
-              <div class="org-stats">
-                <div class="org-stat">
-                  <span class="stat-label">Members</span>
-                  <span class="stat-value" id="orgMemberCount">0</span>
-                </div>
-                <div class="org-stat">
-                  <span class="stat-label">Join Code</span>
-                  <span class="stat-value" id="orgJoinCode">000000</span>
-                </div>
-                <div class="org-stat">
-                  <span class="stat-label">Created</span>
-                  <span class="stat-value" id="orgCreatedDate">-</span>
+                <div class="activity-content">
+                  <div class="activity-title">New employee joined</div>
+                  <div class="activity-desc">Sarah Johnson joined Engineering team</div>
+                  <div class="activity-time">2 hours ago</div>
                 </div>
               </div>
-            </div>
-            <div class="org-actions">
-              <button id="editOrgBtn" class="btn btn-secondary">Edit Organization</button>
-              <button id="regenerateJoinCodeBtn" class="btn btn-outline">Regenerate Join Code</button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Invite Management Section -->
-      <section id="inviteSection" class="dashboard-content hidden">
-        <div class="card invite-card">
-          <div class="card-header">
-            <h2>Invite Employees</h2>
-            <p>Generate invitation links for new employees</p>
-          </div>
-          <form id="generateInviteForm" class="invite-form">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="inviteFirstName">First Name</label>
-                <input type="text" id="inviteFirstName" placeholder="Employee's first name" required>
-              </div>
-              <div class="form-group">
-                <label for="inviteLastName">Last Name</label>
-                <input type="text" id="inviteLastName" placeholder="Employee's last name" required>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="inviteEmail">Email Address</label>
-              <input type="email" id="inviteEmail" placeholder="Employee's email address" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Generate Invite Link</button>
-          </form>
-          <div id="inviteResult" class="invite-result hidden">
-            <h3>Invitation Generated!</h3>
-            <p>Share this link with your employee:</p>
-            <div class="invite-link-container">
-              <input type="text" id="inviteLink" readonly>
-              <button id="copyInviteLink" class="btn btn-secondary">Copy</button>
-            </div>
-            <p class="invite-note">This link will expire in 24 hours</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Main Panel -->
-      <section id="mainDashboard" class="dashboard-content">
-        <div class="dashboard-left">
-          <!-- Line Chart Card -->
-          <div class="card chart-card">
-            <div class="card-header">
-              <span>Employee Growth Trend</span>
-              <div class="chart-tabs">
-                <button class="tab active">Month</button>
-                <button class="tab">Week</button>
-              </div>
-            </div>
-            <canvas id="mainLineChart" height="150" style="height: 150px !important; max-height: 150px !important; min-height: 150px !important;"></canvas>
-          </div>
-          <!-- Activity List Card -->
-          <div class="card activity-card">
-            <div class="card-header">
-              <span>Recent Employee Activity</span>
-              <a href="#" class="view-more">View more</a>
-            </div>
-            <ul class="activity-list">
-              <li class="activity-item">
-                <div style="text-align: center; color: #b0b8c9; padding: 20px;">
-                  Loading activity...
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-trophy"></i>
                 </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <div class="dashboard-right">
-          <!-- Weekly Attendance Card -->
-          <div class="card attendance-card">
-            <div class="card-header">Weekly Attendance</div>
-            <div class="attendance-value">94.8%</div>
-            <canvas id="weeklyBarChart" height="60" style="height: 60px !important; max-height: 60px !important; min-height: 60px !important;"></canvas>
-          </div>
-          <!-- Donut Chart Card -->
-          <div class="card donut-card">
-            <div class="card-header">Department Distribution</div>
-            <canvas id="donutChart" height="120" style="height: 120px !important; max-height: 120px !important; min-height: 120px !important;"></canvas>
-            <div class="donut-label" id="totalRoles">0</div>
-            <div class="donut-meta">
-              <div>Total Roles</div>
-              <div class="donut-total" id="totalEmployeesDonut">0 Employees</div>
-            </div>
-            <div class="donut-legend">
-              <span class="dot home"></span> Members
-              <span class="dot invest"></span> Managers
-              <span class="dot saving"></span> Admins
+                <div class="activity-content">
+                  <div class="activity-title">Performance milestone</div>
+                  <div class="activity-desc">Marketing team exceeded Q4 targets</div>
+                  <div class="activity-time">4 hours ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-calendar"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Meeting scheduled</div>
+                  <div class="activity-desc">All-hands meeting tomorrow at 10 AM</div>
+                  <div class="activity-time">6 hours ago</div>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <i class="fas fa-chart-up"></i>
+                </div>
+                <div class="activity-content">
+                  <div class="activity-title">Attendance improved</div>
+                  <div class="activity-desc">Weekly attendance up by 3.2%</div>
+                  <div class="activity-time">1 day ago</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
     </main>
   </div>
-  <script src="js/shared.js?v=1.0.4"></script>
+  <script src="js/shared.js"></script>
   <script src="js/sidebar.js"></script>
-      <script src="js/dashboard.js?v=2.0.0"></script>
+  <script src="js/dashboard.js"></script>
 </body>
+
 </html>

@@ -1,0 +1,228 @@
+/* Dashboard Page Specific Sidebar */
+.dashboard-sidebar {
+  width: 80px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  z-index: 100;
+  transition: width 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-sidebar.expanded {
+  width: 200px;
+}
+
+.dashboard-sidebar-header {
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dashboard-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.dashboard-sidebar-logo-icon {
+  font-size: 24px;
+  color: #3b82f6;
+}
+
+.dashboard-sidebar-toggle {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.dashboard-sidebar-toggle:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.dashboard-sidebar-nav {
+  flex: 1;
+  padding: 16px 0;
+}
+
+.dashboard-sidebar-nav .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #6b7280;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+
+.dashboard-sidebar-nav .nav-item:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.dashboard-sidebar-nav .nav-item.active {
+  background: #eff6ff;
+  color: #3b82f6;
+  border-left-color: #3b82f6;
+}
+
+.dashboard-sidebar-nav .nav-item i {
+  font-size: 18px;
+  width: 20px;
+  text-align: center;
+}
+
+.dashboard-sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.dashboard-sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.dashboard-sidebar-user:hover {
+  background: #f3f4f6;
+}
+
+.dashboard-sidebar-user .user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #3b82f6;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-sidebar-user .user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-sidebar-user .user-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-sidebar-user .user-email {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-sidebar-logout {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.dashboard-sidebar-logout:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Collapsed state */
+.dashboard-sidebar.collapsed .dashboard-sidebar-logo .logo-text,
+.dashboard-sidebar.collapsed .nav-item span,
+.dashboard-sidebar.collapsed .user-details,
+.dashboard-sidebar.collapsed .dashboard-sidebar-logout span {
+  display: none;
+}
+
+.dashboard-sidebar.collapsed .dashboard-sidebar-header {
+  justify-content: center;
+  padding: 20px 12px;
+}
+
+.dashboard-sidebar.collapsed .dashboard-sidebar-toggle {
+  display: none;
+}
+
+.dashboard-sidebar.collapsed .nav-item {
+  justify-content: center;
+  padding: 12px;
+}
+
+.dashboard-sidebar.collapsed .dashboard-sidebar-footer {
+  padding: 16px 12px;
+}
+
+.dashboard-sidebar.collapsed .dashboard-sidebar-user {
+  justify-content: center;
+  padding: 8px 4px;
+}
+
+.dashboard-sidebar.collapsed .dashboard-sidebar-logout {
+  justify-content: center;
+  padding: 8px 4px;
+}
+
+/* Main content adjustment */
+.dashboard-main {
+  margin-left: 120px;
+  transition: margin-left 0.3s ease;
+}
+
+.dashboard-sidebar.expanded + .dashboard-main {
+  margin-left: 240px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboard-sidebar {
+    width: 60px;
+  }
+  
+  .dashboard-sidebar.expanded {
+    width: 180px;
+  }
+  
+  .dashboard-main {
+    margin-left: 80px;
+  }
+  
+  .dashboard-sidebar.expanded + .dashboard-main {
+    margin-left: 200px;
+  }
+} 

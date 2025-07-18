@@ -26,42 +26,8 @@ class EmployeeHub {
         // Show loading screen initially
         this.showLoadingScreen();
         
-        // Add a small delay to prevent race conditions
-        setTimeout(async () => {
-            console.log('🔧 DEBUGGING: Completely bypassing auth AND preventing any redirects');
-            
-            // Override window.location to prevent any redirects
-            const originalLocation = window.location;
-            Object.defineProperty(window, 'location', {
-                value: {
-                    ...originalLocation,
-                    href: originalLocation.href,
-                    assign: (url) => console.log('🚫 BLOCKED redirect to:', url),
-                    replace: (url) => console.log('🚫 BLOCKED replace to:', url),
-                    reload: () => console.log('🚫 BLOCKED reload')
-                },
-                writable: false
-            });
-            
-            // Skip auth entirely for debugging
-            this.currentUser = {
-                id: 'debug-user',
-                email: 'debug@test.com',
-                first_name: 'Debug',
-                last_name: 'User',
-                role: 'admin'
-            };
-            this.isAuthenticated = true;
-            
-            // Show the app immediately
-            this.showAppContainer();
-            this.updateUserInfo();
-            this.setupEventListeners();
-            this.updateDateTime();
-            setInterval(() => this.updateDateTime(), 1000);
-            
-            console.log('🔧 DEBUGGING: Auth bypassed, app should be visible now');
-        }, 100);
+        // Check authentication
+        await this.checkAuth();
         
         this.isInitialized = true;
         console.log('✅ EmployeeHub initialized');
@@ -117,12 +83,18 @@ class EmployeeHub {
                         this.isAuthenticated = true;
                         this.updateUserInfo();
                         this.showAppContainer();
+                        this.setupEventListeners();
+                        this.updateDateTime();
+                        setInterval(() => this.updateDateTime(), 1000);
                         
                         // Load appropriate script for the page
                         if (window.location.pathname === '/dashboard') {
                             this.loadDashboardScript();
                         } else if (window.location.pathname === '/users') {
                             this.loadUsersScript();
+                        } else if (window.location.pathname === '/analytics') {
+                            // Analytics page is already loaded via script tag
+                            console.log('✅ Analytics page loaded');
                         }
                     } else {
                         console.error('❌ Token verification failed with status:', response.status);
@@ -708,7 +680,7 @@ class EmployeeHub {
         if (!document.querySelector('script[src*="dashboard.js"]')) {
             console.log('📦 Loading dashboard script...');
             const script = document.createElement('script');
-            script.src = '/js/dashboard.js?v=1.0.4';
+            script.src = '/js/dashboard.js';
             script.onload = () => console.log('✅ Dashboard script loaded');
             script.onerror = () => console.error('❌ Failed to load dashboard script');
             document.head.appendChild(script);
@@ -720,7 +692,7 @@ class EmployeeHub {
         if (!document.querySelector('script[src*="users.js"]')) {
             console.log('📦 Loading users script...');
             const script = document.createElement('script');
-            script.src = '/js/users.js?v=1.0.4';
+            script.src = '/js/users.js';
             script.onload = () => console.log('✅ Users script loaded');
             script.onerror = () => console.error('❌ Failed to load users script');
             document.head.appendChild(script);

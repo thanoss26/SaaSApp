@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organization Dashboard - Chronos HR</title>
-    <link rel="stylesheet" href="/styles.css?v=2.0.0">
-    <link rel="stylesheet" href="/css/organizations.css?v=3.5">
+    <link rel="stylesheet" href="/css/organizations.css">
     <link rel="stylesheet" href="/css/enhanced-sidebar.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -68,255 +67,90 @@
         </aside>
 
         <main class="main-content org-dashboard-main">
-            <!-- Top Navigation Bar -->
-            <div class="top-nav">
-                <div class="search-container">
-                    <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" placeholder="Search...">
-                </div>
-                <div class="nav-actions">
-                    <button class="nav-action-btn" title="Keyboard shortcuts">
-                        <i class="fas fa-keyboard"></i>
-                    </button>
-                    <button class="nav-action-btn" title="Command palette">
-                        <span>K</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Info Banner -->
-            <div class="info-banner">
-                <i class="fas fa-bolt"></i>
-                <span>Optimize your Chronos HR experience—track attendance, manage teams, and streamline HR operations effortlessly!</span>
-            </div>
-
-            <!-- Greeting Section -->
-            <div class="greeting-section">
-                <h1 class="greeting-title">Hello, <span id="orgUserName">Loading...</span></h1>
-                <div class="greeting-date" id="orgDate">Loading...</div>
-            </div>
-
-            <!-- Non-Admin Message -->
-            <div class="non-admin-message" style="display: none;">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>Limited Access:</strong> Dashboard metrics are only available for Admin users. Contact your administrator for access.
-                </div>
-            </div>
-
-            <!-- Key Metric Cards Row 1 -->
-            <div class="metrics-grid admin-only">
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-title">
-                            <span>Total Employees</span>
-                            <i class="fas fa-info-circle"></i>
+            <!-- Welcome Section -->
+            <div class="welcome-section">
+                <div class="welcome-card">
+                    <div class="welcome-header">
+                        <div class="welcome-icon">
+                            <i class="fas fa-building"></i>
                         </div>
-                        <button class="metric-menu">
-                            <i class="fas fa-ellipsis-v"></i>
+                        <h1>Welcome to Chronos HR!</h1>
+                        <p>Create your organization to get started with powerful HR management tools</p>
+                    </div>
+                    
+                    <div class="welcome-features">
+                        <div class="feature-item">
+                            <i class="fas fa-users"></i>
+                            <span>Manage your team efficiently</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Track performance analytics</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Monitor attendance & time</span>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <span>Handle payroll seamlessly</span>
+                        </div>
+                    </div>
+
+                    <form id="createOrgForm" class="create-org-form">
+                        <div class="form-group">
+                            <label for="orgName">Organization Name *</label>
+                            <input type="text" id="orgName" placeholder="Enter your organization name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="orgDescription">Description</label>
+                            <textarea id="orgDescription" placeholder="Brief description of your organization (optional)"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="orgIndustry">Industry</label>
+                            <select id="orgIndustry">
+                                <option value="">Select industry</option>
+                                <option value="technology">Technology</option>
+                                <option value="healthcare">Healthcare</option>
+                                <option value="finance">Finance</option>
+                                <option value="education">Education</option>
+                                <option value="retail">Retail</option>
+                                <option value="manufacturing">Manufacturing</option>
+                                <option value="consulting">Consulting</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="orgSize">Company Size</label>
+                            <select id="orgSize">
+                                <option value="">Select size</option>
+                                <option value="1-10">1-10 employees</option>
+                                <option value="11-50">11-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-500">201-500 employees</option>
+                                <option value="500+">500+ employees</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="orgWebsite">Website</label>
+                            <input type="url" id="orgWebsite" placeholder="https://yourcompany.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="orgAddress">Address</label>
+                            <textarea id="orgAddress" placeholder="Enter your organization address"></textarea>
+                        </div>
+                        <button type="submit" class="btn-create-org">
+                            <i class="fas fa-plus"></i>
+                            Create Organization
                         </button>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-value">Loading...</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="metric-subtitle">Loading...</div>
-                    <button class="metric-details-btn">
-                        Details
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-title">
-                            <span>Job Applicants</span>
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <button class="metric-menu">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-value">Loading...</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="metric-subtitle">Loading...</div>
-                    <button class="metric-details-btn">
-                        Details
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-title">
-                            <span>Attendance Report</span>
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <button class="metric-menu">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-value">Loading...</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="metric-subtitle">Loading...</div>
-                    <button class="metric-details-btn">
-                        Details
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Key Metric Cards Row 2 -->
-            <div class="metrics-grid admin-only">
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-title">
-                            <span>Total Revenue</span>
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <button class="metric-menu">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-value">Loading...</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="metric-subtitle">Loading...</div>
-                    <button class="metric-details-btn">
-                        Details
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-
-                <div class="metric-card">
-                    <div class="metric-header">
-                        <div class="metric-title">
-                            <span>Tasks</span>
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <button class="metric-menu">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                    <div class="metric-content">
-                        <div class="metric-value">Loading...</div>
-                        <div class="metric-change positive">
-                            <i class="fas fa-arrow-up"></i>
-                            <span>0%</span>
-                        </div>
-                    </div>
-                    <div class="metric-subtitle">Loading...</div>
-                    <button class="metric-details-btn">
-                        Details
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Task Section -->
-            <div class="task-section">
-                <div class="task-header">
-                    <div class="task-title">
-                        <span>Task</span>
-                        <i class="fas fa-info-circle"></i>
-                    </div>
-                    <div class="task-view-toggles">
-                        <button class="view-toggle active" data-view="kanban">
-                            <i class="fas fa-columns"></i>
-                            <span>Kanban</span>
-                        </button>
-                        <button class="view-toggle" data-view="table">
-                            <i class="fas fa-table"></i>
-                            <span>Table</span>
-                        </button>
-                        <button class="view-toggle" data-view="list">
-                            <i class="fas fa-list"></i>
-                            <span>List View</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="kanban-board">
-                    <div class="kanban-column">
-                        <div class="column-header">
-                            <div class="column-status">
-                                <div class="status-indicator new"></div>
-                                <span>New Request</span>
-                                <span class="task-count">3</span>
-                            </div>
-                            <button class="column-menu">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
-                        <div class="column-content">
-                            <button class="add-task-btn">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <div class="task-placeholder"></div>
-                        </div>
-                    </div>
-
-                    <div class="kanban-column">
-                        <div class="column-header">
-                            <div class="column-status">
-                                <div class="status-indicator progress"></div>
-                                <span>In Progress</span>
-                                <span class="task-count">6</span>
-                            </div>
-                            <button class="column-menu">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
-                        <div class="column-content">
-                            <button class="add-task-btn">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <div class="task-placeholder"></div>
-                        </div>
-                    </div>
-
-                    <div class="kanban-column">
-                        <div class="column-header">
-                            <div class="column-status">
-                                <div class="status-indicator complete"></div>
-                                <span>Complete</span>
-                                <span class="task-count">12</span>
-                            </div>
-                            <button class="column-menu">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
-                        <div class="column-content">
-                            <button class="add-task-btn">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                            <div class="task-placeholder"></div>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </main>
     </div>
 
-    <script src="/js/shared.js?v=1.0.4"></script>
+    <script src="/js/shared.js"></script>
     <script src="/js/sidebar.js"></script>
-    <script src="/js/organizations.js?v=4.0.0"></script>
+    <script src="/js/organizations.js"></script>
 </body>
 </html> 

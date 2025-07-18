@@ -82,11 +82,20 @@ class EnhancedSidebar {
         const navItems = document.querySelectorAll('.nav-item');
         console.log('🔗 Found nav items:', navItems.length);
         navItems.forEach(item => {
-            item.addEventListener('click', (e) => {
+            item.addEventListener('click', async (e) => {
                 e.preventDefault();
                 const href = item.getAttribute('href');
                 console.log('🔗 Navigating to:', href);
-                window.location.href = href;
+                
+                // Check if we have a token before navigating
+                const token = localStorage.getItem('token');
+                if (token) {
+                    console.log('✅ Token exists, navigating to:', href);
+                    window.location.href = href;
+                } else {
+                    console.log('❌ No token found, redirecting to login');
+                    window.location.href = '/login';
+                }
             });
         });
 
