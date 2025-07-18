@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -9,7 +9,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Get all dashboards for the user's organization
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
         const { data: user } = req.user;
         
@@ -45,7 +45,7 @@ router.get('/', authMiddleware, async (req, res) => {
 });
 
 // Get a specific dashboard with its widgets
-router.get('/:slug', authMiddleware, async (req, res) => {
+router.get('/:slug', authenticateToken, async (req, res) => {
     try {
         const { slug } = req.params;
         const { data: user } = req.user;
@@ -97,7 +97,7 @@ router.get('/:slug', authMiddleware, async (req, res) => {
 });
 
 // Create a new dashboard
-router.post('/', authMiddleware, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const { name, slug, description, is_default = false } = req.body;
         const { data: user } = req.user;
@@ -158,7 +158,7 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 // Update a dashboard
-router.put('/:id', authMiddleware, async (req, res) => {
+router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, slug, description, is_default } = req.body;
@@ -217,7 +217,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
 });
 
 // Delete a dashboard
-router.delete('/:id', authMiddleware, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
         const { data: user } = req.user;
@@ -261,7 +261,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 // Widget routes
 
 // Get widgets for a dashboard
-router.get('/:dashboardId/widgets', authMiddleware, async (req, res) => {
+router.get('/:dashboardId/widgets', authenticateToken, async (req, res) => {
     try {
         const { dashboardId } = req.params;
         const { data: user } = req.user;
@@ -310,7 +310,7 @@ router.get('/:dashboardId/widgets', authMiddleware, async (req, res) => {
 });
 
 // Create a new widget
-router.post('/:dashboardId/widgets', authMiddleware, async (req, res) => {
+router.post('/:dashboardId/widgets', authenticateToken, async (req, res) => {
     try {
         const { dashboardId } = req.params;
         const { type, title, config, order_index } = req.body;
@@ -375,7 +375,7 @@ router.post('/:dashboardId/widgets', authMiddleware, async (req, res) => {
 });
 
 // Update a widget
-router.put('/widgets/:widgetId', authMiddleware, async (req, res) => {
+router.put('/widgets/:widgetId', authenticateToken, async (req, res) => {
     try {
         const { widgetId } = req.params;
         const { type, title, config, order_index } = req.body;
@@ -423,7 +423,7 @@ router.put('/widgets/:widgetId', authMiddleware, async (req, res) => {
 });
 
 // Delete a widget
-router.delete('/widgets/:widgetId', authMiddleware, async (req, res) => {
+router.delete('/widgets/:widgetId', authenticateToken, async (req, res) => {
     try {
         const { widgetId } = req.params;
         const { data: user } = req.user;

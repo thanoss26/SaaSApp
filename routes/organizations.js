@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabase } = require('../config/supabase');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireOrganization } = require('../middleware/auth');
 
 // Get all organizations with search, filters, and pagination
 router.get('/', authenticateToken, async (req, res) => {
@@ -102,7 +102,7 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get organization dashboard metrics
-router.get('/dashboard-metrics', authenticateToken, async (req, res) => {
+router.get('/dashboard-metrics', authenticateToken, requireOrganization, async (req, res) => {
     try {
         console.log('📊 Fetching organization dashboard metrics...');
         
@@ -116,11 +116,6 @@ router.get('/dashboard-metrics', authenticateToken, async (req, res) => {
         if (profileError) {
             console.error('❌ Error fetching user profile:', profileError);
             return res.status(500).json({ error: 'Failed to fetch user profile' });
-        }
-
-        if (!profile.organization_id) {
-            console.log('❌ User has no organization assigned');
-            return res.status(400).json({ error: 'User not assigned to any organization' });
         }
 
         const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
@@ -292,16 +287,8 @@ router.post('/', authenticateToken, async (req, res) => {
         const { 
             name, 
             description, 
-            email, 
-            phone, 
-            address, 
-            website, 
             industry,
-            total_employees,
-            job_applicants,
-            attendance_report,
-            total_revenue,
-            tasks
+            size
         } = req.body;
 
         if (!name) {
@@ -311,7 +298,7 @@ router.post('/', authenticateToken, async (req, res) => {
         // Get user profile to check role
         const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
 
@@ -320,29 +307,24 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch user profile' });
         }
 
-        const isAdmin = profile.role === 'admin' || profile.role === 'super_admin';
+        // Check if user already has an organization
+        if (profile.organization_id) {
+            return res.status(400).json({ error: 'User already belongs to an organization' });
+        }
+
+        // Generate a unique join code
+        const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
         // Prepare organization data
         const organizationData = {
             name,
             description,
-            email,
-            phone,
-            address,
-            website,
             industry,
+            size,
+            join_code: joinCode,
             created_by: user.id,
             is_active: true
         };
-
-        // Add admin-only fields if user is admin
-        if (isAdmin) {
-            organizationData.total_employees = total_employees || 0;
-            organizationData.job_applicants = job_applicants || 0;
-            organizationData.attendance_report = attendance_report || 0.00;
-            organizationData.total_revenue = total_revenue || 0.00;
-            organizationData.tasks = tasks || 0;
-        }
 
         const { data: organization, error } = await supabase
             .from('organizations')
@@ -355,7 +337,21 @@ router.post('/', authenticateToken, async (req, res) => {
             return res.status(500).json({ error: 'Failed to create organization' });
         }
 
-        res.status(201).json(organization);
+        // Automatically assign the user to the created organization
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ organization_id: organization.id })
+            .eq('id', user.id);
+
+        if (updateError) {
+            console.error('Error assigning user to organization:', updateError);
+            // Don't fail the request, just log the error
+        }
+
+        res.status(201).json({
+            ...organization,
+            message: 'Organization created successfully and you have been assigned as a member'
+        });
 
     } catch (error) {
         console.error('Error in create organization route:', error);

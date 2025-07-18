@@ -4,88 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chronos HR - Settings</title>
-    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/enhanced-sidebar.css">
-    <link rel="stylesheet" href="css/settings.css?v=1.0">
+    <link rel="stylesheet" href="css/settings.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="dashboard-bg">
-      <div class="dashboard-layout">
-    <!-- Sidebar -->
-    <aside class="enhanced-sidebar" id="enhanced-sidebar">
-      <div class="enhanced-sidebar-header">
-        <div class="enhanced-sidebar-logo">
-          <div class="logo-icon">⏱️</div>
-          <span class="logo-text">Chronos HR</span>
-        </div>
-        <div class="enhanced-sidebar-controls">
-          <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
-            <i class="fas fa-bars"></i>
-          </button>
-          <button class="enhanced-theme-toggle" id="theme-toggle">
-            <i class="fas fa-moon" id="theme-icon"></i>
-          </button>
-        </div>
-      </div>
-
-      <nav class="enhanced-sidebar-nav">
-        <a href="/dashboard" class="nav-item" data-page="dashboard">
-          <i class="fas fa-tachometer-alt"></i>
-          <span>Dashboard</span>
-        </a>
-        <a href="/analytics" class="nav-item" data-page="analytics">
-          <i class="fas fa-chart-bar"></i>
-          <span>Analytics</span>
-        </a>
-        <a href="/payroll" class="nav-item" data-page="payroll">
-          <i class="fas fa-money-bill-wave"></i>
-          <span>Payrolls</span>
-        </a>
-        <a href="/organizations" class="nav-item" data-page="organizations">
-          <i class="fas fa-building"></i>
-          <span>Organizations</span>
-        </a>
-        <a href="/settings" class="nav-item active" data-page="settings">
-          <i class="fas fa-cog"></i>
-          <span>Settings</span>
-        </a>
-      </nav>
-
-      <div class="enhanced-sidebar-footer">
-        <div class="enhanced-sidebar-user">
-          <div class="user-avatar">TV</div>
-          <div class="user-details">
-            <div class="user-name">Loading...</div>
-                          <div class="user-email">Loading...</div>
-          </div>
-        </div>
-        <button class="enhanced-logout-btn" onclick="logout()">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Log out</span>
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main Content -->
-        <main class="dashboard-main">
-            <!-- Topbar -->
-            <header class="dashboard-topbar">
-                <div class="topbar-left">
-                    <h1 class="dashboard-title">Settings</h1>
-                    <p class="dashboard-subtitle">Manage your account and application preferences</p>
+<body class="settings-bg">
+    <div class="settings-layout">
+        <!-- Sidebar -->
+        <aside class="enhanced-sidebar" id="enhanced-sidebar">
+            <div class="enhanced-sidebar-header">
+                <div class="enhanced-sidebar-logo">
+                    <div class="logo-icon">⏱️</div>
+                    <span class="logo-text">Chronos HR</span>
                 </div>
-                <div class="topbar-right">
+                <div class="enhanced-sidebar-controls">
+                    <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <button class="enhanced-theme-toggle" id="theme-toggle">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <nav class="enhanced-sidebar-nav">
+                <a href="/dashboard" class="nav-item" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/analytics" class="nav-item" data-page="analytics">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="/users" class="nav-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="/payroll" class="nav-item" data-page="payroll">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>Payroll</span>
+                </a>
+                <a href="/organizations" class="nav-item" data-page="organizations">
+                    <i class="fas fa-building"></i>
+                    <span>Organizations</span>
+                </a>
+                <a href="/settings" class="nav-item active" data-page="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="enhanced-sidebar-footer">
+                <div class="enhanced-sidebar-user">
+                    <div class="user-avatar">TV</div>
+                    <div class="user-details">
+                        <div class="user-name">Loading...</div>
+                        <div class="user-email">Loading...</div>
+                    </div>
+                </div>
+                <button class="enhanced-logout-btn" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Log out</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="settings-main">
+            <!-- Topbar -->
+            <header class="settings-topbar">
+                <h1 class="settings-title">Settings</h1>
+                <div class="settings-actions">
+                    <button class="btn btn-outline" id="discardChanges">
+                        <i class="fas fa-undo"></i>
+                        Discard
+                    </button>
                     <button class="btn btn-primary" id="saveAllBtn">
                         <i class="fas fa-save"></i>
-                        Save All Changes
+                        Save Changes
                     </button>
                 </div>
             </header>
 
             <!-- Settings Content -->
-            <div class="settings-container">
+            <div class="settings-content">
                 <!-- Settings Navigation -->
                 <nav class="settings-nav">
                     <button class="settings-tab active" data-tab="profile">
@@ -96,6 +100,10 @@
                         <i class="fas fa-shield-alt"></i>
                         <span>Security</span>
                     </button>
+                    <button class="settings-tab" data-tab="system">
+                        <i class="fas fa-server"></i>
+                        <span>System</span>
+                    </button>
                     <button class="settings-tab" data-tab="notifications">
                         <i class="fas fa-bell"></i>
                         <span>Notifications</span>
@@ -104,17 +112,13 @@
                         <i class="fas fa-palette"></i>
                         <span>Appearance</span>
                     </button>
-                    <button class="settings-tab" data-tab="organization">
-                        <i class="fas fa-building"></i>
-                        <span>Organization</span>
-                    </button>
                     <button class="settings-tab" data-tab="integrations">
                         <i class="fas fa-plug"></i>
                         <span>Integrations</span>
                     </button>
-                    <button class="settings-tab" data-tab="billing">
-                        <i class="fas fa-credit-card"></i>
-                        <span>Billing</span>
+                    <button class="settings-tab" data-tab="advanced">
+                        <i class="fas fa-cogs"></i>
+                        <span>Advanced</span>
                     </button>
                 </nav>
 
@@ -124,85 +128,76 @@
                     <div class="settings-panel active" id="profile">
                         <div class="panel-header">
                             <h2>Profile Settings</h2>
-                            <p>Update your personal information and account details</p>
+                            <p>Manage your personal information and account details</p>
                         </div>
                         
-                        <div class="settings-section">
-                            <div class="section-header">
+                        <div class="settings-card">
+                            <div class="card-header">
                                 <h3>Personal Information</h3>
-                                <p>Your basic profile information</p>
+                                <p>Update your basic profile information</p>
                             </div>
                             
-                            <div class="profile-avatar-section">
-                                <div class="avatar-container">
-                                    <div class="avatar-preview">
-                                        <img src="https://via.placeholder.com/120x120/3b82f6/ffffff?text=TV" alt="Profile Avatar" id="avatarPreview">
-                                        <div class="avatar-overlay">
-                                            <i class="fas fa-camera"></i>
+                            <div class="profile-section">
+                                <div class="avatar-section">
+                                    <div class="avatar-container">
+                                        <div class="avatar-preview">
+                                            <div class="user-avatar-large" id="avatarPreview">TV</div>
+                                            <div class="avatar-overlay">
+                                                <i class="fas fa-camera"></i>
+                                            </div>
+                                        </div>
+                                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                        <button class="btn btn-outline btn-sm" onclick="document.getElementById('avatarInput').click()">
+                                            Change Photo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="firstName">First Name</label>
+                                            <input type="text" id="firstName" value="" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="lastName">Last Name</label>
+                                            <input type="text" id="lastName" value="" class="form-input">
                                         </div>
                                     </div>
-                                    <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                                    <button class="btn btn-outline btn-sm" onclick="document.getElementById('avatarInput').click()">
-                                        Change Photo
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="firstName">First Name</label>
-                                    <input type="text" id="firstName" value="Thanos" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="lastName">Last Name</label>
-                                    <input type="text" id="lastName" value="Vako" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="email">Email Address</label>
-                                    <input type="email" id="email" value="" class="form-input" readonly>
-                                    <small class="form-help">Email cannot be changed</small>
-                                </div>
-                                <div class="form-group">
-                                    <label for="phone">Phone Number</label>
-                                    <input type="tel" id="phone" value="+30 123 456 7890" class="form-input">
-                                </div>
-                                <div class="form-group full-width">
-                                    <label for="bio">Bio</label>
-                                    <textarea id="bio" class="form-textarea" rows="4" placeholder="Tell us about yourself...">Senior Software Engineer with 8+ years of experience in full-stack development and team leadership.</textarea>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="email">Email Address</label>
+                                            <input type="email" id="email" value="" class="form-input" readonly>
+                                            <small class="form-help">Email cannot be changed</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="phone">Phone Number</label>
+                                            <input type="tel" id="phone" value="" class="form-input" placeholder="+1 (555) 123-4567">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bio">Bio</label>
+                                        <textarea id="bio" class="form-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Work Information</h3>
-                                <p>Your professional details</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Role Information</h3>
+                                <p>Your role and permissions within the platform</p>
                             </div>
                             
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="jobTitle">Job Title</label>
-                                    <input type="text" id="jobTitle" value="Senior Software Engineer" class="form-input">
+                            <div class="role-info">
+                                <div class="role-badge super-admin">
+                                    <i class="fas fa-crown"></i>
+                                    Super Administrator
                                 </div>
-                                <div class="form-group">
-                                    <label for="department">Department</label>
-                                    <select id="department" class="form-select">
-                                        <option value="engineering" selected>Engineering</option>
-                                        <option value="marketing">Marketing</option>
-                                        <option value="sales">Sales</option>
-                                        <option value="hr">Human Resources</option>
-                                        <option value="finance">Finance</option>
-                                        <option value="operations">Operations</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="employeeId">Employee ID</label>
-                                    <input type="text" id="employeeId" value="EMP-2024-001" class="form-input" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label for="startDate">Start Date</label>
-                                    <input type="date" id="startDate" value="2024-01-15" class="form-input">
-                                </div>
+                                <p class="role-description">
+                                    You have full administrative access to the platform, including user management, 
+                                    system configuration, and all organizational data.
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -211,111 +206,190 @@
                     <div class="settings-panel" id="security">
                         <div class="panel-header">
                             <h2>Security Settings</h2>
-                            <p>Manage your account security and privacy</p>
+                            <p>Manage your account security and authentication</p>
                         </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
+
+                        <div class="settings-card">
+                            <div class="card-header">
                                 <h3>Password</h3>
-                                <p>Change your account password</p>
+                                <p>Update your account password</p>
                             </div>
                             
-                            <div class="form-grid">
+                            <div class="form-section">
                                 <div class="form-group">
                                     <label for="currentPassword">Current Password</label>
                                     <input type="password" id="currentPassword" class="form-input">
                                 </div>
-                                <div class="form-group">
-                                    <label for="newPassword">New Password</label>
-                                    <input type="password" id="newPassword" class="form-input">
-                                    <div class="password-strength">
-                                        <div class="strength-bar">
-                                            <div class="strength-fill" style="width: 0%"></div>
-                                        </div>
-                                        <span class="strength-text">Enter a password</span>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="newPassword">New Password</label>
+                                        <input type="password" id="newPassword" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirmPassword">Confirm Password</label>
+                                        <input type="password" id="confirmPassword" class="form-input">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="confirmPassword">Confirm New Password</label>
-                                    <input type="password" id="confirmPassword" class="form-input">
+                                <div class="form-actions">
+                                    <button class="btn btn-primary">Update Password</button>
                                 </div>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button class="btn btn-primary">Update Password</button>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
+                        <div class="settings-card">
+                            <div class="card-header">
                                 <h3>Two-Factor Authentication</h3>
                                 <p>Add an extra layer of security to your account</p>
                             </div>
                             
-                            <div class="two-factor-status">
-                                <div class="status-card">
-                                    <div class="status-icon">
+                            <div class="security-option">
+                                <div class="option-info">
+                                    <div class="option-icon">
                                         <i class="fas fa-mobile-alt"></i>
                                     </div>
-                                    <div class="status-content">
-                                        <h4>SMS Authentication</h4>
-                                        <p>Receive codes via text message</p>
-                                        <div class="status-badge disabled">Disabled</div>
-                                    </div>
-                                    <button class="btn btn-outline">Enable</button>
-                                </div>
-                                
-                                <div class="status-card">
-                                    <div class="status-icon">
-                                        <i class="fas fa-qrcode"></i>
-                                    </div>
-                                    <div class="status-content">
+                                    <div class="option-details">
                                         <h4>Authenticator App</h4>
-                                        <p>Use Google Authenticator or similar</p>
-                                        <div class="status-badge enabled">Enabled</div>
+                                        <p>Use an authenticator app to generate codes</p>
                                     </div>
-                                    <button class="btn btn-outline">Manage</button>
+                                </div>
+                                <div class="option-action">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="twoFactorAuth">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Login Sessions</h3>
-                                <p>Manage your active login sessions</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Session Management</h3>
+                                <p>Manage your active sessions across devices</p>
                             </div>
                             
-                            <div class="sessions-list">
+                            <div class="session-list">
                                 <div class="session-item current">
                                     <div class="session-info">
-                                        <div class="session-icon">
-                                            <i class="fas fa-desktop"></i>
+                                        <div class="session-device">
+                                            <i class="fas fa-laptop"></i>
+                                            <span>Current Session - MacBook Pro</span>
                                         </div>
                                         <div class="session-details">
-                                            <h4>MacBook Air (Current)</h4>
-                                            <p>Chrome on macOS • Athens, Greece</p>
-                                            <small>Active now</small>
+                                            <span class="session-location">San Francisco, CA</span>
+                                            <span class="session-time">Active now</span>
                                         </div>
                                     </div>
                                     <div class="session-actions">
                                         <span class="current-badge">Current</span>
                                     </div>
                                 </div>
-                                
-                                <div class="session-item">
-                                    <div class="session-info">
-                                        <div class="session-icon">
-                                            <i class="fas fa-mobile-alt"></i>
-                                        </div>
-                                        <div class="session-details">
-                                            <h4>iPhone 14</h4>
-                                            <p>Safari on iOS • Athens, Greece</p>
-                                            <small>Last active 2 hours ago</small>
-                                        </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Settings -->
+                    <div class="settings-panel" id="system">
+                        <div class="panel-header">
+                            <h2>System Settings</h2>
+                            <p>Configure platform-wide settings and preferences</p>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Platform Configuration</h3>
+                                <p>General platform settings and configurations</p>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="platformName">Platform Name</label>
+                                        <input type="text" id="platformName" value="Chronos HR" class="form-input">
                                     </div>
-                                    <div class="session-actions">
-                                        <button class="btn btn-sm btn-danger">Revoke</button>
+                                    <div class="form-group">
+                                        <label for="supportEmail">Support Email</label>
+                                        <input type="email" id="supportEmail" value="support@chronoshr.com" class="form-input">
                                     </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="maxUsers">Maximum Users</label>
+                                        <input type="number" id="maxUsers" value="1000" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="sessionTimeout">Session Timeout (minutes)</label>
+                                        <input type="number" id="sessionTimeout" value="60" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>User Registration</h3>
+                                <p>Control how new users can join the platform</p>
+                            </div>
+                            
+                            <div class="system-options">
+                                <div class="system-option">
+                                    <div class="option-info">
+                                        <h4>Allow Self Registration</h4>
+                                        <p>Users can create their own accounts</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="allowSelfRegistration">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="system-option">
+                                    <div class="option-info">
+                                        <h4>Email Verification Required</h4>
+                                        <p>New users must verify their email address</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="requireEmailVerification" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="system-option">
+                                    <div class="option-info">
+                                        <h4>Admin Approval Required</h4>
+                                        <p>New registrations require admin approval</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="requireAdminApproval" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Data Management</h3>
+                                <p>Manage platform data and backups</p>
+                            </div>
+                            
+                            <div class="data-actions">
+                                <div class="action-item">
+                                    <div class="action-info">
+                                        <h4>Export All Data</h4>
+                                        <p>Download a complete backup of all platform data</p>
+                                    </div>
+                                    <button class="btn btn-outline">
+                                        <i class="fas fa-download"></i>
+                                        Export
+                                    </button>
+                                </div>
+                                <div class="action-item">
+                                    <div class="action-info">
+                                        <h4>System Analytics</h4>
+                                        <p>View detailed system usage and performance metrics</p>
+                                    </div>
+                                    <button class="btn btn-outline">
+                                        <i class="fas fa-chart-line"></i>
+                                        View Analytics
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -327,120 +401,73 @@
                             <h2>Notification Settings</h2>
                             <p>Control how and when you receive notifications</p>
                         </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
+
+                        <div class="settings-card">
+                            <div class="card-header">
                                 <h3>Email Notifications</h3>
                                 <p>Manage your email notification preferences</p>
                             </div>
                             
-                            <div class="notification-settings">
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Account Updates</h4>
-                                        <p>Important changes to your account settings</p>
+                            <div class="notification-options">
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>System Alerts</h4>
+                                        <p>Critical system issues and updates</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
+                                        <input type="checkbox" id="systemAlerts" checked>
+                                        <span class="slider"></span>
                                     </label>
                                 </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Security Alerts</h4>
-                                        <p>Login attempts and security events</p>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>User Activity</h4>
+                                        <p>New user registrations and account changes</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
+                                        <input type="checkbox" id="userActivity" checked>
+                                        <span class="slider"></span>
                                     </label>
                                 </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Team Updates</h4>
-                                        <p>New team members and role changes</p>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>Security Events</h4>
+                                        <p>Login attempts and security-related events</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox">
-                                        <span class="toggle-slider"></span>
+                                        <input type="checkbox" id="securityEvents" checked>
+                                        <span class="slider"></span>
                                     </label>
                                 </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Project Updates</h4>
-                                        <p>Project status changes and deadlines</p>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>Weekly Reports</h4>
+                                        <p>Platform usage and analytics summary</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Payroll Notifications</h4>
-                                        <p>Payment confirmations and tax documents</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Marketing & Updates</h4>
-                                        <p>Product updates and promotional content</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox">
-                                        <span class="toggle-slider"></span>
+                                        <input type="checkbox" id="weeklyReports">
+                                        <span class="slider"></span>
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>In-App Notifications</h3>
-                                <p>Notifications within the application</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Notification Schedule</h3>
+                                <p>Set your preferred times for receiving notifications</p>
                             </div>
                             
-                            <div class="notification-settings">
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Real-time Updates</h4>
-                                        <p>Live updates and activity feeds</p>
+                            <div class="form-section">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="quietHoursStart">Quiet Hours Start</label>
+                                        <input type="time" id="quietHoursStart" value="22:00" class="form-input">
                                     </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Sound Alerts</h4>
-                                        <p>Play sounds for important notifications</p>
+                                    <div class="form-group">
+                                        <label for="quietHoursEnd">Quiet Hours End</label>
+                                        <input type="time" id="quietHoursEnd" value="08:00" class="form-input">
                                     </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                
-                                <div class="notification-item">
-                                    <div class="notification-info">
-                                        <h4>Desktop Notifications</h4>
-                                        <p>Show notifications on your desktop</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
                                 </div>
                             </div>
                         </div>
@@ -450,179 +477,76 @@
                     <div class="settings-panel" id="appearance">
                         <div class="panel-header">
                             <h2>Appearance Settings</h2>
-                            <p>Customize the look and feel of your dashboard</p>
+                            <p>Customize the look and feel of your interface</p>
                         </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
+
+                        <div class="settings-card">
+                            <div class="card-header">
                                 <h3>Theme</h3>
                                 <p>Choose your preferred color scheme</p>
                             </div>
                             
                             <div class="theme-options">
-                                <div class="theme-card active" data-theme="light">
-                                    <div class="theme-preview light-theme">
-                                        <div class="preview-header"></div>
-                                        <div class="preview-sidebar"></div>
-                                        <div class="preview-content"></div>
+                                <div class="theme-option active" data-theme="light">
+                                    <div class="theme-preview light">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
                                     </div>
-                                    <div class="theme-info">
-                                        <h4>Light Theme</h4>
-                                        <p>Clean and bright interface</p>
-                                    </div>
+                                    <span>Light</span>
                                 </div>
-                                
-                                <div class="theme-card" data-theme="dark">
-                                    <div class="theme-preview dark-theme">
-                                        <div class="preview-header"></div>
-                                        <div class="preview-sidebar"></div>
-                                        <div class="preview-content"></div>
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview dark">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
                                     </div>
-                                    <div class="theme-info">
-                                        <h4>Dark Theme</h4>
-                                        <p>Easy on the eyes</p>
-                                    </div>
+                                    <span>Dark</span>
                                 </div>
-                                
-                                <div class="theme-card" data-theme="auto">
-                                    <div class="theme-preview auto-theme">
-                                        <div class="preview-header"></div>
-                                        <div class="preview-sidebar"></div>
-                                        <div class="preview-content"></div>
+                                <div class="theme-option" data-theme="auto">
+                                    <div class="theme-preview auto">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
                                     </div>
-                                    <div class="theme-info">
-                                        <h4>Auto</h4>
-                                        <p>Follows system preference</p>
-                                    </div>
+                                    <span>Auto</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Layout</h3>
-                                <p>Customize your dashboard layout</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Layout Preferences</h3>
+                                <p>Customize your workspace layout</p>
                             </div>
                             
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="sidebarPosition">Sidebar Position</label>
-                                    <select id="sidebarPosition" class="form-select">
-                                        <option value="left" selected>Left</option>
-                                        <option value="right">Right</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="sidebarBehavior">Sidebar Behavior</label>
-                                    <select id="sidebarBehavior" class="form-select">
-                                        <option value="fixed" selected>Fixed</option>
-                                        <option value="collapsible">Collapsible</option>
-                                        <option value="auto">Auto-hide</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="density">Content Density</label>
-                                    <select id="density" class="form-select">
-                                        <option value="comfortable" selected>Comfortable</option>
-                                        <option value="compact">Compact</option>
-                                        <option value="spacious">Spacious</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="animations">Animations</label>
-                                    <select id="animations" class="form-select">
-                                        <option value="enabled" selected>Enabled</option>
-                                        <option value="reduced">Reduced</option>
-                                        <option value="disabled">Disabled</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Organization Settings -->
-                    <div class="settings-panel" id="organization">
-                        <div class="panel-header">
-                            <h2>Organization Settings</h2>
-                            <p>Manage your organization's configuration</p>
-                        </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Organization Information</h3>
-                                <p>Basic organization details</p>
-                            </div>
-                            
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="orgName">Organization Name</label>
-                                    <input type="text" id="orgName" value="TechCorp Solutions" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="orgEmail">Organization Email</label>
-                                    <input type="email" id="orgEmail" value="contact@techcorp.com" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="orgPhone">Organization Phone</label>
-                                    <input type="tel" id="orgPhone" value="+30 210 123 4567" class="form-input">
-                                </div>
-                                <div class="form-group">
-                                    <label for="orgWebsite">Website</label>
-                                    <input type="url" id="orgWebsite" value="https://techcorp.com" class="form-input">
-                                </div>
-                                <div class="form-group full-width">
-                                    <label for="orgAddress">Address</label>
-                                    <textarea id="orgAddress" class="form-textarea" rows="3">123 Innovation Street, Athens 104 47, Greece</textarea>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Departments</h3>
-                                <p>Manage your organization's departments</p>
-                            </div>
-                            
-                            <div class="departments-list">
-                                <div class="department-item">
-                                    <div class="department-info">
-                                        <h4>Engineering</h4>
-                                        <p>45 employees • 8 managers</p>
+                            <div class="layout-options">
+                                <div class="layout-option">
+                                    <div class="option-info">
+                                        <h4>Compact Mode</h4>
+                                        <p>Reduce spacing and padding for more content</p>
                                     </div>
-                                    <div class="department-actions">
-                                        <button class="btn btn-sm btn-outline">Edit</button>
-                                        <button class="btn btn-sm btn-danger">Delete</button>
-                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="compactMode">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
-                                
-                                <div class="department-item">
-                                    <div class="department-info">
-                                        <h4>Marketing</h4>
-                                        <p>23 employees • 3 managers</p>
+                                <div class="layout-option">
+                                    <div class="option-info">
+                                        <h4>Sidebar Auto-hide</h4>
+                                        <p>Automatically hide sidebar on smaller screens</p>
                                     </div>
-                                    <div class="department-actions">
-                                        <button class="btn btn-sm btn-outline">Edit</button>
-                                        <button class="btn btn-sm btn-danger">Delete</button>
-                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="sidebarAutoHide" checked>
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
-                                
-                                <div class="department-item">
-                                    <div class="department-info">
-                                        <h4>Sales</h4>
-                                        <p>34 employees • 5 managers</p>
-                                    </div>
-                                    <div class="department-actions">
-                                        <button class="btn btn-sm btn-outline">Edit</button>
-                                        <button class="btn btn-sm btn-danger">Delete</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="form-actions">
-                                <button class="btn btn-primary">
-                                    <i class="fas fa-plus"></i>
-                                    Add Department
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -631,220 +555,138 @@
                     <div class="settings-panel" id="integrations">
                         <div class="panel-header">
                             <h2>Integrations</h2>
-                            <p>Connect with your favorite tools and services</p>
+                            <p>Connect with external services and applications</p>
                         </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Connected Services</h3>
-                                <p>Manage your third-party integrations</p>
+
+                        <div class="integrations-grid">
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fab fa-slack"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Slack</h3>
+                                    <p>Send notifications to Slack channels</p>
+                                    <span class="integration-status disconnected">Not Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-primary">Connect</button>
+                                </div>
                             </div>
-                            
-                            <div class="integrations-grid">
-                                <div class="integration-card connected">
-                                    <div class="integration-header">
-                                        <div class="integration-icon">
-                                            <i class="fab fa-slack"></i>
-                                        </div>
-                                        <div class="integration-status">
-                                            <span class="status-badge connected">Connected</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-content">
-                                        <h4>Slack</h4>
-                                        <p>Team communication and notifications</p>
-                                        <div class="integration-meta">
-                                            <span>Connected 2 months ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-actions">
-                                        <button class="btn btn-sm btn-outline">Configure</button>
-                                        <button class="btn btn-sm btn-danger">Disconnect</button>
-                                    </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fab fa-microsoft"></i>
                                 </div>
-                                
-                                <div class="integration-card connected">
-                                    <div class="integration-header">
-                                        <div class="integration-icon">
-                                            <i class="fab fa-google"></i>
-                                        </div>
-                                        <div class="integration-status">
-                                            <span class="status-badge connected">Connected</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-content">
-                                        <h4>Google Workspace</h4>
-                                        <p>Email, calendar, and document sync</p>
-                                        <div class="integration-meta">
-                                            <span>Connected 1 month ago</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-actions">
-                                        <button class="btn btn-sm btn-outline">Configure</button>
-                                        <button class="btn btn-sm btn-danger">Disconnect</button>
-                                    </div>
+                                <div class="integration-info">
+                                    <h3>Microsoft Teams</h3>
+                                    <p>Integrate with Microsoft Teams</p>
+                                    <span class="integration-status disconnected">Not Connected</span>
                                 </div>
-                                
-                                <div class="integration-card">
-                                    <div class="integration-header">
-                                        <div class="integration-icon">
-                                            <i class="fab fa-github"></i>
-                                        </div>
-                                        <div class="integration-status">
-                                            <span class="status-badge">Available</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-content">
-                                        <h4>GitHub</h4>
-                                        <p>Code repository and project management</p>
-                                        <div class="integration-meta">
-                                            <span>Free integration</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-actions">
-                                        <button class="btn btn-sm btn-primary">Connect</button>
-                                    </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-primary">Connect</button>
                                 </div>
-                                
-                                <div class="integration-card">
-                                    <div class="integration-header">
-                                        <div class="integration-icon">
-                                            <i class="fab fa-trello"></i>
-                                        </div>
-                                        <div class="integration-status">
-                                            <span class="status-badge">Available</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-content">
-                                        <h4>Trello</h4>
-                                        <p>Project management and task tracking</p>
-                                        <div class="integration-meta">
-                                            <span>Free integration</span>
-                                        </div>
-                                    </div>
-                                    <div class="integration-actions">
-                                        <button class="btn btn-sm btn-primary">Connect</button>
-                                    </div>
+                            </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Email Service</h3>
+                                    <p>Configure SMTP settings for emails</p>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline">Configure</button>
+                                </div>
+                            </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Database Backup</h3>
+                                    <p>Automated database backups</p>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline">Configure</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Billing Settings -->
-                    <div class="settings-panel" id="billing">
+                    <!-- Advanced Settings -->
+                    <div class="settings-panel" id="advanced">
                         <div class="panel-header">
-                            <h2>Billing & Subscription</h2>
-                            <p>Manage your subscription and billing information</p>
-                        </div>
-                        
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Current Plan</h3>
-                                <p>Your active subscription details</p>
-                            </div>
-                            
-                            <div class="plan-card">
-                                <div class="plan-header">
-                                    <div class="plan-info">
-                                        <h3>Professional Plan</h3>
-                                        <p>Perfect for growing teams</p>
-                                    </div>
-                                    <div class="plan-price">
-                                        <span class="price">€49</span>
-                                        <span class="period">/month</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="plan-features">
-                                    <div class="feature-item">
-                                        <i class="fas fa-check"></i>
-                                        <span>Up to 100 employees</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-check"></i>
-                                        <span>Advanced analytics</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-check"></i>
-                                        <span>Priority support</span>
-                                    </div>
-                                    <div class="feature-item">
-                                        <i class="fas fa-check"></i>
-                                        <span>Custom integrations</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="plan-actions">
-                                    <button class="btn btn-outline">Change Plan</button>
-                                    <button class="btn btn-primary">Upgrade</button>
-                                </div>
-                            </div>
+                            <h2>Advanced Settings</h2>
+                            <p>Advanced configuration options and developer settings</p>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Billing Information</h3>
-                                <p>Your payment method and billing address</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>API Configuration</h3>
+                                <p>Manage API keys and access tokens</p>
                             </div>
                             
-                            <div class="billing-info">
-                                <div class="payment-method">
-                                    <div class="payment-header">
-                                        <h4>Payment Method</h4>
-                                        <button class="btn btn-sm btn-outline">Update</button>
+                            <div class="api-section">
+                                <div class="api-key-item">
+                                    <div class="api-info">
+                                        <h4>Master API Key</h4>
+                                        <p>Full access to all API endpoints</p>
+                                        <code class="api-key">pk_live_51H2...</code>
                                     </div>
-                                    <div class="payment-details">
-                                        <div class="card-info">
-                                            <i class="fab fa-cc-visa"></i>
-                                            <span>•••• •••• •••• 4242</span>
-                                        </div>
-                                        <span class="expiry">Expires 12/25</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="billing-address">
-                                    <div class="address-header">
-                                        <h4>Billing Address</h4>
-                                        <button class="btn btn-sm btn-outline">Edit</button>
-                                    </div>
-                                    <div class="address-details">
-                                        <p>TechCorp Solutions</p>
-                                        <p>123 Innovation Street</p>
-                                        <p>Athens 104 47, Greece</p>
+                                    <div class="api-actions">
+                                        <button class="btn btn-outline btn-sm">Regenerate</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-section">
-                            <div class="section-header">
-                                <h3>Billing History</h3>
-                                <p>Your recent invoices and payments</p>
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Developer Options</h3>
+                                <p>Options for development and debugging</p>
                             </div>
                             
-                            <div class="billing-history">
-                                <div class="invoice-item">
-                                    <div class="invoice-info">
-                                        <h4>Invoice #2024-001</h4>
-                                        <p>Professional Plan - January 2024</p>
-                                        <small>Paid on Jan 1, 2024</small>
+                            <div class="developer-options">
+                                <div class="developer-option">
+                                    <div class="option-info">
+                                        <h4>Debug Mode</h4>
+                                        <p>Enable detailed logging and error reporting</p>
                                     </div>
-                                    <div class="invoice-amount">
-                                        <span class="amount">€49.00</span>
-                                        <button class="btn btn-sm btn-outline">Download</button>
-                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="debugMode">
+                                        <span class="slider"></span>
+                                    </label>
                                 </div>
-                                
-                                <div class="invoice-item">
-                                    <div class="invoice-info">
-                                        <h4>Invoice #2023-012</h4>
-                                        <p>Professional Plan - December 2023</p>
-                                        <small>Paid on Dec 1, 2023</small>
+                                <div class="developer-option">
+                                    <div class="option-info">
+                                        <h4>Maintenance Mode</h4>
+                                        <p>Put the platform into maintenance mode</p>
                                     </div>
-                                    <div class="invoice-amount">
-                                        <span class="amount">€49.00</span>
-                                        <button class="btn btn-sm btn-outline">Download</button>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="maintenanceMode">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card danger">
+                            <div class="card-header">
+                                <h3>Danger Zone</h3>
+                                <p>Irreversible actions that affect the entire platform</p>
+                            </div>
+                            
+                            <div class="danger-actions">
+                                <div class="danger-action">
+                                    <div class="action-info">
+                                        <h4>Reset All Data</h4>
+                                        <p>This will permanently delete all data on the platform</p>
                                     </div>
+                                    <button class="btn btn-danger">Reset Platform</button>
                                 </div>
                             </div>
                         </div>
@@ -855,8 +697,6 @@
     </div>
 
     <script src="js/shared.js"></script>
-    <script src="js/sidebar.js"></script>
-    <script src="js/dashboard.js"></script>
     <script src="js/settings.js"></script>
 </body>
 </html>

@@ -1,377 +1,932 @@
-// Settings Page JavaScript
+// Settings Page JavaScript - Real Data Integration
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSettings();
-});
+class SettingsManager {
+    constructor() {
+        this.currentUser = null;
+        this.isLoading = false;
+        this.hasChanges = false;
+        this.mockSessionData = null; // For demo purposes
+        this.initializeSettings();
+    }
 
-function initializeSettings() {
-    // Initialize tab navigation
-    initializeTabs();
-    
-    // Initialize form handlers
-    initializeFormHandlers();
-    
-    // Initialize password strength checker
-    initializePasswordStrength();
-    
-    // Initialize avatar upload
-    initializeAvatarUpload();
-    
-    // Initialize theme selection
-    initializeThemeSelection();
-    
-    // Initialize save functionality
-    initializeSaveFunctionality();
-    
-    // Initialize notification toggles
-    initializeNotificationToggles();
-}
-
-// Tab Navigation
-function initializeTabs() {
-    const tabs = document.querySelectorAll('.settings-tab');
-    const panels = document.querySelectorAll('.settings-panel');
-    
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const targetTab = tab.dataset.tab;
+    async initializeSettings() {
+        console.log('🚀 Initializing Settings Manager...');
+        
+        // Wait for shared EmployeeHub to be ready if it exists
+        await this.waitForSharedInstance();
+        
+        try {
+            // Load user profile first
+            await this.loadUserProfile();
             
-            // Remove active class from all tabs and panels
-            tabs.forEach(t => t.classList.remove('active'));
-            panels.forEach(p => p.classList.remove('active'));
+            // Initialize all components
+            this.initializeTabs();
+            this.initializeFormHandlers();
+            this.initializePasswordStrength();
+            this.initializeAvatarUpload();
+            this.initializeThemeSelection();
+            this.initializeSaveFunctionality();
+            this.initializeNotificationToggles();
+            this.initializeSystemSettings();
             
-            // Add active class to clicked tab and corresponding panel
-            tab.classList.add('active');
-            document.getElementById(targetTab).classList.add('active');
+            // Load all data
+            await this.loadAllSettingsData();
             
-            // Update URL hash
-            window.location.hash = targetTab;
-        });
-    });
-    
-    // Check for hash on page load
-    if (window.location.hash) {
-        const targetTab = window.location.hash.substring(1);
-        const tab = document.querySelector(`[data-tab="${targetTab}"]`);
-        if (tab) {
-            tab.click();
+            console.log('✅ Settings Manager initialized successfully');
+        } catch (error) {
+            console.error('❌ Settings initialization failed:', error);
+            this.showError('Failed to load settings. Please refresh the page.');
         }
     }
-}
 
-// Form Handlers
-function initializeFormHandlers() {
-    // Profile form
-    const profileForm = document.querySelector('#profile');
-    if (profileForm) {
-        const inputs = profileForm.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
+    async waitForSharedInstance() {
+        // Wait for shared EmployeeHub instance to be available
+        const maxWait = 5000; // 5 seconds
+        const startTime = Date.now();
+        
+        while (!window.EmployeeHub && (Date.now() - startTime) < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        if (window.EmployeeHub) {
+            console.log('✅ Shared EmployeeHub instance found');
+            // If shared instance already has user data, use it
+            if (window.EmployeeHub.currentUser) {
+                this.currentUser = window.EmployeeHub.currentUser;
+                console.log('✅ Using user data from shared instance:', this.currentUser);
+            }
+        }
+    }
+
+    showLoadingState() {
+        // Don't interfere with sidebar elements - let shared.js handle those
+        // Only show loading for settings-specific elements
+        console.log('📄 Settings page loading...');
+    }
+
+    hideLoadingState() {
+        // Loading is handled by individual data loading functions
+    }
+
+    async loadUserProfile() {
+        try {
+            console.log('📡 Loading user profile...');
+            
+            // If we already have user data from shared instance, use it
+            if (this.currentUser) {
+                console.log('✅ Using existing user data');
+                this.updateProfileUI();
+                return;
+            }
+            
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            const response = await fetch('/api/auth/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Profile fetch failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            // Extract profile data (handle nested structure)
+            this.currentUser = data.profile || data.user || data;
+            
+            console.log('✅ User profile loaded:', this.currentUser);
+            
+            // Update profile information in the UI
+            this.updateProfileUI();
+            
+        } catch (error) {
+            console.error('❌ Failed to load user profile:', error);
+            throw error;
+        }
+    }
+
+    updateProfileUI() {
+        if (!this.currentUser) return;
+
+        // Only update profile form fields, not sidebar elements
+        // Sidebar elements are handled by shared.js
+        
+        const firstNameInput = document.getElementById('firstName');
+        const lastNameInput = document.getElementById('lastName');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const bioInput = document.getElementById('bio');
+        const avatarPreview = document.getElementById('avatarPreview');
+
+        if (firstNameInput) firstNameInput.value = this.currentUser.first_name || '';
+        if (lastNameInput) lastNameInput.value = this.currentUser.last_name || '';
+        if (emailInput) emailInput.value = this.currentUser.email || '';
+        if (phoneInput) phoneInput.value = this.currentUser.phone || '';
+        if (bioInput) bioInput.value = this.currentUser.bio || '';
+        
+        // Update avatar preview
+        if (avatarPreview) {
+            const initials = this.getInitials(this.currentUser.first_name, this.currentUser.last_name);
+            avatarPreview.textContent = initials;
+        }
+
+        // Update role badge
+        this.updateRoleBadge();
+    }
+
+    updateRoleBadge() {
+        const roleBadge = document.querySelector('.role-badge');
+        if (roleBadge && this.currentUser) {
+            const role = this.currentUser.role;
+            
+            // Update badge content
+            const roleText = this.formatRole(role);
+            roleBadge.innerHTML = `<i class="fas fa-crown"></i> ${roleText}`;
+            
+            // Update badge class based on role
+            roleBadge.className = `role-badge ${role.replace('_', '-')}`;
+        }
+    }
+
+    formatRole(role) {
+        const roleMap = {
+            'super_admin': 'Super Administrator',
+            'admin': 'Administrator',
+            'manager': 'Manager',
+            'employee': 'Employee',
+            'organization_member': 'Organization Member'
+        };
+        return roleMap[role] || role;
+    }
+
+    getInitials(firstName, lastName) {
+        const first = (firstName || '').charAt(0).toUpperCase();
+        const last = (lastName || '').charAt(0).toUpperCase();
+        return first + last || 'U';
+    }
+
+    async loadAllSettingsData() {
+        try {
+            // Load data in parallel
+            await Promise.all([
+                this.loadNotificationSettings(),
+                this.loadSystemSettings(),
+                this.loadSecuritySettings(),
+                this.loadSessionData()
+            ]);
+        } catch (error) {
+            console.error('❌ Failed to load some settings data:', error);
+        }
+    }
+
+    async loadNotificationSettings() {
+        try {
+            // For now, use localStorage or set defaults
+            // In a real app, this would come from the database
+            const saved = localStorage.getItem('notificationSettings');
+            const settings = saved ? JSON.parse(saved) : {
+                systemAlerts: true,
+                userActivity: true,
+                securityEvents: true,
+                weeklyReports: false,
+                quietHoursStart: '22:00',
+                quietHoursEnd: '08:00'
+            };
+
+            // Update UI
+            Object.keys(settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    if (element.type === 'checkbox') {
+                        element.checked = settings[key];
+                    } else {
+                        element.value = settings[key];
+                    }
+                }
+            });
+
+        } catch (error) {
+            console.error('❌ Failed to load notification settings:', error);
+        }
+    }
+
+    async loadSystemSettings() {
+        try {
+            // Load system configuration (super admin only)
+            if (this.currentUser?.role === 'super_admin') {
+                const settings = {
+                    platformName: 'Chronos HR',
+                    supportEmail: 'support@chronoshr.com',
+                    maxUsers: 1000,
+                    sessionTimeout: 60,
+                    allowSelfRegistration: false,
+                    requireEmailVerification: true,
+                    requireAdminApproval: true
+                };
+
+                // Update UI
+                Object.keys(settings).forEach(key => {
+                    const element = document.getElementById(key);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = settings[key];
+                        } else {
+                            element.value = settings[key];
+                        }
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('❌ Failed to load system settings:', error);
+        }
+    }
+
+    async loadSecuritySettings() {
+        try {
+            // Load security settings from localStorage or defaults
+            const settings = {
+                twoFactorAuth: false,
+                sidebarAutoHide: true,
+                compactMode: false
+            };
+
+            Object.keys(settings).forEach(key => {
+                const element = document.getElementById(key);
+                if (element && element.type === 'checkbox') {
+                    element.checked = settings[key];
+                }
+            });
+
+        } catch (error) {
+            console.error('❌ Failed to load security settings:', error);
+        }
+    }
+
+    async loadSessionData() {
+        try {
+            // Mock session data for demo (in real app, this would come from backend)
+            this.mockSessionData = [
+                {
+                    id: 'current',
+                    device: 'MacBook Pro',
+                    location: 'San Francisco, CA',
+                    lastActive: 'Active now',
+                    isCurrent: true
+                }
+            ];
+
+            this.updateSessionList();
+
+        } catch (error) {
+            console.error('❌ Failed to load session data:', error);
+        }
+    }
+
+    updateSessionList() {
+        const sessionList = document.querySelector('.session-list');
+        if (!sessionList || !this.mockSessionData) return;
+
+        sessionList.innerHTML = this.mockSessionData.map(session => `
+            <div class="session-item ${session.isCurrent ? 'current' : ''}">
+                <div class="session-info">
+                    <div class="session-device">
+                        <i class="fas fa-${session.device.toLowerCase().includes('phone') ? 'mobile-alt' : 'laptop'}"></i>
+                        <span>${session.isCurrent ? 'Current Session - ' : ''}${session.device}</span>
+                    </div>
+                    <div class="session-details">
+                        <span class="session-location">${session.location}</span>
+                        <span class="session-time">${session.lastActive}</span>
+                    </div>
+                </div>
+                <div class="session-actions">
+                    ${session.isCurrent ? 
+                        '<span class="current-badge">Current</span>' : 
+                        '<button class="btn btn-sm btn-danger" onclick="settingsManager.revokeSession(\'' + session.id + '\')">Revoke</button>'
+                    }
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // Tab Navigation
+    initializeTabs() {
+        const tabs = document.querySelectorAll('.settings-tab');
+        const panels = document.querySelectorAll('.settings-panel');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                // Remove active class from all tabs and panels
+                tabs.forEach(t => t.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding panel
+                tab.classList.add('active');
+                const targetPanel = document.getElementById(targetTab);
+                if (targetPanel) {
+                    targetPanel.classList.add('active');
+                }
+                
+                // Update URL hash
+                window.location.hash = targetTab;
+            });
+        });
+        
+        // Check for hash on page load
+        if (window.location.hash) {
+            const targetTab = window.location.hash.substring(1);
+            const tab = document.querySelector(`[data-tab="${targetTab}"]`);
+            if (tab) {
+                tab.click();
+            }
+        }
+    }
+
+    // Form Handlers
+    initializeFormHandlers() {
+        // Profile form
+        const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
+        profileInputs.forEach(input => {
             input.addEventListener('change', () => {
-                markFormAsChanged(profileForm);
+                this.markFormAsChanged();
+            });
+        });
+        
+        // Security form
+        const securityInputs = document.querySelectorAll('#security input');
+        securityInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.markFormAsChanged();
+            });
+        });
+
+        // System form (super admin only)
+        const systemInputs = document.querySelectorAll('#system input, #system select');
+        systemInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.markFormAsChanged();
+            });
+        });
+
+        // Notification form
+        const notificationInputs = document.querySelectorAll('#notifications input');
+        notificationInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.markFormAsChanged();
             });
         });
     }
-    
-    // Security form
-    const securityForm = document.querySelector('#security');
-    if (securityForm) {
-        const inputs = securityForm.querySelectorAll('input');
-        inputs.forEach(input => {
-            input.addEventListener('change', () => {
-                markFormAsChanged(securityForm);
+
+    markFormAsChanged() {
+        this.hasChanges = true;
+        this.updateSaveButton();
+    }
+
+    updateSaveButton() {
+        const saveBtn = document.getElementById('saveAllBtn');
+        if (!saveBtn) return;
+        
+        if (this.hasChanges) {
+            saveBtn.classList.add('has-changes');
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            saveBtn.disabled = false;
+        } else {
+            saveBtn.classList.remove('has-changes');
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            saveBtn.disabled = false;
+        }
+    }
+
+    // Password Strength Checker
+    initializePasswordStrength() {
+        const passwordInput = document.getElementById('newPassword');
+        
+        if (passwordInput) {
+            passwordInput.addEventListener('input', () => {
+                const password = passwordInput.value;
+                const strength = this.calculatePasswordStrength(password);
+                this.updatePasswordStrength(strength);
+            });
+        }
+    }
+
+    calculatePasswordStrength(password) {
+        let score = 0;
+        
+        if (password.length >= 8) score += 1;
+        if (password.match(/[a-z]/)) score += 1;
+        if (password.match(/[A-Z]/)) score += 1;
+        if (password.match(/[0-9]/)) score += 1;
+        if (password.match(/[^a-zA-Z0-9]/)) score += 1;
+        
+        if (score < 2) return { level: 'weak', percentage: 25, color: '#ef4444' };
+        if (score < 3) return { level: 'fair', percentage: 50, color: '#f59e0b' };
+        if (score < 4) return { level: 'good', percentage: 75, color: '#10b981' };
+        return { level: 'strong', percentage: 100, color: '#059669' };
+    }
+
+    updatePasswordStrength(strength) {
+        // Create strength indicator if it doesn't exist
+        const passwordInput = document.getElementById('newPassword');
+        if (!passwordInput) return;
+
+        let strengthContainer = passwordInput.parentNode.querySelector('.password-strength');
+        if (!strengthContainer) {
+            strengthContainer = document.createElement('div');
+            strengthContainer.className = 'password-strength';
+            strengthContainer.innerHTML = `
+                <div class="strength-bar">
+                    <div class="strength-fill"></div>
+                </div>
+                <span class="strength-text">Enter a password</span>
+            `;
+            passwordInput.parentNode.appendChild(strengthContainer);
+        }
+
+        const strengthBar = strengthContainer.querySelector('.strength-fill');
+        const strengthText = strengthContainer.querySelector('.strength-text');
+
+        if (strengthBar && strengthText) {
+            strengthBar.style.width = strength.percentage + '%';
+            strengthBar.style.backgroundColor = strength.color;
+            
+            const messages = {
+                weak: 'Weak password',
+                fair: 'Fair password',
+                good: 'Good password',
+                strong: 'Strong password'
+            };
+            
+            strengthText.textContent = messages[strength.level];
+            strengthText.style.color = strength.color;
+        }
+    }
+
+    // Avatar Upload
+    initializeAvatarUpload() {
+        const avatarInput = document.getElementById('avatarInput');
+        const avatarPreview = document.getElementById('avatarPreview');
+        
+        if (avatarInput && avatarPreview) {
+            avatarInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    if (file.type.startsWith('image/')) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            // For now, just show initials since we don't have image upload backend
+                            this.showNotification('Avatar upload functionality will be available soon', 'info');
+                            this.markFormAsChanged();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        this.showNotification('Please select a valid image file', 'error');
+                    }
+                }
+            });
+            
+            // Click avatar to trigger file input
+            avatarPreview.addEventListener('click', () => {
+                avatarInput.click();
+            });
+        }
+    }
+
+    // Theme Selection
+    initializeThemeSelection() {
+        const themeOptions = document.querySelectorAll('.theme-option');
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        themeOptions.forEach(option => {
+            if (option.dataset.theme === savedTheme) {
+                option.classList.add('active');
+            } else {
+                option.classList.remove('active');
+            }
+        });
+        
+        themeOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove active class from all options
+                themeOptions.forEach(opt => opt.classList.remove('active'));
+                
+                // Add active class to clicked option
+                option.classList.add('active');
+                
+                // Get selected theme
+                const theme = option.dataset.theme;
+                
+                // Apply theme
+                this.applyTheme(theme);
+                
+                // Mark as changed
+                this.markFormAsChanged();
             });
         });
     }
-}
 
-function markFormAsChanged(form) {
-    form.classList.add('has-changes');
-    updateSaveButton();
-}
-
-function updateSaveButton() {
-    const saveBtn = document.getElementById('saveAllBtn');
-    const hasChanges = document.querySelectorAll('.has-changes').length > 0;
-    
-    if (hasChanges) {
-        saveBtn.classList.add('has-changes');
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save Changes';
-    } else {
-        saveBtn.classList.remove('has-changes');
-        saveBtn.innerHTML = '<i class="fas fa-save"></i> Save All Changes';
+    applyTheme(theme) {
+        // Store theme preference
+        localStorage.setItem('theme', theme);
+        
+        // Apply theme to body (you can implement actual theme switching here)
+        document.body.setAttribute('data-theme', theme);
+        
+        this.showNotification(`Theme changed to ${theme}`, 'success');
     }
-}
 
-// Password Strength Checker
-function initializePasswordStrength() {
-    const passwordInput = document.getElementById('newPassword');
-    const strengthBar = document.querySelector('.strength-fill');
-    const strengthText = document.querySelector('.strength-text');
-    
-    if (passwordInput && strengthBar && strengthText) {
-        passwordInput.addEventListener('input', () => {
-            const password = passwordInput.value;
-            const strength = calculatePasswordStrength(password);
-            updatePasswordStrength(strength, strengthBar, strengthText);
+    // Save Functionality
+    initializeSaveFunctionality() {
+        const saveBtn = document.getElementById('saveAllBtn');
+        const discardBtn = document.getElementById('discardChanges');
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveAllChanges();
+            });
+        }
+
+        if (discardBtn) {
+            discardBtn.addEventListener('click', () => {
+                this.discardChanges();
+            });
+        }
+    }
+
+    async saveAllChanges() {
+        if (this.isLoading) return;
+        
+        const saveBtn = document.getElementById('saveAllBtn');
+        const originalText = saveBtn.innerHTML;
+        
+        this.isLoading = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        saveBtn.disabled = true;
+        
+        try {
+            // Collect form data
+            const formData = this.collectFormData();
+            console.log('💾 Saving form data:', formData);
+
+            // Save profile data
+            if (formData.profile && Object.keys(formData.profile).length > 0) {
+                await this.saveProfileData(formData.profile);
+            }
+
+            // Save notification settings
+            if (formData.notifications) {
+                this.saveNotificationSettings(formData.notifications);
+            }
+
+            // Save system settings (super admin only)
+            if (formData.system && this.currentUser?.role === 'super_admin') {
+                this.saveSystemSettings(formData.system);
+            }
+
+            // Save security settings
+            if (formData.security) {
+                this.saveSecuritySettings(formData.security);
+            }
+
+            this.showNotification('Settings saved successfully!', 'success');
+            this.hasChanges = false;
+            this.updateSaveButton();
+            
+        } catch (error) {
+            console.error('❌ Save failed:', error);
+            this.showNotification('Failed to save settings. Please try again.', 'error');
+        } finally {
+            this.isLoading = false;
+            saveBtn.innerHTML = originalText;
+            saveBtn.disabled = false;
+        }
+    }
+
+    async saveProfileData(profileData) {
+        const token = localStorage.getItem('token');
+        
+        const response = await fetch('/api/auth/profile', {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(profileData)
         });
+
+        if (!response.ok) {
+            throw new Error('Failed to update profile');
+        }
+
+        const result = await response.json();
+        console.log('✅ Profile updated:', result);
+        
+        // Update current user data
+        if (result.profile) {
+            this.currentUser = { ...this.currentUser, ...result.profile };
+            this.updateProfileUI();
+        }
     }
-}
 
-function calculatePasswordStrength(password) {
-    let score = 0;
-    
-    if (password.length >= 8) score += 1;
-    if (password.match(/[a-z]/)) score += 1;
-    if (password.match(/[A-Z]/)) score += 1;
-    if (password.match(/[0-9]/)) score += 1;
-    if (password.match(/[^a-zA-Z0-9]/)) score += 1;
-    
-    if (score < 2) return { level: 'weak', percentage: 25 };
-    if (score < 3) return { level: 'fair', percentage: 50 };
-    if (score < 4) return { level: 'good', percentage: 75 };
-    return { level: 'strong', percentage: 100 };
-}
+    saveNotificationSettings(settings) {
+        localStorage.setItem('notificationSettings', JSON.stringify(settings));
+        console.log('✅ Notification settings saved');
+    }
 
-function updatePasswordStrength(strength, strengthBar, strengthText) {
-    strengthBar.style.width = strength.percentage + '%';
-    strengthBar.className = 'strength-fill ' + strength.level;
-    
-    const messages = {
-        weak: 'Weak password',
-        fair: 'Fair password',
-        good: 'Good password',
-        strong: 'Strong password'
-    };
-    
-    strengthText.textContent = messages[strength.level];
-}
+    saveSystemSettings(settings) {
+        localStorage.setItem('systemSettings', JSON.stringify(settings));
+        console.log('✅ System settings saved');
+    }
 
-// Avatar Upload
-function initializeAvatarUpload() {
-    const avatarInput = document.getElementById('avatarInput');
-    const avatarPreview = document.getElementById('avatarPreview');
-    
-    if (avatarInput && avatarPreview) {
-        avatarInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if (file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        avatarPreview.src = e.target.result;
-                        markFormAsChanged(document.querySelector('#profile'));
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    showNotification('Please select a valid image file', 'error');
+    saveSecuritySettings(settings) {
+        localStorage.setItem('securitySettings', JSON.stringify(settings));
+        console.log('✅ Security settings saved');
+    }
+
+    discardChanges() {
+        if (confirm('Are you sure you want to discard all changes?')) {
+            // Reload the page to reset all changes
+            window.location.reload();
+        }
+    }
+
+    collectFormData() {
+        const data = {
+            profile: {},
+            notifications: {},
+            system: {},
+            security: {},
+            appearance: {}
+        };
+        
+        // Profile data
+        const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
+        profileInputs.forEach(input => {
+            if (input.id && input.value !== '') {
+                const key = input.id;
+                if (['firstName', 'lastName', 'email', 'phone', 'bio'].includes(key)) {
+                    data.profile[key === 'firstName' ? 'first_name' : 
+                                  key === 'lastName' ? 'last_name' : key] = input.value;
                 }
             }
         });
         
-        // Click avatar to trigger file input
-        avatarPreview.addEventListener('click', () => {
-            avatarInput.click();
-        });
-    }
-}
-
-// Theme Selection
-function initializeThemeSelection() {
-    const themeCards = document.querySelectorAll('.theme-card');
-    
-    themeCards.forEach(card => {
-        card.addEventListener('click', () => {
-            // Remove active class from all cards
-            themeCards.forEach(c => c.classList.remove('active'));
-            
-            // Add active class to clicked card
-            card.classList.add('active');
-            
-            // Get selected theme
-            const theme = card.dataset.theme;
-            
-            // Apply theme (you can implement theme switching logic here)
-            applyTheme(theme);
-            
-            // Mark as changed
-            markFormAsChanged(document.querySelector('#appearance'));
-        });
-    });
-}
-
-function applyTheme(theme) {
-    // Store theme preference
-    localStorage.setItem('theme', theme);
-    
-    // Apply theme to body
-    document.body.className = `dashboard-bg theme-${theme}`;
-    
-    showNotification(`Theme changed to ${theme}`, 'success');
-}
-
-// Save Functionality
-function initializeSaveFunctionality() {
-    const saveBtn = document.getElementById('saveAllBtn');
-    
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            saveAllChanges();
-        });
-    }
-}
-
-function saveAllChanges() {
-    const saveBtn = document.getElementById('saveAllBtn');
-    const originalText = saveBtn.innerHTML;
-    
-    // Show loading state
-    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    saveBtn.disabled = true;
-    
-    // Simulate save operation
-    setTimeout(() => {
-        // Collect all form data
-        const formData = collectFormData();
-        
-        // Here you would typically send the data to your backend
-        console.log('Saving form data:', formData);
-        
-        // Show success message
-        showNotification('Settings saved successfully!', 'success');
-        
-        // Reset form states
-        document.querySelectorAll('.has-changes').forEach(form => {
-            form.classList.remove('has-changes');
-        });
-        
-        // Reset save button
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-        updateSaveButton();
-        
-    }, 1500);
-}
-
-function collectFormData() {
-    const data = {};
-    
-    // Profile data
-    const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
-    profileInputs.forEach(input => {
-        if (input.id) {
-            data[input.id] = input.value;
-        }
-    });
-    
-    // Security data
-    const securityInputs = document.querySelectorAll('#security input');
-    securityInputs.forEach(input => {
-        if (input.id) {
-            data[input.id] = input.value;
-        }
-    });
-    
-    // Notification settings
-    const notificationToggles = document.querySelectorAll('#notifications input[type="checkbox"]');
-    notificationToggles.forEach(toggle => {
-        data[toggle.id || toggle.name] = toggle.checked;
-    });
-    
-    // Appearance settings
-    const appearanceInputs = document.querySelectorAll('#appearance select');
-    appearanceInputs.forEach(input => {
-        if (input.id) {
-            data[input.id] = input.value;
-        }
-    });
-    
-    return data;
-}
-
-// Notification Toggles
-function initializeNotificationToggles() {
-    const toggles = document.querySelectorAll('.toggle-switch input');
-    
-    toggles.forEach(toggle => {
-        toggle.addEventListener('change', () => {
-            const notificationItem = toggle.closest('.notification-item');
-            if (notificationItem) {
-                markFormAsChanged(document.querySelector('#notifications'));
+        // Notification settings
+        const notificationInputs = document.querySelectorAll('#notifications input');
+        notificationInputs.forEach(input => {
+            if (input.id) {
+                data.notifications[input.id] = input.type === 'checkbox' ? input.checked : input.value;
             }
         });
-    });
-}
-
-// Utility Functions
-function showNotification(message, type = 'info') {
-    // Create notification element
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <div class="notification-content">
-            <i class="fas fa-${getNotificationIcon(type)}"></i>
-            <span>${message}</span>
-        </div>
-        <button class="notification-close">
-            <i class="fas fa-times"></i>
-        </button>
-    `;
-    
-    // Add styles
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${getNotificationColor(type)};
-        color: white;
-        padding: 16px 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        z-index: 1000;
-        animation: slideInRight 0.3s ease-out;
-        max-width: 400px;
-    `;
-    
-    // Add to page
-    document.body.appendChild(notification);
-    
-    // Add close functionality
-    const closeBtn = notification.querySelector('.notification-close');
-    closeBtn.addEventListener('click', () => {
-        notification.remove();
-    });
-    
-    // Auto remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentNode) {
-            notification.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => notification.remove(), 300);
+        
+        // System settings (super admin only)
+        if (this.currentUser?.role === 'super_admin') {
+            const systemInputs = document.querySelectorAll('#system input, #system select');
+            systemInputs.forEach(input => {
+                if (input.id) {
+                    data.system[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
         }
-    }, 5000);
+        
+        // Security settings
+        const securityInputs = document.querySelectorAll('#security input[type="checkbox"]');
+        securityInputs.forEach(input => {
+            if (input.id) {
+                data.security[input.id] = input.checked;
+            }
+        });
+        
+        return data;
+    }
+
+    // Notification Toggles
+    initializeNotificationToggles() {
+        const toggles = document.querySelectorAll('.toggle-switch input');
+        
+        toggles.forEach(toggle => {
+            toggle.addEventListener('change', () => {
+                this.markFormAsChanged();
+            });
+        });
+    }
+
+    // System Settings
+    initializeSystemSettings() {
+        // Initialize developer options
+        const devOptions = document.querySelectorAll('#advanced input[type="checkbox"]');
+        devOptions.forEach(option => {
+            option.addEventListener('change', () => {
+                const isEnabled = option.checked;
+                const optionName = option.id;
+                
+                if (optionName === 'maintenanceMode' && isEnabled) {
+                    if (!confirm('Are you sure you want to enable maintenance mode? This will make the platform unavailable to users.')) {
+                        option.checked = false;
+                        return;
+                    }
+                }
+                
+                this.markFormAsChanged();
+            });
+        });
+
+        // Initialize danger zone actions
+        const resetPlatformBtn = document.querySelector('.danger-action button');
+        if (resetPlatformBtn) {
+            resetPlatformBtn.addEventListener('click', () => {
+                this.handleDangerousAction('reset');
+            });
+        }
+    }
+
+    handleDangerousAction(action) {
+        if (action === 'reset') {
+            const confirmation = prompt('This will permanently delete ALL data on the platform. Type "DELETE EVERYTHING" to confirm:');
+            if (confirmation === 'DELETE EVERYTHING') {
+                this.showNotification('Platform reset functionality is disabled in demo mode', 'warning');
+            } else {
+                this.showNotification('Platform reset cancelled', 'info');
+            }
+        }
+    }
+
+    // Session Management
+    async revokeSession(sessionId) {
+        if (confirm('Are you sure you want to revoke this session?')) {
+            try {
+                // In a real app, make API call to revoke session
+                console.log('🔐 Revoking session:', sessionId);
+                
+                // Remove from mock data
+                this.mockSessionData = this.mockSessionData.filter(session => session.id !== sessionId);
+                this.updateSessionList();
+                
+                this.showNotification('Session revoked successfully', 'success');
+            } catch (error) {
+                console.error('❌ Failed to revoke session:', error);
+                this.showNotification('Failed to revoke session', 'error');
+            }
+        }
+    }
+
+    // Integration Management
+    connectIntegration(integrationName) {
+        console.log('🔗 Connecting to:', integrationName);
+        
+        this.showNotification(`Connecting to ${integrationName}...`, 'info');
+        
+        // Simulate connection process
+        setTimeout(() => {
+            this.showNotification(`Successfully connected to ${integrationName}!`, 'success');
+            
+            // Update integration card
+            const integrationCard = document.querySelector(`[data-integration="${integrationName}"]`);
+            if (integrationCard) {
+                const statusEl = integrationCard.querySelector('.integration-status');
+                const actionBtn = integrationCard.querySelector('button');
+                
+                if (statusEl) {
+                    statusEl.textContent = 'Connected';
+                    statusEl.className = 'integration-status connected';
+                }
+                
+                if (actionBtn) {
+                    actionBtn.textContent = 'Configure';
+                    actionBtn.className = 'btn btn-outline';
+                }
+            }
+        }, 2000);
+    }
+
+    disconnectIntegration(integrationName) {
+        if (confirm(`Are you sure you want to disconnect from ${integrationName}?`)) {
+            console.log('🔌 Disconnecting from:', integrationName);
+            
+            this.showNotification(`Disconnected from ${integrationName}`, 'success');
+            
+            // Update integration card
+            const integrationCard = document.querySelector(`[data-integration="${integrationName}"]`);
+            if (integrationCard) {
+                const statusEl = integrationCard.querySelector('.integration-status');
+                const actionBtn = integrationCard.querySelector('button');
+                
+                if (statusEl) {
+                    statusEl.textContent = 'Not Connected';
+                    statusEl.className = 'integration-status disconnected';
+                }
+                
+                if (actionBtn) {
+                    actionBtn.textContent = 'Connect';
+                    actionBtn.className = 'btn btn-primary';
+                }
+            }
+        }
+    }
+
+    // Utility Functions
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
+                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
+                <span>${message}</span>
+            </div>
+            <button class="notification-close">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Add styles
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${this.getNotificationColor(type)};
+            color: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 400px;
+        `;
+        
+        // Add to page
+        document.body.appendChild(notification);
+        
+        // Add close functionality
+        const closeBtn = notification.querySelector('.notification-close');
+        closeBtn.addEventListener('click', () => {
+            notification.remove();
+        });
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }
+        }, 5000);
+    }
+
+    getNotificationIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+        return icons[type] || 'info-circle';
+    }
+
+    getNotificationColor(type) {
+        const colors = {
+            success: '#10b981',
+            error: '#ef4444',
+            warning: '#f59e0b',
+            info: '#3b82f6'
+        };
+        return colors[type] || '#3b82f6';
+    }
+
+    showError(message) {
+        this.showNotification(message, 'error');
+    }
 }
 
-function getNotificationIcon(type) {
-    const icons = {
-        success: 'check-circle',
-        error: 'exclamation-circle',
-        warning: 'exclamation-triangle',
-        info: 'info-circle'
-    };
-    return icons[type] || 'info-circle';
+// Global functions for HTML onclick handlers
+function connectIntegration(name) {
+    if (window.settingsManager) {
+        window.settingsManager.connectIntegration(name);
+    }
 }
 
-function getNotificationColor(type) {
-    const colors = {
-        success: '#10b981',
-        error: '#ef4444',
-        warning: '#f59e0b',
-        info: '#3b82f6'
-    };
-    return colors[type] || '#3b82f6';
+function disconnectIntegration(name) {
+    if (window.settingsManager) {
+        window.settingsManager.disconnectIntegration(name);
+    }
 }
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.settingsManager = new SettingsManager();
+});
 
 // Add notification animations to CSS
 const style = document.createElement('style');
@@ -432,88 +987,30 @@ style.textContent = `
             box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
         }
     }
-`;
-document.head.appendChild(style);
 
-// Session Management
-function revokeSession(sessionId) {
-    if (confirm('Are you sure you want to revoke this session?')) {
-        // Here you would typically make an API call to revoke the session
-        console.log('Revoking session:', sessionId);
-        
-        // Remove the session item from DOM
-        const sessionItem = document.querySelector(`[data-session-id="${sessionId}"]`);
-        if (sessionItem) {
-            sessionItem.style.animation = 'fadeOut 0.3s ease-out';
-            setTimeout(() => sessionItem.remove(), 300);
-        }
-        
-        showNotification('Session revoked successfully', 'success');
+    .password-strength {
+        margin-top: 8px;
     }
-}
 
-// Department Management
-function deleteDepartment(departmentId) {
-    if (confirm('Are you sure you want to delete this department? This action cannot be undone.')) {
-        // Here you would typically make an API call to delete the department
-        console.log('Deleting department:', departmentId);
-        
-        // Remove the department item from DOM
-        const departmentItem = document.querySelector(`[data-department-id="${departmentId}"]`);
-        if (departmentItem) {
-            departmentItem.style.animation = 'fadeOut 0.3s ease-out';
-            setTimeout(() => departmentItem.remove(), 300);
-        }
-        
-        showNotification('Department deleted successfully', 'success');
+    .strength-bar {
+        width: 100%;
+        height: 4px;
+        background: #f3f4f6;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 4px;
     }
-}
 
-// Integration Management
-function connectIntegration(integrationName) {
-    // Here you would typically redirect to the integration's OAuth flow
-    console.log('Connecting to:', integrationName);
-    
-    // Simulate connection process
-    showNotification(`Connecting to ${integrationName}...`, 'info');
-    
-    setTimeout(() => {
-        showNotification(`Successfully connected to ${integrationName}!`, 'success');
-        // Update the integration card to show connected state
-        const integrationCard = document.querySelector(`[data-integration="${integrationName}"]`);
-        if (integrationCard) {
-            integrationCard.classList.add('connected');
-        }
-    }, 2000);
-}
-
-function disconnectIntegration(integrationName) {
-    if (confirm(`Are you sure you want to disconnect from ${integrationName}?`)) {
-        // Here you would typically make an API call to disconnect
-        console.log('Disconnecting from:', integrationName);
-        
-        showNotification(`Disconnected from ${integrationName}`, 'success');
-        
-        // Update the integration card to show disconnected state
-        const integrationCard = document.querySelector(`[data-integration="${integrationName}"]`);
-        if (integrationCard) {
-            integrationCard.classList.remove('connected');
-        }
+    .strength-fill {
+        height: 100%;
+        border-radius: 2px;
+        transition: all 0.3s ease;
+        width: 0%;
     }
-}
 
-// Add fadeOut animation
-const fadeOutStyle = document.createElement('style');
-fadeOutStyle.textContent = `
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
+    .strength-text {
+        font-size: 0.75rem;
+        font-weight: 500;
     }
 `;
-document.head.appendChild(fadeOutStyle); 
+document.head.appendChild(style); 
