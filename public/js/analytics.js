@@ -45,24 +45,28 @@ function initializeGrowthChart() {
                     data: [1100, 1150, 1180, 1200, 1220, 1240, 1247],
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 3,
+                    borderWidth: 2,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.3
                 },
                 {
                     label: 'Active Employees',
                     data: [1050, 1100, 1130, 1150, 1170, 1190, 1195],
                     borderColor: '#10b981',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    borderWidth: 3,
+                    borderWidth: 2,
                     fill: true,
-                    tension: 0.4
+                    tension: 0.3
                 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            },
             plugins: {
                 legend: {
                     display: false
@@ -74,7 +78,10 @@ function initializeGrowthChart() {
                         display: false
                     },
                     ticks: {
-                        color: '#6b7280'
+                        color: '#6b7280',
+                        font: {
+                            size: 12
+                        }
                     }
                 },
                 y: {
@@ -82,15 +89,22 @@ function initializeGrowthChart() {
                         color: '#f3f4f6'
                     },
                     ticks: {
-                        color: '#6b7280'
+                        color: '#6b7280',
+                        font: {
+                            size: 12
+                        }
                     }
                 }
             },
             elements: {
                 point: {
-                    radius: 4,
-                    hoverRadius: 6
+                    radius: 3,
+                    hoverRadius: 5
                 }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
             }
         }
     });
@@ -122,6 +136,10 @@ function initializeDepartmentChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
+            },
             plugins: {
                 legend: {
                     display: false
@@ -151,13 +169,17 @@ function initializeProductivityChart() {
                 backgroundColor: 'rgba(59, 130, 246, 0.8)',
                 borderColor: '#3b82f6',
                 borderWidth: 0,
-                borderRadius: 6,
+                borderRadius: 4,
                 borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1000,
+                easing: 'easeInOutQuart'
+            },
             plugins: {
                 legend: {
                     display: false
@@ -169,7 +191,10 @@ function initializeProductivityChart() {
                         display: false
                     },
                     ticks: {
-                        color: '#6b7280'
+                        color: '#6b7280',
+                        font: {
+                            size: 12
+                        }
                     }
                 },
                 y: {
@@ -178,6 +203,9 @@ function initializeProductivityChart() {
                     },
                     ticks: {
                         color: '#6b7280',
+                        font: {
+                            size: 12
+                        },
                         callback: function(value) {
                             return value + '%';
                         }
@@ -214,6 +242,10 @@ function initializeProjectChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 800,
+                easing: 'easeInOutQuart'
+            },
             plugins: {
                 legend: {
                     display: false
@@ -228,10 +260,9 @@ function initializeProjectChart() {
     });
 }
 
-// Chart Tabs
+// Chart Tabs Functionality
 function initializeChartTabs() {
-    const tabs = document.querySelectorAll('.tab');
-    
+    const tabs = document.querySelectorAll('.chart-tabs .tab');
     tabs.forEach(tab => {
         tab.addEventListener('click', function() {
             // Remove active class from all tabs
@@ -239,60 +270,48 @@ function initializeChartTabs() {
             // Add active class to clicked tab
             this.classList.add('active');
             
-            // Update chart data based on selected period
-            updateProductivityChart(this.textContent.toLowerCase());
+            // Update chart based on selected period
+            const period = this.textContent.toLowerCase();
+            updateProductivityChart(period);
         });
     });
 }
 
-// Update productivity chart based on selected period
+// Update Productivity Chart based on selected period
 function updateProductivityChart(period) {
     const ctx = document.getElementById('productivityChart');
     if (!ctx) return;
 
-    let labels, data;
-    
-    switch(period) {
-        case 'daily':
-            labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            data = [85, 88, 92, 87, 90, 82, 79];
-            break;
-        case 'weekly':
-            labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-            data = [87, 89, 91, 88];
-            break;
-        case 'monthly':
-            labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-            data = [84, 86, 88, 87, 89, 91];
-            break;
-        default:
-            return;
-    }
+    // Sample data for different periods
+    const dataMap = {
+        'daily': [85, 88, 92, 87, 90, 82, 79],
+        'weekly': [87, 89, 91, 88, 86, 84, 85],
+        'monthly': [88, 90, 89, 91, 87, 88, 89]
+    };
 
+    const newData = dataMap[period] || dataMap['daily'];
+    
     // Update chart data
-    const chart = Chart.getChart(ctx);
-    if (chart) {
-        chart.data.labels = labels;
-        chart.data.datasets[0].data = data;
-        chart.update();
+    if (window.productivityChart) {
+        window.productivityChart.data.datasets[0].data = newData;
+        window.productivityChart.update('active');
     }
 }
 
-// Alert Banner
+// Alert Banner Functionality
 function initializeAlertBanner() {
     const closeIcon = document.querySelector('.close-icon');
     const alertBanner = document.querySelector('.alert-banner');
-    
-    if (closeIcon && alertBanner) {
+    const moreDetailsBtn = document.querySelector('.more-details-btn');
+
+    if (closeIcon) {
         closeIcon.addEventListener('click', function() {
             alertBanner.style.display = 'none';
         });
     }
 
-    const moreDetailsBtn = document.querySelector('.more-details-btn');
     if (moreDetailsBtn) {
         moreDetailsBtn.addEventListener('click', function() {
-            // Show detailed insights modal or navigate to insights page
             showInsightsModal();
         });
     }
@@ -300,33 +319,17 @@ function initializeAlertBanner() {
 
 // Table Interactions
 function initializeTableInteractions() {
-    const viewAllBtns = document.querySelectorAll('.btn-outline');
-    
-    viewAllBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const card = this.closest('.card');
-            const cardTitle = card.querySelector('.card-header span').textContent;
-            
-            // Navigate to detailed view or show modal
-            showDetailedView(cardTitle);
-        });
-    });
-
-    // Add hover effects to table rows
-    const tableRows = document.querySelectorAll('.employees-table tbody tr');
-    tableRows.forEach(row => {
-        row.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.01)';
-            this.style.transition = 'transform 0.2s ease';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
+    const viewAllButtons = document.querySelectorAll('.btn-outline');
+    viewAllButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const cardHeader = this.closest('.card-header');
+            const tableTitle = cardHeader.querySelector('span').textContent;
+            showDetailedView(tableTitle);
         });
     });
 }
 
-// Date Range Selector
+// Date Selector Functionality
 function initializeDateSelector() {
     const dateDropdown = document.querySelector('.date-dropdown');
     if (dateDropdown) {
@@ -336,10 +339,10 @@ function initializeDateSelector() {
     }
 }
 
-// Export functionality
+// Export Functionality
 function initializeExport() {
     const exportBtn = document.querySelector('.btn-primary');
-    if (exportBtn && exportBtn.textContent.includes('Export')) {
+    if (exportBtn) {
         exportBtn.addEventListener('click', function() {
             exportAnalyticsReport();
         });
@@ -349,44 +352,68 @@ function initializeExport() {
 // Load Analytics Data
 function loadAnalyticsData() {
     // Simulate loading analytics data
-    console.log('Loading analytics data...');
+    console.log('📊 Loading analytics data...');
     
-    // In a real application, this would fetch data from the server
-    // fetch('/api/analytics/data')
-    //     .then(response => response.json())
-    //     .then(data => {
-    //         updateKPICards(data.kpis);
-    //         updateCharts(data.charts);
-    //         updateTables(data.tables);
-    //     })
-    //     .catch(error => {
-    //         console.error('Error loading analytics data:', error);
-    //     });
+    // Update stats cards with real data
+    updateStatsCards();
+}
+
+// Update Stats Cards
+function updateStatsCards() {
+    const statValues = document.querySelectorAll('.stat-value');
+    const statTrends = document.querySelectorAll('.stat-trend');
+    
+    // Animate stat values
+    statValues.forEach((stat, index) => {
+        const finalValue = stat.textContent;
+        animateValue(stat, 0, parseInt(finalValue.replace(/[^\d]/g, '')), 1000);
+    });
+}
+
+// Animate numeric values
+function animateValue(element, start, end, duration) {
+    const startTime = performance.now();
+    const startValue = start;
+    const change = end - start;
+    
+    function updateValue(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        const currentValue = Math.floor(startValue + (change * progress));
+        element.textContent = currentValue.toLocaleString();
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateValue);
+        }
+    }
+    
+    requestAnimationFrame(updateValue);
 }
 
 // Show Insights Modal
 function showInsightsModal() {
-    // Create and show a modal with detailed insights
+    // Create modal for detailed insights
     const modal = document.createElement('div');
     modal.className = 'insights-modal';
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Analytics Insights</h3>
+                <h3>Detailed Insights</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="insight-item">
-                    <h4>Productivity Increase</h4>
-                    <p>Employee productivity has increased by 15% this month compared to last month.</p>
+                    <h4>Employee Productivity Increase</h4>
+                    <p>Productivity has increased by 15% this month due to improved workflow processes and better resource allocation.</p>
                 </div>
                 <div class="insight-item">
-                    <h4>Top Performing Department</h4>
-                    <p>Engineering department shows the highest productivity score at 91.2%.</p>
+                    <h4>Department Performance</h4>
+                    <p>Engineering and Sales departments show the highest performance metrics, while HR shows steady improvement.</p>
                 </div>
                 <div class="insight-item">
-                    <h4>Growth Trend</h4>
-                    <p>Company has grown by 12% in employee count over the last 6 months.</p>
+                    <h4>Project Completion Rate</h4>
+                    <p>Project completion rate has improved by 8% compared to last month, with better project management practices.</p>
                 </div>
             </div>
         </div>
@@ -410,32 +437,24 @@ function showInsightsModal() {
 
 // Show Detailed View
 function showDetailedView(tableTitle) {
-    // Navigate to detailed view or show detailed modal
-    console.log(`Showing detailed view for: ${tableTitle}`);
-    
-    // This could open a new page or show a detailed modal
-    // window.location.href = `/analytics/${tableTitle.toLowerCase().replace(/\s+/g, '-')}`;
+    console.log(`📋 Showing detailed view for: ${tableTitle}`);
+    // Implement detailed view functionality
+    alert(`Detailed view for ${tableTitle} would open here.`);
 }
 
 // Export Analytics Report
 function exportAnalyticsReport() {
-    // Generate and download analytics report
-    console.log('Exporting analytics report...');
-    
-    // This would generate a PDF or Excel report
-    // In a real application, this would call the server to generate the report
-    alert('Analytics report export functionality would be implemented here.');
+    console.log('📤 Exporting analytics report...');
+    // Implement export functionality
+    alert('Analytics report export would start here.');
 }
 
-// Update Analytics Data
+// Update Analytics Data based on date range
 function updateAnalyticsData(dateRange) {
-    console.log(`Updating analytics data for: ${dateRange}`);
-    
-    // This would fetch new data based on the selected date range
-    // and update all charts and tables accordingly
+    console.log(`📅 Updating analytics data for: ${dateRange}`);
+    // Implement date range filtering
+    // This would typically make an API call to get filtered data
 }
-
-// Initialize all functionality - This is now handled in the main DOMContentLoaded event above
 
 // Add CSS for insights modal
 const modalStyles = `
