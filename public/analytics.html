@@ -10,6 +10,72 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .org-required-section {
+            padding: 60px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
+        }
+        .org-required-content-large {
+            text-align: center;
+            max-width: 600px;
+            background: white;
+            padding: 60px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        }
+        .org-required-icon {
+            font-size: 6rem;
+            margin-bottom: 30px;
+        }
+        .org-required-content-large h2 {
+            color: #1a1a1a;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        .org-required-content-large p {
+            color: #666;
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+        .org-required-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-primary-large, .btn-secondary-large {
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            min-width: 200px;
+        }
+        .btn-primary-large {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .btn-primary-large:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+        .btn-secondary-large {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        .btn-secondary-large:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+        }
+    </style>
 </head>
 <body class="analytics-bg">
     <div class="analytics-layout">
@@ -39,9 +105,13 @@
                     <i class="fas fa-chart-bar"></i>
                     <span>Analytics</span>
                 </a>
+                <a href="/users" class="nav-item" data-page="users">
+                    <i class="fas fa-users"></i>
+                    <span>User Management</span>
+                </a>
                 <a href="/payroll" class="nav-item" data-page="payroll">
-                    <i class="fas fa-money-bill-wave"></i>
-                    <span>Payrolls</span>
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>Payroll</span>
                 </a>
                 <a href="/organizations" class="nav-item" data-page="organizations">
                     <i class="fas fa-building"></i>
@@ -69,7 +139,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="analytics-main">
+        <main class="analytics-main" id="analyticsMain">
             <!-- Topbar -->
             <header class="analytics-topbar">
                 <div class="topbar-left">
@@ -104,8 +174,25 @@
                 </div>
             </div>
 
+            <!-- Organization Required Section -->
+            <section class="org-required-section" id="organizationRequired" style="display: none;">
+                <div class="org-required-content-large">
+                    <div class="org-required-icon">🏢</div>
+                    <h2>Organization Required</h2>
+                    <p>You need to create or join an organization to access analytics features.</p>
+                    <div class="org-required-actions">
+                        <button class="btn btn-primary-large" onclick="window.location.href='/create-organization'">
+                            Create Organization
+                        </button>
+                        <button class="btn btn-secondary-large" onclick="window.location.href='/organizations'">
+                            Join Organization
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Stats Cards -->
-            <section class="analytics-stats">
+            <section class="analytics-stats" id="analyticsContent">
                 <div class="stat-card">
                     <div class="stat-label">Total Employees</div>
                     <div class="stat-value">1,247</div>
@@ -131,29 +218,29 @@
             <!-- Main Content -->
             <section class="analytics-content">
                 <div class="analytics-left">
-                    <!-- Employee Growth Chart -->
+                    <!-- Website Traffic Chart -->
                     <div class="card chart-card">
                         <div class="card-header">
-                            <span>Employee Growth Trend</span>
+                            <span>Website Traffic Trend</span>
                             <a href="#" class="view-more">More details ></a>
                         </div>
                         <canvas id="growthChart" height="80"></canvas>
                         <div class="chart-legend">
                             <div class="legend-item">
                                 <span class="dot total"></span>
-                                <span>Total Employees</span>
+                                <span>Total Visitors</span>
                             </div>
                             <div class="legend-item">
                                 <span class="dot active"></span>
-                                <span>Active Employees</span>
+                                <span>Unique Visitors</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Productivity Trends -->
+                    <!-- System Performance -->
                     <div class="card chart-card">
                         <div class="card-header">
-                            <span>Productivity Trends</span>
+                            <span>System Performance Metrics</span>
                             <div class="chart-tabs">
                                 <button class="tab active">Daily</button>
                                 <button class="tab">Weekly</button>
@@ -165,39 +252,37 @@
                 </div>
 
                 <div class="analytics-right">
-                    <!-- Department Distribution -->
+                    <!-- Traffic Sources -->
                     <div class="card donut-card">
-                        <div class="card-header">Department Distribution</div>
+                        <div class="card-header">Traffic Sources</div>
                         <canvas id="departmentChart" height="120"></canvas>
-                        <div class="donut-label">1,247</div>
+                        <div class="donut-label">24.6K</div>
                         <div class="donut-meta">
-                            <div>Total Employees</div>
-                            <div class="donut-total">6 Departments</div>
+                            <div>Total Sessions</div>
+                            <div class="donut-total">5 Source Types</div>
                         </div>
                         <div class="donut-legend">
-                            <span class="dot engineering"></span> Engineering
-                            <span class="dot marketing"></span> Marketing
-                            <span class="dot sales"></span> Sales
-                            <span class="dot hr"></span> HR
-                            <span class="dot finance"></span> Finance
-                            <span class="dot operations"></span> Operations
+                            <span class="dot engineering"></span> Organic Search
+                            <span class="dot marketing"></span> Direct
+                            <span class="dot sales"></span> Social Media
+                            <span class="dot hr"></span> Email
+                            <span class="dot finance"></span> Referral
                         </div>
                     </div>
 
-                    <!-- Project Status -->
+                    <!-- User Device Types -->
                     <div class="card donut-card">
-                        <div class="card-header">Project Status Overview</div>
+                        <div class="card-header">User Device Types</div>
                         <canvas id="projectChart" height="120"></canvas>
-                        <div class="donut-label">89</div>
+                        <div class="donut-label">1.8K</div>
                         <div class="donut-meta">
-                            <div>Total Projects</div>
-                            <div class="donut-total">4 Status Types</div>
+                            <div>Active Users</div>
+                            <div class="donut-total">3 Device Types</div>
                         </div>
                         <div class="donut-legend">
-                            <span class="dot completed"></span> Completed
-                            <span class="dot in-progress"></span> In Progress
-                            <span class="dot on-hold"></span> On Hold
-                            <span class="dot cancelled"></span> Cancelled
+                            <span class="dot completed"></span> Desktop
+                            <span class="dot in-progress"></span> Mobile
+                            <span class="dot on-hold"></span> Tablet
                         </div>
                     </div>
                 </div>
@@ -208,70 +293,70 @@
                 <div class="table-card top-performers">
                     <div class="card">
                         <div class="card-header">
-                            <span>Top Performing Employees</span>
+                            <span>Top Website Pages</span>
                             <button class="btn btn-outline">View All</button>
                         </div>
                         <div class="table-container">
                             <table class="employees-table">
                                 <thead>
                                     <tr>
-                                        <th>Employee</th>
-                                        <th>Department</th>
-                                        <th>Productivity Score</th>
-                                        <th>Projects Completed</th>
-                                        <th>Performance</th>
+                                        <th>Page</th>
+                                        <th>Page Views</th>
+                                        <th>Unique Visitors</th>
+                                        <th>Avg. Time on Page</th>
+                                        <th>Bounce Rate</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td>
                                             <div class="employee-info">
-                                                <div class="employee-avatar">JD</div>
+                                                <div class="employee-avatar">🏠</div>
                                                 <div class="employee-details">
-                                                    <div class="employee-name">John Doe</div>
-                                                    <div class="employee-email">john.doe@company.com</div>
+                                                    <div class="employee-name">/dashboard</div>
+                                                    <div class="employee-email">Main Dashboard</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>Engineering</td>
-                                        <td>95.2%</td>
-                                        <td>12</td>
+                                        <td>8,429</td>
+                                        <td>6,234</td>
+                                        <td>4:32</td>
                                         <td>
-                                            <div class="performance-badge excellent">Excellent</div>
+                                            <div class="performance-badge excellent">18.5%</div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div class="employee-info">
-                                                <div class="employee-avatar">SM</div>
+                                                <div class="employee-avatar">👥</div>
                                                 <div class="employee-details">
-                                                    <div class="employee-name">Sarah Miller</div>
-                                                    <div class="employee-email">sarah.miller@company.com</div>
+                                                    <div class="employee-name">/users</div>
+                                                    <div class="employee-email">User Management</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>Marketing</td>
-                                        <td>92.8%</td>
-                                        <td>8</td>
+                                        <td>5,672</td>
+                                        <td>4,891</td>
+                                        <td>3:45</td>
                                         <td>
-                                            <div class="performance-badge excellent">Excellent</div>
+                                            <div class="performance-badge good">24.8%</div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td>
                                             <div class="employee-info">
-                                                <div class="employee-avatar">AB</div>
+                                                <div class="employee-avatar">📊</div>
                                                 <div class="employee-details">
-                                                    <div class="employee-name">Alex Brown</div>
-                                                    <div class="employee-email">alex.brown@company.com</div>
+                                                    <div class="employee-name">/analytics</div>
+                                                    <div class="employee-email">Analytics Dashboard</div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td>Sales</td>
-                                        <td>89.5%</td>
-                                        <td>15</td>
+                                        <td>4,293</td>
+                                        <td>3,567</td>
+                                        <td>5:18</td>
                                         <td>
-                                            <div class="performance-badge good">Good</div>
+                                            <div class="performance-badge excellent">16.2%</div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -283,55 +368,55 @@
                 <div class="table-card department-analytics">
                     <div class="card">
                         <div class="card-header">
-                            <span>Department Analytics</span>
+                            <span>System Status & Security</span>
                             <button class="btn btn-outline">View All</button>
                         </div>
                         <div class="table-container">
                             <table class="employees-table">
                                 <thead>
                                     <tr>
-                                        <th>Department</th>
-                                        <th>Employee Count</th>
-                                        <th>Avg Productivity</th>
-                                        <th>Active Projects</th>
-                                        <th>Budget Utilization</th>
+                                        <th>Service</th>
+                                        <th>Status</th>
+                                        <th>Uptime</th>
+                                        <th>Response Time</th>
+                                        <th>Security Score</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>Engineering</td>
-                                        <td>342</td>
-                                        <td>91.2%</td>
-                                        <td>28</td>
+                                        <td>Main Application</td>
+                                        <td><span class="status-badge online">Online</span></td>
+                                        <td>99.8%</td>
+                                        <td>142ms</td>
                                         <td>
                                             <div class="progress-bar">
-                                                <div class="progress-fill" style="width: 85%"></div>
+                                                <div class="progress-fill" style="width: 95%"></div>
                                             </div>
-                                            <span class="progress-text">85%</span>
+                                            <span class="progress-text">95%</span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Marketing</td>
-                                        <td>156</td>
-                                        <td>88.7%</td>
-                                        <td>15</td>
+                                        <td>Database</td>
+                                        <td><span class="status-badge online">Online</span></td>
+                                        <td>99.9%</td>
+                                        <td>28ms</td>
                                         <td>
                                             <div class="progress-bar">
-                                                <div class="progress-fill" style="width: 72%"></div>
+                                                <div class="progress-fill" style="width: 98%"></div>
                                             </div>
-                                            <span class="progress-text">72%</span>
+                                            <span class="progress-text">98%</span>
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Sales</td>
-                                        <td>234</td>
-                                        <td>86.3%</td>
-                                        <td>22</td>
+                                        <td>API Gateway</td>
+                                        <td><span class="status-badge online">Online</span></td>
+                                        <td>99.5%</td>
+                                        <td>89ms</td>
                                         <td>
                                             <div class="progress-bar">
-                                                <div class="progress-fill" style="width: 93%"></div>
+                                                <div class="progress-fill" style="width: 92%"></div>
                                             </div>
-                                            <span class="progress-text">93%</span>
+                                            <span class="progress-text">92%</span>
                                         </td>
                                     </tr>
                                 </tbody>

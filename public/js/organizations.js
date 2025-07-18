@@ -32,6 +32,15 @@ class OrganizationsManager {
             return;
         }
         
+        // Show organization requirement immediately, then check
+        this.showOrganizationRequired();
+        
+        // Check organization requirement
+        const hasOrganization = await this.checkOrganizationRequirement();
+        if (!hasOrganization) {
+            return; // Keep showing organization requirement
+        }
+        
         await this.loadUserProfile();
         this.setGreetingAndDate();
         await this.loadOrganizations();
@@ -61,6 +70,238 @@ class OrganizationsManager {
             console.error('❌ Authentication check failed:', error);
             return false;
         }
+    }
+
+    async checkOrganizationRequirement() {
+        console.log('🔍 Organizations - Checking organization requirement...');
+        
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.log('❌ No token found, redirecting to login');
+            window.location.href = '/login.html';
+            return;
+        }
+
+        // Show organization requirement immediately
+        this.showOrganizationRequired();
+
+        try {
+            // Fast fetch with timeout
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Timeout')), 3000)
+            );
+            
+            const profilePromise = fetch('/api/auth/profile', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (!response.ok) throw new Error('Profile fetch failed');
+                return response.json();
+            });
+
+            const profile = await Promise.race([profilePromise, timeoutPromise]);
+            
+            console.log('🔍 Organizations - Profile loaded:', profile);
+            
+            // Extract actual profile data if nested
+            const profileData = profile.profile || profile;
+            
+            // Check organization requirement based on role
+            if (profileData.role === 'super_admin') {
+                // Super admin sees all organizations
+                console.log('✅ Super admin detected - showing all organizations');
+                this.showAllOrganizations();
+            } else if (!profileData.organization_id) {
+                // Admin and employees need organization
+                console.log('❌ Organization required for role:', profileData.role);
+                // Organization requirement already shown, keep it visible
+            } else {
+                // Admin/employee with organization
+                console.log('✅ Organization check passed - showing organization management');
+                this.hideOrganizationRequired();
+                this.initialize();
+            }
+            
+        } catch (error) {
+            console.error('⚠️ Organizations initialization error:', error);
+            // Keep organization requirement shown on error
+        }
+    }
+
+    showOrganizationRequired() {
+        console.log('🚫 Showing organization requirement screen');
+        const orgRequiredSection = document.getElementById('organizationRequired');
+        const welcomeSection = document.querySelector('.welcome-section');
+        
+        if (orgRequiredSection) {
+            orgRequiredSection.style.display = 'block';
+        }
+        if (welcomeSection) {
+            welcomeSection.style.display = 'none';
+        }
+    }
+
+    hideOrganizationRequired() {
+        console.log('✅ Hiding organization requirement screen');
+        const orgRequiredSection = document.getElementById('organizationRequired');
+        const welcomeSection = document.querySelector('.welcome-section');
+        
+        if (orgRequiredSection) {
+            orgRequiredSection.style.display = 'none';
+        }
+        if (welcomeSection) {
+            welcomeSection.style.display = 'block';
+        }
+    }
+
+    showAllOrganizations() {
+        console.log('👑 Showing super admin all organizations view');
+        this.hideOrganizationRequired();
+        
+        // Update page content for super admin
+        const pageTitle = document.querySelector('h1');
+        if (pageTitle) {
+            pageTitle.textContent = 'All Organizations Management';
+        }
+
+        const pageDescription = document.querySelector('.welcome-section p');
+        if (pageDescription) {
+            pageDescription.textContent = 'Manage all organizations on the platform';
+        }
+
+        // Load all organizations
+        this.loadAllOrganizations();
+    }
+
+    async loadAllOrganizations() {
+        console.log('🏢 Loading all organizations...');
+        
+        try {
+            // Mock data for all organizations - replace with actual API call
+            const allOrganizations = [
+                {
+                    id: 1,
+                    name: 'Tech Corp',
+                    industry: 'Technology',
+                    employees: 45,
+                    created_at: '2024-01-15',
+                    is_active: true
+                },
+                {
+                    id: 2,
+                    name: 'Design Studio',
+                    industry: 'Creative',
+                    employees: 12,
+                    created_at: '2024-02-10',
+                    is_active: true
+                },
+                {
+                    id: 3,
+                    name: 'Finance Group',
+                    industry: 'Finance',
+                    employees: 28,
+                    created_at: '2024-01-20',
+                    is_active: false
+                }
+            ];
+
+            // Update stats
+            this.updateOrganizationStats(allOrganizations);
+            
+            // Render organizations
+            this.renderOrganizationsTable(allOrganizations);
+            
+        } catch (error) {
+            console.error('❌ Error loading all organizations:', error);
+        }
+    }
+
+    updateOrganizationStats(organizations) {
+        const totalOrgs = organizations.length;
+        const activeOrgs = organizations.filter(org => org.is_active).length;
+        const totalEmployees = organizations.reduce((sum, org) => sum + org.employees, 0);
+
+        // Update stats if available
+        const statsContainer = document.querySelector('.stats-container');
+        if (statsContainer) {
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalOrgs}</div>
+                    <div class="stat-label">Total Organizations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${activeOrgs}</div>
+                    <div class="stat-label">Active Organizations</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalEmployees}</div>
+                    <div class="stat-label">Total Employees</div>
+                </div>
+            `;
+        }
+    }
+
+    renderOrganizationsTable(organizations) {
+        // Create or update organizations table
+        let tableContainer = document.querySelector('.organizations-table-container');
+        if (!tableContainer) {
+            tableContainer = document.createElement('div');
+            tableContainer.className = 'organizations-table-container';
+            
+            const welcomeSection = document.querySelector('.welcome-section');
+            if (welcomeSection) {
+                welcomeSection.appendChild(tableContainer);
+            }
+        }
+
+        tableContainer.innerHTML = `
+            <div class="table-header">
+                <h3>Organizations Overview</h3>
+            </div>
+            <table class="organizations-table">
+                <thead>
+                    <tr>
+                        <th>Organization</th>
+                        <th>Industry</th>
+                        <th>Employees</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${organizations.map(org => `
+                        <tr>
+                            <td>
+                                <div class="org-info">
+                                    <div class="org-name">${org.name}</div>
+                                </div>
+                            </td>
+                            <td>${org.industry}</td>
+                            <td>${org.employees}</td>
+                            <td>
+                                <span class="status-badge status-${org.is_active ? 'active' : 'inactive'}">
+                                    ${org.is_active ? 'Active' : 'Inactive'}
+                                </span>
+                            </td>
+                            <td>${new Date(org.created_at).toLocaleDateString()}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn-icon" onclick="editOrganization(${org.id})" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn-icon" onclick="deleteOrganization(${org.id})" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     }
 
     async loadUserProfile() {

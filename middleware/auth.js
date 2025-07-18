@@ -84,6 +84,48 @@ const requireOrganizationAccess = (req, res, next) => {
   next();
 };
 
+// New middleware to check organization requirements for dashboard access
+const requireOrganization = async (req, res, next) => {
+  try {
+    // Super admin can access everything without organization
+    if (req.profile.role === 'super_admin') {
+      return next();
+    }
+
+    // For admin and below roles, require organization
+    if (!req.profile.organization_id) {
+      return res.status(403).json({ 
+        error: 'Organization required',
+        requiresOrganization: true,
+        userRole: req.profile.role,
+        message: 'You need to create or join an organization to access this feature'
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('❌ Organization requirement check error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Middleware to check organization status for frontend
+const checkOrganizationStatus = async (req, res, next) => {
+  try {
+    // Add organization status to request
+    req.organizationStatus = {
+      hasOrganization: !!req.profile.organization_id,
+      requiresOrganization: req.profile.role !== 'super_admin',
+      userRole: req.profile.role
+    };
+
+    next();
+  } catch (error) {
+    console.error('❌ Organization status check error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Middleware to check if user can access specific organization
 const requireOrganizationMembership = (organizationId) => {
   return (req, res, next) => {
@@ -111,5 +153,7 @@ module.exports = {
   requireManagerOrAdmin,
   requireSuperAdmin,
   requireOrganizationAccess,
-  requireOrganizationMembership
+  requireOrganizationMembership,
+  requireOrganization,
+  checkOrganizationStatus
 }; 

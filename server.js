@@ -330,6 +330,10 @@ app.get('/signup.html', (req, res) => {
   res.redirect('/signup');
 });
 
+app.get('/create-organization.html', (req, res) => {
+  res.redirect('/create-organization');
+});
+
 // Dashboard API endpoints
 app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   try {
@@ -904,6 +908,24 @@ app.get('/signup', (req, res) => {
   } else {
     console.log('❌ signup.html file not found');
     res.status(404).send('Signup page not found');
+  }
+});
+
+// Serve create-organization page
+app.get('/create-organization', (req, res) => {
+  console.log('🔍 Create organization route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/create-organization.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ create-organization.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ create-organization.html file not found');
+    res.status(404).send('Create organization page not found');
   }
 });
 

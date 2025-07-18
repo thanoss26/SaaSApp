@@ -8,6 +8,72 @@
   <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
   <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+  <style>
+    .org-required-section {
+      padding: 60px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 60vh;
+    }
+    .org-required-content-large {
+      text-align: center;
+      max-width: 600px;
+      background: white;
+      padding: 60px 40px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+    .org-required-icon {
+      font-size: 6rem;
+      margin-bottom: 30px;
+    }
+    .org-required-content-large h2 {
+      color: #1a1a1a;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    .org-required-content-large p {
+      color: #666;
+      font-size: 1.3rem;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+    .org-required-actions {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn-primary-large, .btn-secondary-large {
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      min-width: 200px;
+    }
+    .btn-primary-large {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+    }
+    .btn-primary-large:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+    }
+    .btn-secondary-large {
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+    }
+    .btn-secondary-large:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+  </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,9 +107,13 @@
           <i class="fas fa-chart-bar"></i>
           <span>Analytics</span>
         </a>
+        <a href="/users" class="nav-item" data-page="users">
+          <i class="fas fa-users"></i>
+          <span>User Management</span>
+        </a>
         <a href="/payroll" class="nav-item" data-page="payroll">
-          <i class="fas fa-money-bill-wave"></i>
-          <span>Payrolls</span>
+          <i class="fas fa-dollar-sign"></i>
+          <span>Payroll</span>
         </a>
         <a href="/organizations" class="nav-item" data-page="organizations">
           <i class="fas fa-building"></i>
@@ -91,7 +161,7 @@
       </header>
 
       <!-- Enhanced Dashboard with Charts -->
-      <section class="dashboard-content">
+      <section class="dashboard-content" id="mainDashboard">
         <!-- Top Row - Enhanced Stats -->
         <div class="dashboard-stats-extended">
           <div class="stat-card-extended">
@@ -313,6 +383,23 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Organization Required Section -->
+      <section class="org-required-section" id="orgRequiredSection" style="display: none;">
+        <div class="org-required-content-large">
+          <div class="org-required-icon">🏢</div>
+          <h2>Organization Required</h2>
+          <p>You need to create or join an organization to access dashboard features.</p>
+          <div class="org-required-actions">
+            <button class="btn btn-primary-large" onclick="window.location.href='/create-organization'">
+              Create Organization
+            </button>
+            <button class="btn btn-secondary-large" onclick="window.location.href='/organizations'">
+              Join Organization
+            </button>
           </div>
         </div>
       </section>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Organization - Chronos HR</title>
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/organizations.css">
+    <style>
+        .create-org-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .create-org-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .create-org-header h1 {
+            color: #1a1a1a;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .create-org-header p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn-create-org {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-create-org:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-create-org:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #495057;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+        }
+
+        .info-box p {
+            color: #6c757d;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .info-box ul {
+            color: #6c757d;
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 4px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 4px;
+            padding: 12px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="create-org-container">
+        <div class="create-org-header">
+            <h1>Create Your Organization</h1>
+            <p>Set up your organization to start using Chronos HR features</p>
+        </div>
+
+        <div class="info-box">
+            <h3>Why create an organization?</h3>
+            <p>As an admin or team member, you need to be part of an organization to:</p>
+            <ul>
+                <li>Access dashboard analytics and metrics</li>
+                <li>Manage team members and projects</li>
+                <li>Track attendance and performance</li>
+                <li>View reports and insights</li>
+                <li>Collaborate with your team</li>
+            </ul>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <form id="createOrgForm">
+            <div class="form-group">
+                <label for="orgName">Organization Name *</label>
+                <input type="text" id="orgName" name="name" required placeholder="Enter your organization name">
+            </div>
+
+            <div class="form-group">
+                <label for="orgDescription">Description</label>
+                <textarea id="orgDescription" name="description" placeholder="Brief description of your organization"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="orgIndustry">Industry</label>
+                <select id="orgIndustry" name="industry">
+                    <option value="">Select Industry</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Education">Education</option>
+                    <option value="Manufacturing">Manufacturing</option>
+                    <option value="Retail">Retail</option>
+                    <option value="Consulting">Consulting</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="orgSize">Organization Size</label>
+                <select id="orgSize" name="size">
+                    <option value="">Select Size</option>
+                    <option value="1-10">1-10 employees</option>
+                    <option value="11-50">11-50 employees</option>
+                    <option value="51-100">51-100 employees</option>
+                    <option value="101-500">101-500 employees</option>
+                    <option value="500+">500+ employees</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-create-org" id="createOrgBtn">
+                Create Organization
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Creating your organization...</p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('createOrgForm');
+            const createBtn = document.getElementById('createOrgBtn');
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+
+            // Check if user is already authenticated
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login';
+                return;
+            }
+
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Show loading state
+                createBtn.disabled = true;
+                loading.style.display = 'block';
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+
+                const formData = new FormData(form);
+                const orgData = {
+                    name: formData.get('name'),
+                    description: formData.get('description'),
+                    industry: formData.get('industry'),
+                    size: formData.get('size')
+                };
+
+                try {
+                    const response = await fetch('/api/organizations', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(orgData)
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        successMessage.textContent = 'Organization created successfully! Redirecting to dashboard...';
+                        successMessage.style.display = 'block';
+                        
+                        // Redirect to dashboard after a short delay
+                        setTimeout(() => {
+                            window.location.href = '/dashboard';
+                        }, 2000);
+                    } else {
+                        throw new Error(result.error || 'Failed to create organization');
+                    }
+                } catch (error) {
+                    errorMessage.textContent = error.message;
+                    errorMessage.style.display = 'block';
+                } finally {
+                    createBtn.disabled = false;
+                    loading.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html> 

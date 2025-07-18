@@ -1,1763 +1,997 @@
 // Users Page JavaScript
-class UsersPage {
+class UserManagement {
     constructor() {
-        this.employees = [];
-        this.filteredEmployees = [];
+        this.currentUser = null;
+        this.users = [];
         this.currentPage = 1;
         this.itemsPerPage = 10;
-        this.currentView = 'table';
+        this.totalPages = 1;
+        this.totalUsers = 0;
         this.filters = {
             search: '',
-            department: '',
             role: '',
-            status: ''
+            status: '',
+            organization: ''
         };
-        this.init();
-    }
-
-    async init() {
-        console.log('🚀 Users page initializing...');
+        this.sortBy = 'created_at';
+        this.sortOrder = 'desc';
+        this.selectedUsers = new Set();
+        this.isLoading = false;
+        this.currentView = 'table';
         
-        // Setup sidebar and event listeners first
-        this.setupSidebar();
-        this.setupEventListeners();
-        
-        try {
-            // Load employees directly - server middleware handles auth
-            await this.loadEmployees();
-            console.log('✅ Employees loaded');
-            
-            this.updateStats();
-            console.log('✅ Stats updated');
-            
-            console.log('✅ Users page initialization complete');
-        } catch (error) {
-            console.error('❌ Users page initialization failed:', error);
-            // If there's an auth error, redirect to login
-            if (error.message.includes('401') || error.message.includes('403') || error.message.includes('Authentication failed')) {
-                console.log('⚠️ Auth error detected, redirecting to login...');
-                window.location.href = '/login';
-            } else {
-                this.showToast('Failed to load employees', 'error');
-            }
-        }
+        this.initializeEventListeners();
     }
 
-    setupSidebar() {
-        // Standalone sidebar toggle - works independently
-        (function() {
-            function setupStandaloneSidebarToggle() {
-                const sidebar = document.getElementById('sidebar');
-                const sidebarToggle = document.getElementById('sidebarToggle');
-                
-                if (sidebar && sidebarToggle) {
-                    console.log('🔄 Setting up standalone sidebar toggle...');
-                    
-                    // Remove any existing event listeners by cloning the element
-                    const newToggle = sidebarToggle.cloneNode(true);
-                    sidebarToggle.parentNode.replaceChild(newToggle, sidebarToggle);
-                    
-                    newToggle.addEventListener('click', function(e) {
-                        console.log('🎯 Standalone sidebar toggle clicked!');
-                        e.preventDefault();
-                        e.stopPropagation();
-                        
-                        const isExpanded = sidebar.classList.contains('expanded');
-                        console.log('Current sidebar state - expanded:', isExpanded);
-                        
-                        if (isExpanded) {
-                            sidebar.classList.remove('expanded');
-                            sidebar.classList.add('collapsed');
-                            console.log('✅ Sidebar collapsed (standalone)');
-                        } else {
-                            sidebar.classList.remove('collapsed');
-                            sidebar.classList.add('expanded');
-                            console.log('✅ Sidebar expanded (standalone)');
-                        }
-                    });
-                    
-                    console.log('✅ Standalone sidebar toggle setup complete');
-                }
-            }
-            
-            // Setup immediately
-            setupStandaloneSidebarToggle();
-            
-            // Also setup after DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setupStandaloneSidebarToggle);
-            }
-            
-            // And after window load
-            window.addEventListener('load', setupStandaloneSidebarToggle);
-        })();
-    }
-
-
-
-    async loadEmployees() {
+    async checkOrganizationRequirement() {
         try {
-            console.log('📊 Loading employees...');
-            const token = localStorage.getItem('token');
+            console.log('🔍 Users - Checking organization requirement...');
             
-            // Check if user is authenticated
-            if (!token) {
-                console.log('❌ No token found, redirecting to login');
-                window.location.href = '/login';
+            // Fetch user profile with timeout
+            const profile = await Promise.race([
+                fetch('/api/auth/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                }).then(res => res.json()),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+                )
+            ]);
+
+            console.log('🔍 Users - Profile loaded:', profile);
+            
+            // Extract actual profile data if nested
+            const profileData = profile.profile || profile;
+            
+            // Check if user has super_admin role - they can access all user management features
+            if (profileData.role === 'super_admin') {
+                console.log('👑 Super admin detected - loading user management');
+                this.currentUser = profileData;
+                this.hideOrganizationRequired();
+                await this.initializeUserManagement();
                 return;
             }
-            
-            // Get current user from localStorage
-            const userData = localStorage.getItem('user');
-            if (userData) {
-                this.currentUser = JSON.parse(userData);
-                console.log('✅ Current user loaded from localStorage:', this.currentUser.email);
-            } else {
-                console.log('⚠️ No user data in localStorage, attempting to fetch from server...');
-                // Try to get user data from server
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                if (response.ok) {
-                    const userData = await response.json();
-                            this.currentUser = userData.profile;
-        localStorage.setItem('user', JSON.stringify(userData.profile));
-                    console.log('✅ User data fetched from server:', this.currentUser.email);
-                } else {
-                    console.log('❌ Failed to get user data, redirecting to login');
-                    window.location.href = '/login';
-                    return;
-                }
-            }
-            
-            const response = await this.retryRequest(async () => {
-                return await fetch('/api/users', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            });
-            
-            if (!response.ok) {
-                if (response.status === 429) {
-                    const errorData = await response.json();
-                    throw new Error(`Rate limit exceeded. Please try again in ${errorData.retryAfter || 30} seconds.`);
-                }
-                throw new Error('Failed to fetch employees');
-            }
-            
-            const data = await response.json();
-            this.employees = data.users || [];
-            console.log('📊 Employees loaded:', this.employees.length);
-            
-            this.applyFilters();
-            this.renderEmployees();
-            this.updatePagination();
-            
-        } catch (error) {
-            console.error('❌ Failed to load employees:', error);
-            this.showToast(error.message, 'error');
-            
-            // If it's an authentication error, redirect to login
-            if (error.message.includes('Authentication failed') || error.message.includes('Access token required')) {
-                console.log('🔐 Authentication error, redirecting to login...');
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
+
+            // For other roles, check organization requirement
+            if (!profileData.organization_id) {
+                console.log('❌ Organization required for role:', profileData.role);
+                this.showOrganizationRequired();
                 return;
             }
-            
-            // For other errors, show the error message
-            this.showToast('Failed to load employees. Please try again.', 'error');
+
+            console.log('✅ Organization found - loading user management');
+            this.currentUser = profileData;
+            this.hideOrganizationRequired();
+            await this.initializeUserManagement();
+
+        } catch (error) {
+            console.error('❌ Error checking organization requirement:', error);
+            this.showOrganizationRequired();
         }
     }
 
-    async retryRequest(requestFn, maxRetries = 3) {
-        for (let attempt = 0; attempt <= maxRetries; attempt++) {
-            try {
-                return await requestFn();
-            } catch (error) {
-                if (attempt === maxRetries) {
-                    throw error;
-                }
-                
-                // Wait before retrying (exponential backoff)
-                const delay = Math.pow(2, attempt) * 1000;
-                console.log(`🔄 Retrying request in ${delay}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-                await this.sleep(delay);
-            }
+    showOrganizationRequired() {
+        const orgRequiredSection = document.getElementById('organizationRequired');
+        const userManagementContent = document.getElementById('userManagementContent');
+        
+        if (orgRequiredSection) {
+            orgRequiredSection.style.display = 'flex';
+        }
+        if (userManagementContent) {
+            userManagementContent.style.display = 'none';
         }
     }
 
-    sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+    hideOrganizationRequired() {
+        const orgRequiredSection = document.getElementById('organizationRequired');
+        const userManagementContent = document.getElementById('userManagementContent');
+        
+        if (orgRequiredSection) {
+            orgRequiredSection.style.display = 'none';
+        }
+        if (userManagementContent) {
+            userManagementContent.style.display = 'block';
+        }
     }
 
-    loadSampleData() {
-        console.log('📊 Loading sample data...');
-        this.employees = [
-            {
-                id: '1',
-                first_name: 'John',
-                last_name: 'Doe',
-                email: 'john.doe@company.com',
-                department: 'engineering',
-                role: 'manager',
-                status: 'active',
-                phone: '+1 (555) 123-4567',
-                hire_date: '2023-01-15',
-                performance: 85,
-                invite_code: 'ABC12345',
-                invite_code_expires_at: '2024-12-31T23:59:59Z',
-                invite_sent_at: '2024-01-15T10:00:00Z',
-                profile_id: null
-            },
-            {
-                id: '2',
-                first_name: 'Jane',
-                last_name: 'Smith',
-                email: 'jane.smith@company.com',
-                department: 'marketing',
-                role: 'employee',
-                status: 'active',
-                phone: '+1 (555) 234-5678',
-                hire_date: '2023-03-20',
-                performance: 92,
-                invite_code: 'DEF67890',
-                invite_code_expires_at: '2024-12-31T23:59:59Z',
-                invite_sent_at: null,
-                profile_id: null
-            },
-            {
-                id: '3',
-                first_name: 'Mike',
-                last_name: 'Johnson',
-                email: 'mike.johnson@company.com',
-                department: 'sales',
-                role: 'manager',
-                status: 'active',
-                phone: '+1 (555) 345-6789',
-                hire_date: '2022-11-10',
-                performance: 78,
-                invite_code: null,
-                invite_code_expires_at: null,
-                invite_sent_at: null,
-                profile_id: null
-            },
-            {
-                id: '4',
-                first_name: 'Sarah',
-                last_name: 'Wilson',
-                email: 'sarah.wilson@company.com',
-                department: 'hr',
-                role: 'admin',
-                status: 'active',
-                phone: '+1 (555) 456-7890',
-                hire_date: '2023-02-05',
-                performance: 88,
-                invite_code: 'GHI24680',
-                invite_code_expires_at: '2024-12-31T23:59:59Z',
-                invite_sent_at: '2024-01-20T14:30:00Z',
-                profile_id: 'user-123' // This user has registered
-            },
-            {
-                id: '5',
-                first_name: 'David',
-                last_name: 'Brown',
-                email: 'david.brown@company.com',
-                department: 'finance',
-                role: 'employee',
-                status: 'inactive',
-                phone: '+1 (555) 567-8901',
-                hire_date: '2023-04-12',
-                performance: 65,
-                invite_code: 'JKL13579',
-                invite_code_expires_at: '2024-12-31T23:59:59Z',
-                invite_sent_at: null,
-                profile_id: null
-            }
-        ];
+    async initializeUserManagement() {
+        console.log('🚀 Initializing user management...');
         
-        this.applyFilters();
-        this.renderEmployees();
-        this.updatePagination();
+        // Load initial data
+        await Promise.all([
+            this.loadUsers(),
+            this.loadStats(),
+            this.loadOrganizations()
+        ]);
+        
+        // Set up periodic refresh for stats
+        setInterval(() => this.loadStats(), 30000); // Refresh every 30 seconds
     }
 
-    setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
-        
-        // Search and filters
-        const searchInput = document.getElementById('searchInput');
+    initializeEventListeners() {
+        // Search functionality
+        const searchInput = document.getElementById('userSearch');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.filters.search = e.target.value;
-                this.applyFilters();
+                this.debounceSearch();
             });
         }
 
-        const departmentFilter = document.getElementById('departmentFilter');
-        if (departmentFilter) {
-            departmentFilter.addEventListener('change', (e) => {
-                this.filters.department = e.target.value;
-                this.applyFilters();
-            });
-        }
-
+        // Filter controls
         const roleFilter = document.getElementById('roleFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const organizationFilter = document.getElementById('organizationFilter');
+
         if (roleFilter) {
             roleFilter.addEventListener('change', (e) => {
                 this.filters.role = e.target.value;
-                this.applyFilters();
+                this.loadUsers();
             });
         }
 
-        const statusFilter = document.getElementById('statusFilter');
         if (statusFilter) {
             statusFilter.addEventListener('change', (e) => {
                 this.filters.status = e.target.value;
-                this.applyFilters();
+                this.loadUsers();
+            });
+        }
+
+        if (organizationFilter) {
+            organizationFilter.addEventListener('change', (e) => {
+                this.filters.organization = e.target.value;
+                this.loadUsers();
             });
         }
 
         // View toggle
         const viewButtons = document.querySelectorAll('.view-btn');
-        viewButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                const view = e.target.closest('.view-btn').dataset.view;
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
                 this.switchView(view);
             });
         });
 
-        // Add employee button
-        const addEmployeeBtn = document.getElementById('addEmployeeBtn');
-        if (addEmployeeBtn) {
-            addEmployeeBtn.addEventListener('click', () => {
-                this.showAddModal();
-            });
+        // Bulk actions
+        const bulkActionsBtn = document.getElementById('bulkActionsBtn');
+        if (bulkActionsBtn) {
+            bulkActionsBtn.addEventListener('click', () => this.openBulkActionsModal());
+        }
+
+        // Add user button
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', () => this.openAddUserModal());
         }
 
         // Export button
         const exportBtn = document.getElementById('exportBtn');
         if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
-                this.exportEmployees();
+            exportBtn.addEventListener('click', () => this.exportUsers());
+        }
+
+        // Select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', (e) => {
+                this.selectAllUsers(e.target.checked);
             });
         }
+
+        // Modal close handlers
+        this.setupModalHandlers();
 
         // Pagination
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
-        
-        if (prevPageBtn) {
-            prevPageBtn.addEventListener('click', () => {
-                this.goToPage(this.currentPage - 1);
-            });
-        }
-        
-        if (nextPageBtn) {
-            nextPageBtn.addEventListener('click', () => {
-                this.goToPage(this.currentPage + 1);
-            });
-        }
+        this.setupPaginationHandlers();
 
-        // Modal event listeners
-        this.setupModalEventListeners();
-        
-        // Logout button
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleLogout();
-            });
-        }
-        
-        console.log('✅ Event listeners setup complete');
+        // Start organization requirement check
+        this.checkOrganizationRequirement();
     }
 
-    setupModalEventListeners() {
-        // Add employee modal
-        const addModal = document.getElementById('addEmployeeModal');
+    setupModalHandlers() {
+        // Add User Modal
+        const addUserModal = document.getElementById('addUserModal');
         const closeAddModal = document.getElementById('closeAddModal');
-        const cancelAdd = document.getElementById('cancelAdd');
-        const addEmployeeForm = document.getElementById('addEmployeeForm');
+        const cancelAddUser = document.getElementById('cancelAddUser');
+        const addUserForm = document.getElementById('addUserForm');
 
         if (closeAddModal) {
-            closeAddModal.addEventListener('click', () => this.hideModal(addModal));
-        }
-        if (cancelAdd) {
-            cancelAdd.addEventListener('click', () => this.hideModal(addModal));
-        }
-        if (addEmployeeForm) {
-            addEmployeeForm.addEventListener('submit', (e) => this.handleAddEmployee(e));
+            closeAddModal.addEventListener('click', () => this.closeModal('addUserModal'));
         }
 
-        // Step form functionality
-        this.setupStepForm();
-
-        // Invite code generation in modal
-        const generateInviteCodeBtn = document.getElementById('generateInviteCode');
-        if (generateInviteCodeBtn) {
-            generateInviteCodeBtn.addEventListener('click', () => {
-                this.generateInviteCodeForModal();
-            });
+        if (cancelAddUser) {
+            cancelAddUser.addEventListener('click', () => this.closeModal('addUserModal'));
         }
 
-        // Edit employee modal
-        const editModal = document.getElementById('editEmployeeModal');
-        const closeEditModal = document.getElementById('closeEditModal');
-        const cancelEdit = document.getElementById('cancelEdit');
-        const editEmployeeForm = document.getElementById('editEmployeeForm');
-
-        if (closeEditModal) {
-            closeEditModal.addEventListener('click', () => this.hideModal(editModal));
-        }
-        if (cancelEdit) {
-            cancelEdit.addEventListener('click', () => this.hideModal(editModal));
-        }
-        if (editEmployeeForm) {
-            editEmployeeForm.addEventListener('submit', (e) => this.handleEditEmployee(e));
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', (e) => this.handleAddUser(e));
         }
 
-        // Delete confirmation modal
-        const deleteModal = document.getElementById('deleteConfirmModal');
-        const closeDeleteModal = document.getElementById('closeDeleteModal');
-        const cancelDelete = document.getElementById('cancelDelete');
-        const confirmDelete = document.getElementById('confirmDelete');
-
-        if (closeDeleteModal) {
-            closeDeleteModal.addEventListener('click', () => this.hideModal(deleteModal));
-        }
-        if (cancelDelete) {
-            cancelDelete.addEventListener('click', () => this.hideModal(deleteModal));
-        }
-        if (confirmDelete) {
-            confirmDelete.addEventListener('click', () => this.handleDeleteEmployee());
-        }
-
-        // Close modals when clicking outside
-        [addModal, editModal, deleteModal].forEach(modal => {
-            if (modal) {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        this.hideModal(modal);
-                    }
-                });
-            }
-        });
-    }
-
-    setupStepForm() {
-        const nextStepBtn = document.getElementById('nextStep');
-        const prevStepBtn = document.getElementById('prevStep');
-        const submitFormBtn = document.getElementById('submitForm');
-        const radioOptions = document.querySelectorAll('.radio-option input[type="radio"]');
-        const fileUploadZone = document.querySelector('.upload-zone');
-        const removeFileBtns = document.querySelectorAll('.remove-file');
-
-        // Step navigation
-        if (nextStepBtn) {
-            nextStepBtn.addEventListener('click', () => this.nextStep());
-        }
-        if (prevStepBtn) {
-            prevStepBtn.addEventListener('click', () => this.prevStep());
-        }
-
-        // Radio button selection
-        radioOptions.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                // Remove selected class from all options
-                document.querySelectorAll('.radio-option').forEach(option => {
-                    option.classList.remove('selected');
-                });
-                // Add selected class to current option
-                e.target.closest('.radio-option').classList.add('selected');
-            });
-        });
-
-        // File upload zone
-        if (fileUploadZone) {
-            fileUploadZone.addEventListener('click', () => {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.pdf,.jpg,.jpeg,.png';
-                input.multiple = true;
-                input.addEventListener('change', (e) => this.handleFileUpload(e));
-                input.click();
-            });
-
-            // Drag and drop functionality
-            fileUploadZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                fileUploadZone.style.borderColor = '#4e8cff';
-                fileUploadZone.style.background = '#eff6ff';
-            });
-
-            fileUploadZone.addEventListener('dragleave', (e) => {
-                e.preventDefault();
-                fileUploadZone.style.borderColor = '#d1d5db';
-                fileUploadZone.style.background = '#f9fafb';
-            });
-
-            fileUploadZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                fileUploadZone.style.borderColor = '#d1d5db';
-                fileUploadZone.style.background = '#f9fafb';
-                this.handleFileUpload({ target: { files: e.dataTransfer.files } });
-            });
-        }
-
-        // Remove file buttons
-        removeFileBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const fileItem = btn.closest('.file-item');
-                if (fileItem) {
-                    fileItem.remove();
+        // Close modal when clicking outside
+        if (addUserModal) {
+            addUserModal.addEventListener('click', (e) => {
+                if (e.target === addUserModal) {
+                    this.closeModal('addUserModal');
                 }
             });
-        });
-    }
-
-    nextStep() {
-        const currentStep = document.querySelector('.form-step.active');
-        const currentStepNumber = parseInt(currentStep.dataset.step);
-        const nextStepNumber = currentStepNumber + 1;
-        const nextStep = document.querySelector(`.form-step[data-step="${nextStepNumber}"]`);
-
-        if (nextStep) {
-            // Validate current step
-            if (this.validateStep(currentStepNumber)) {
-                // Hide current step
-                currentStep.classList.remove('active');
-                
-                // Show next step
-                nextStep.classList.add('active');
-                
-                // Update progress bar
-                this.updateProgressBar(currentStepNumber, nextStepNumber);
-                
-                // Update buttons
-                this.updateStepButtons(nextStepNumber);
-            }
         }
-    }
 
-    prevStep() {
-        const currentStep = document.querySelector('.form-step.active');
-        const currentStepNumber = parseInt(currentStep.dataset.step);
-        const prevStepNumber = currentStepNumber - 1;
-        const prevStep = document.querySelector(`.form-step[data-step="${prevStepNumber}"]`);
+        // Bulk Actions Modal
+        const bulkActionsModal = document.getElementById('bulkActionsModal');
+        const closeBulkModal = document.getElementById('closeBulkModal');
 
-        if (prevStep) {
-            // Hide current step
-            currentStep.classList.remove('active');
-            
-            // Show previous step
-            prevStep.classList.add('active');
-            
-            // Update progress bar
-            this.updateProgressBar(currentStepNumber, prevStepNumber);
-            
-            // Update buttons
-            this.updateStepButtons(prevStepNumber);
+        if (closeBulkModal) {
+            closeBulkModal.addEventListener('click', () => this.closeModal('bulkActionsModal'));
         }
-    }
 
-    validateStep(stepNumber) {
-        const currentStep = document.querySelector(`.form-step[data-step="${stepNumber}"]`);
-        const requiredFields = currentStep.querySelectorAll('[required]');
-        let isValid = true;
-
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                isValid = false;
-                field.style.borderColor = '#ef4444';
-                field.focus();
-            } else {
-                field.style.borderColor = '#e5e7eb';
-            }
-        });
-
-        return isValid;
-    }
-
-    updateProgressBar(fromStep, toStep) {
-        const stepItems = document.querySelectorAll('.step-item');
-        const stepConnectors = document.querySelectorAll('.step-connector');
-
-        stepItems.forEach((item, index) => {
-            const stepNumber = index + 1;
-            const stepIcon = item.querySelector('.step-icon');
-            
-            // Remove all existing classes
-            item.classList.remove('active', 'completed');
-            
-            if (stepNumber < toStep) {
-                // Completed steps
-                item.classList.add('completed');
-                stepIcon.innerHTML = '<i class="fas fa-check"></i>';
-            } else if (stepNumber === toStep) {
-                // Current step
-                item.classList.add('active');
-                stepIcon.innerHTML = `<span style="color: #ffffff; font-size: 0.9rem; font-weight: 600;">${stepNumber}</span>`;
-            } else {
-                // Pending steps
-                stepIcon.innerHTML = '<i class="fas fa-check"></i>';
-            }
-        });
-
-        stepConnectors.forEach((connector, index) => {
-            const stepNumber = index + 1;
-            
-            // Remove all existing classes
-            connector.classList.remove('active', 'completed');
-            
-            if (stepNumber < toStep) {
-                // Fully completed - all green
-                connector.classList.add('completed');
-            } else if (stepNumber === toStep) {
-                // Current step - half green, half gray
-                connector.classList.add('active');
-            }
-            // Pending connectors get no special classes
-        });
-    }
-
-    updateStepButtons(stepNumber) {
-        const prevBtn = document.getElementById('prevStep');
-        const nextBtn = document.getElementById('nextStep');
-        const submitBtn = document.getElementById('submitForm');
-
-        if (stepNumber === 1) {
-            prevBtn.style.display = 'none';
-            nextBtn.style.display = 'inline-flex';
-            submitBtn.style.display = 'none';
-        } else if (stepNumber === 4) {
-            prevBtn.style.display = 'inline-flex';
-            nextBtn.style.display = 'none';
-            submitBtn.style.display = 'inline-flex';
-        } else {
-            prevBtn.style.display = 'inline-flex';
-            nextBtn.style.display = 'inline-flex';
-            submitBtn.style.display = 'none';
-        }
-    }
-
-    handleFileUpload(event) {
-        const files = event.target.files;
-        const uploadedFiles = document.querySelector('.uploaded-files');
-
-        Array.from(files).forEach(file => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item';
-            fileItem.innerHTML = `
-                <i class="fas fa-file-pdf"></i>
-                <span>${file.name}</span>
-                <button type="button" class="remove-file">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-
-            // Add remove functionality
-            const removeBtn = fileItem.querySelector('.remove-file');
-            removeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                fileItem.remove();
+        if (bulkActionsModal) {
+            bulkActionsModal.addEventListener('click', (e) => {
+                if (e.target === bulkActionsModal) {
+                    this.closeModal('bulkActionsModal');
+                }
             });
 
-            uploadedFiles.appendChild(fileItem);
+            // Bulk action buttons
+            const bulkActionBtns = bulkActionsModal.querySelectorAll('.bulk-action-btn');
+            bulkActionBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const action = e.currentTarget.dataset.action;
+                    this.executeBulkAction(action);
+                });
+            });
+        }
+    }
+
+    setupPaginationHandlers() {
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+
+        if (prevPageBtn) {
+            prevPageBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.loadUsers();
+                }
+            });
+        }
+
+        if (nextPageBtn) {
+            nextPageBtn.addEventListener('click', () => {
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                    this.loadUsers();
+                }
+            });
+        }
+    }
+
+    debounceSearch() {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+            this.currentPage = 1;
+            this.loadUsers();
+        }, 300);
+    }
+
+    async loadStats() {
+        try {
+            console.log('📊 Loading user management stats...');
+            
+            // For super admin, show platform-wide stats
+            if (this.currentUser?.role === 'super_admin') {
+                const stats = {
+                    totalUsers: 247,
+                    activeUsers: 203,
+                    adminUsers: 12,
+                    recentLogins: 89
+                };
+
+                this.updateStatsDisplay(stats);
+            } else {
+                // For organization users, show organization-specific stats
+                const response = await fetch('/api/users/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    this.updateStatsDisplay(stats);
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error loading stats:', error);
+            // Show default stats on error
+            this.updateStatsDisplay({
+                totalUsers: 0,
+                activeUsers: 0,
+                adminUsers: 0,
+                recentLogins: 0
+            });
+        }
+    }
+
+    updateStatsDisplay(stats) {
+        const elements = {
+            totalUsers: document.getElementById('totalUsers'),
+            activeUsers: document.getElementById('activeUsers'),
+            adminUsers: document.getElementById('adminUsers'),
+            recentLogins: document.getElementById('recentLogins')
+        };
+
+        Object.keys(elements).forEach(key => {
+            if (elements[key] && stats[key] !== undefined) {
+                elements[key].textContent = stats[key].toLocaleString();
+            }
         });
     }
 
-    applyFilters() {
-        console.log('🔍 Applying filters...');
-        let filtered = [...this.employees];
+    async loadUsers() {
+        if (this.isLoading) return;
+        
+        this.isLoading = true;
+        this.showLoadingState();
 
-        // Search filter
-        if (this.filters.search) {
-            const searchTerm = this.filters.search.toLowerCase();
-            filtered = filtered.filter(employee => 
-                employee.first_name.toLowerCase().includes(searchTerm) ||
-                employee.last_name.toLowerCase().includes(searchTerm) ||
-                employee.email.toLowerCase().includes(searchTerm)
-            );
+        try {
+            console.log('👥 Loading users...');
+            
+            // For super admin, load all platform users
+            if (this.currentUser?.role === 'super_admin') {
+                await this.loadAllPlatformUsers();
+            } else {
+                // For organization users, load organization users
+                await this.loadOrganizationUsers();
+            }
+        } catch (error) {
+            console.error('❌ Error loading users:', error);
+            this.showErrorState();
+        } finally {
+            this.isLoading = false;
         }
-
-        // Department filter
-        if (this.filters.department) {
-            filtered = filtered.filter(employee => 
-                employee.department === this.filters.department
-            );
-        }
-
-        // Role filter
-        if (this.filters.role) {
-            filtered = filtered.filter(employee => 
-                employee.role === this.filters.role
-            );
-        }
-
-        // Status filter
-        if (this.filters.status) {
-            filtered = filtered.filter(employee => 
-                employee.status === this.filters.status
-            );
-        }
-
-        this.filteredEmployees = filtered;
-        this.currentPage = 1; // Reset to first page when filtering
-        console.log('🔍 Filtered employees:', this.filteredEmployees.length);
     }
 
-    renderEmployees() {
-        console.log('🎨 Rendering employees...');
+    async loadAllPlatformUsers() {
+        // For demo purposes, showing mock data for super admin
+        const mockUsers = [
+            {
+                id: '1',
+                first_name: 'John',
+                last_name: 'Smith',
+                email: 'john.smith@techcorp.com',
+                role: 'admin',
+                status: 'active',
+                organization_name: 'TechCorp Inc',
+                last_login: '2024-01-18T09:30:00Z',
+                created_at: '2024-01-15T10:00:00Z'
+            },
+            {
+                id: '2',
+                first_name: 'Sarah',
+                last_name: 'Johnson',
+                email: 'sarah.j@innovate.co',
+                role: 'manager',
+                status: 'active',
+                organization_name: 'Innovate Solutions',
+                last_login: '2024-01-18T08:15:00Z',
+                created_at: '2024-01-14T14:30:00Z'
+            },
+            {
+                id: '3',
+                first_name: 'Mike',
+                last_name: 'Davis',
+                email: 'mike.davis@startup.io',
+                role: 'employee',
+                status: 'pending',
+                organization_name: 'StartupIO',
+                last_login: null,
+                created_at: '2024-01-18T16:20:00Z'
+            }
+        ];
+
+        this.users = mockUsers;
+        this.totalUsers = mockUsers.length;
+        this.totalPages = Math.ceil(this.totalUsers / this.itemsPerPage);
         
+        this.renderUsers();
+        this.updatePagination();
+        this.updateUserCount();
+    }
+
+    async loadOrganizationUsers() {
+        const queryParams = new URLSearchParams({
+            page: this.currentPage,
+            limit: this.itemsPerPage,
+            search: this.filters.search,
+            role: this.filters.role,
+            status: this.filters.status,
+            sortBy: this.sortBy,
+            sortOrder: this.sortOrder
+        });
+
+        const response = await fetch(`/api/users?${queryParams}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load users');
+        }
+
+        const data = await response.json();
+        this.users = data.users || [];
+        this.totalUsers = data.total || 0;
+        this.totalPages = data.totalPages || 1;
+        
+        this.renderUsers();
+        this.updatePagination();
+        this.updateUserCount();
+    }
+
+    async loadOrganizations() {
+        try {
+            // Only load organizations for organization filter if user is super admin
+            if (this.currentUser?.role === 'super_admin') {
+                const organizationFilter = document.getElementById('organizationFilter');
+                if (organizationFilter) {
+                    // Add mock organizations for demo
+                    const organizations = [
+                        { id: '1', name: 'TechCorp Inc' },
+                        { id: '2', name: 'Innovate Solutions' },
+                        { id: '3', name: 'StartupIO' }
+                    ];
+
+                    organizationFilter.innerHTML = '<option value="">All Organizations</option>';
+                    organizations.forEach(org => {
+                        const option = document.createElement('option');
+                        option.value = org.id;
+                        option.textContent = org.name;
+                        organizationFilter.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('❌ Error loading organizations:', error);
+        }
+    }
+
+    renderUsers() {
         if (this.currentView === 'table') {
             this.renderTableView();
         } else {
             this.renderGridView();
         }
-        
-        this.updateEmployeeCount();
     }
 
     renderTableView() {
-        const tbody = document.getElementById('employeesTableBody');
-        if (!tbody) return;
+        const tableBody = document.getElementById('usersTableBody');
+        if (!tableBody) return;
 
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-        const endIndex = startIndex + this.itemsPerPage;
-        const pageEmployees = this.filteredEmployees.slice(startIndex, endIndex);
-
-        if (pageEmployees.length === 0) {
-            tbody.innerHTML = `
+        if (this.users.length === 0) {
+            tableBody.innerHTML = `
                 <tr>
                     <td colspan="9" class="loading-row">
-                        <span>No employees found</span>
+                        <div>No users found</div>
                     </td>
                 </tr>
             `;
             return;
         }
 
-        tbody.innerHTML = pageEmployees.map(employee => `
+        tableBody.innerHTML = this.users.map(user => `
             <tr>
                 <td>
-                    <input type="checkbox" class="employee-checkbox" value="${employee.id}">
+                    <input type="checkbox" 
+                           class="user-checkbox" 
+                           data-user-id="${user.id}"
+                           ${this.selectedUsers.has(user.id) ? 'checked' : ''}>
                 </td>
                 <td>
-                    <div class="employee-info">
-                        <div class="employee-avatar">
-                            ${employee.first_name.charAt(0)}${employee.last_name.charAt(0)}
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            ${this.getInitials(user.first_name, user.last_name)}
                         </div>
-                        <div class="employee-details">
-                            <div class="employee-name">${employee.first_name} ${employee.last_name}</div>
-                            <div class="employee-email">${employee.email}</div>
+                        <div class="user-details">
+                            <div class="user-name">${user.first_name} ${user.last_name}</div>
+                            <div class="user-email">${user.email}</div>
                         </div>
                     </div>
                 </td>
-                <td>${employee.email}</td>
+                <td>${user.email}</td>
+                <td>${user.organization_name || 'No Organization'}</td>
+                <td><span class="role-badge ${user.role}">${this.formatRole(user.role)}</span></td>
+                <td><span class="status-badge ${user.status}">${this.formatStatus(user.status)}</span></td>
+                <td>${user.last_login ? this.formatDate(user.last_login) : 'Never'}</td>
+                <td>${this.formatDate(user.created_at)}</td>
                 <td>
-                    ${employee.invite_code ? `
-                        <div class="invite-code-container">
-                            <div class="invite-code-display">
-                                <code class="invite-code">${employee.invite_code}</code>
-                                ${employee.profile_id ? 
-                                    '<span class="invite-status registered">✓ Registered</span>' : 
-                                    '<span class="invite-status pending">⏳ Pending</span>'
-                                }
-                            </div>
-                            ${!employee.profile_id ? `
-                                <div class="invite-actions">
-                                    <button class="invite-btn regenerate" onclick="usersPage.regenerateInvite('${employee.id}')" title="Regenerate Code">
-                                        <i class="fas fa-sync-alt"></i>
-                                    </button>
-                                    <button class="invite-btn send" onclick="usersPage.sendInvite('${employee.id}')" title="Send Invite">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    ` : `
-                        <div class="invite-code-container">
-                            <span class="no-invite">No invite code</span>
-                            <button class="invite-btn generate" onclick="usersPage.generateInvite('${employee.id}')" title="Generate Code">
-                                <i class="fas fa-plus"></i>
-                            </button>
-                        </div>
-                    `}
-                </td>
-                <td>
-                    <span class="department-badge ${employee.department}">${employee.department}</span>
-                </td>
-                <td>
-                    <span class="role-badge ${employee.role}">${employee.role}</span>
-                </td>
-                <td>
-                    <span class="status-badge ${employee.status}">${employee.status}</span>
-                </td>
-                <td>
-                    <div class="performance-bar">
-                        <div class="performance-fill" style="width: ${employee.performance}%"></div>
-                    </div>
-                    <div class="performance-text">${employee.performance}%</div>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        <button class="action-btn view" onclick="usersPage.viewEmployee('${employee.id}')" title="View">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn edit" onclick="usersPage.editEmployee('${employee.id}')" title="Edit">
+                    <div class="actions-cell">
+                        <button class="action-btn edit" onclick="userManagement.editUser('${user.id}')" title="Edit User">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="action-btn delete" onclick="usersPage.deleteEmployee('${employee.id}')" title="Delete">
+                        <button class="action-btn delete" onclick="userManagement.deleteUser('${user.id}')" title="Delete User">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
                 </td>
             </tr>
         `).join('');
+
+        // Add event listeners for checkboxes
+        this.setupUserCheckboxes();
     }
 
     renderGridView() {
-        const grid = document.getElementById('employeesGrid');
-        if (!grid) return;
+        const gridContainer = document.getElementById('usersGrid');
+        if (!gridContainer) return;
 
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-        const endIndex = startIndex + this.itemsPerPage;
-        const pageEmployees = this.filteredEmployees.slice(startIndex, endIndex);
-
-        if (pageEmployees.length === 0) {
-            grid.innerHTML = `
-                <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #6b7280;">
-                    <span>No employees found</span>
-                </div>
-            `;
+        if (this.users.length === 0) {
+            gridContainer.innerHTML = '<div>No users found</div>';
             return;
         }
 
-        grid.innerHTML = pageEmployees.map(employee => `
-            <div class="employee-card">
-                <div class="employee-card-header">
-                    <div class="employee-card-avatar">
-                        ${employee.first_name.charAt(0)}${employee.last_name.charAt(0)}
+        gridContainer.innerHTML = this.users.map(user => `
+            <div class="user-card">
+                <div class="user-card-header">
+                    <div class="user-avatar">
+                        ${this.getInitials(user.first_name, user.last_name)}
                     </div>
-                    <div class="employee-card-info">
-                        <h4>${employee.first_name} ${employee.last_name}</h4>
-                        <p>${employee.email}</p>
+                    <div class="user-details">
+                        <h4>${user.first_name} ${user.last_name}</h4>
+                        <p>${user.email}</p>
                     </div>
                 </div>
-                <div class="employee-card-details">
-                    <div class="employee-card-detail">
-                        <label>Department</label>
-                        <span class="department-badge ${employee.department}">${employee.department}</span>
+                <div class="user-card-details">
+                    <div class="user-card-detail">
+                        <label>Organization</label>
+                        <span>${user.organization_name || 'No Organization'}</span>
                     </div>
-                    <div class="employee-card-detail">
+                    <div class="user-card-detail">
                         <label>Role</label>
-                        <span class="role-badge ${employee.role}">${employee.role}</span>
+                        <span class="role-badge ${user.role}">${this.formatRole(user.role)}</span>
                     </div>
-                    <div class="employee-card-detail">
+                    <div class="user-card-detail">
                         <label>Status</label>
-                        <span class="status-badge ${employee.status}">${employee.status}</span>
+                        <span class="status-badge ${user.status}">${this.formatStatus(user.status)}</span>
                     </div>
-                    <div class="employee-card-detail">
-                        <label>Performance</label>
-                        <span>${employee.performance}%</span>
+                    <div class="user-card-detail">
+                        <label>Last Login</label>
+                        <span>${user.last_login ? this.formatDate(user.last_login) : 'Never'}</span>
                     </div>
                 </div>
-                <div class="employee-card-actions">
-                    <button class="btn btn-outline" onclick="usersPage.viewEmployee('${employee.id}')">
-                        <i class="fas fa-eye"></i> View
+                <div class="user-card-actions">
+                    <button class="action-btn edit" onclick="userManagement.editUser('${user.id}')">
+                        <i class="fas fa-edit"></i>
+                        Edit
                     </button>
-                    <button class="btn btn-outline" onclick="usersPage.editEmployee('${employee.id}')">
-                        <i class="fas fa-edit"></i> Edit
-                    </button>
-                    <button class="btn btn-outline" onclick="usersPage.deleteEmployee('${employee.id}')">
-                        <i class="fas fa-trash"></i> Delete
+                    <button class="action-btn delete" onclick="userManagement.deleteUser('${user.id}')">
+                        <i class="fas fa-trash"></i>
+                        Delete
                     </button>
                 </div>
             </div>
         `).join('');
     }
 
-    switchView(view) {
-        console.log('🔄 Switching to view:', view);
-        this.currentView = view;
+    setupUserCheckboxes() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', (e) => {
+                const userId = e.target.dataset.userId;
+                if (e.target.checked) {
+                    this.selectedUsers.add(userId);
+                } else {
+                    this.selectedUsers.delete(userId);
+                }
+                this.updateSelectAllState();
+                this.updateBulkActionsState();
+            });
+        });
+    }
+
+    updateSelectAllState() {
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (!selectAllCheckbox) return;
+
+        const totalVisible = this.users.length;
+        const selectedVisible = this.users.filter(user => this.selectedUsers.has(user.id)).length;
+
+        if (selectedVisible === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedVisible === totalVisible) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+
+    updateBulkActionsState() {
+        const bulkActionsBtn = document.getElementById('bulkActionsBtn');
+        if (bulkActionsBtn) {
+            bulkActionsBtn.disabled = this.selectedUsers.size === 0;
+        }
+    }
+
+    selectAllUsers(checked) {
+        if (checked) {
+            this.users.forEach(user => this.selectedUsers.add(user.id));
+        } else {
+            this.users.forEach(user => this.selectedUsers.delete(user.id));
+        }
         
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+
+        this.updateBulkActionsState();
+    }
+
+    switchView(view) {
+        this.currentView = view;
+
         // Update view buttons
         const viewButtons = document.querySelectorAll('.view-btn');
         viewButtons.forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.dataset.view === view) {
-                btn.classList.add('active');
-            }
+            btn.classList.toggle('active', btn.dataset.view === view);
         });
 
-        // Show/hide containers
+        // Show/hide view containers
         const tableView = document.getElementById('tableView');
         const gridView = document.getElementById('gridView');
-        
-        if (view === 'table') {
-            tableView.classList.remove('hidden');
-            gridView.classList.add('hidden');
-        } else {
-            tableView.classList.add('hidden');
-            gridView.classList.remove('hidden');
-        }
 
-        this.renderEmployees();
-    }
-
-    async updateStats() {
-        try {
-            const token = localStorage.getItem('token');
-            
-            // If no token, use local stats
-            if (!token) {
-                console.log('📊 No token found, using local stats calculation...');
-                this.updateStatsLocal();
-                return;
-            }
-            
-            const response = await this.retryRequest(async () => {
-                return await fetch('/api/users/stats/overview', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            });
-            
-            if (response.ok) {
-                const stats = await response.json();
-                document.getElementById('totalEmployeesCount').textContent = stats.totalUsers || 0;
-                document.getElementById('activeEmployeesCount').textContent = stats.activeUsers || 0;
-                document.getElementById('departmentsCount').textContent = stats.departments || 0;
-                document.getElementById('avgPerformance').textContent = `${stats.attendanceRate || 0}%`;
-            } else if (response.status === 429) {
-                const errorData = await response.json();
-                console.warn('Rate limited when fetching stats:', errorData);
-                // Fall back to local calculation
-                this.updateStatsLocal();
+        if (tableView && gridView) {
+            if (view === 'table') {
+                tableView.classList.remove('hidden');
+                gridView.classList.add('hidden');
             } else {
-                // Fall back to local calculation
-                this.updateStatsLocal();
+                tableView.classList.add('hidden');
+                gridView.classList.remove('hidden');
             }
-        } catch (error) {
-            console.error('Failed to update stats:', error);
-            // Fall back to local calculation
-            this.updateStatsLocal();
         }
-    }
 
-    updateStatsLocal() {
-        const totalEmployees = this.employees.length;
-        const activeEmployees = this.employees.filter(e => e.status === 'active').length;
-        const departments = new Set(this.employees.map(e => e.department)).size;
-        const avgPerformance = this.employees.length > 0 
-            ? Math.round(this.employees.reduce((sum, e) => sum + e.performance, 0) / this.employees.length)
-            : 0;
-
-        document.getElementById('totalEmployeesCount').textContent = totalEmployees;
-        document.getElementById('activeEmployeesCount').textContent = activeEmployees;
-        document.getElementById('departmentsCount').textContent = departments;
-        document.getElementById('avgPerformance').textContent = `${avgPerformance}%`;
-    }
-
-    updateEmployeeCount() {
-        const countElement = document.getElementById('employeeCount');
-        if (countElement) {
-            countElement.textContent = `${this.filteredEmployees.length} employees`;
-        }
+        this.renderUsers();
     }
 
     updatePagination() {
-        const totalPages = Math.ceil(this.filteredEmployees.length / this.itemsPerPage);
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage + 1;
-        const endIndex = Math.min(this.currentPage * this.itemsPerPage, this.filteredEmployees.length);
-
-        // Update pagination info
         const paginationInfo = document.getElementById('paginationInfo');
-        if (paginationInfo) {
-            paginationInfo.textContent = `Showing ${startIndex} to ${endIndex} of ${this.filteredEmployees.length} employees`;
-        }
-
-        // Update pagination buttons
+        const pageNumbers = document.getElementById('pageNumbers');
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
-        
+
+        if (paginationInfo) {
+            const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+            const end = Math.min(this.currentPage * this.itemsPerPage, this.totalUsers);
+            paginationInfo.textContent = `Showing ${start}-${end} of ${this.totalUsers} users`;
+        }
+
         if (prevPageBtn) {
             prevPageBtn.disabled = this.currentPage <= 1;
         }
+
         if (nextPageBtn) {
-            nextPageBtn.disabled = this.currentPage >= totalPages;
+            nextPageBtn.disabled = this.currentPage >= this.totalPages;
         }
 
-        // Update page numbers
-        this.renderPageNumbers(totalPages);
+        if (pageNumbers) {
+            const pages = this.generatePageNumbers();
+            pageNumbers.innerHTML = pages.map(page => {
+                if (page === '...') {
+                    return '<span class="page-ellipsis">...</span>';
+                }
+                return `
+                    <button class="page-number ${page === this.currentPage ? 'active' : ''}"
+                            onclick="userManagement.goToPage(${page})">
+                        ${page}
+                    </button>
+                `;
+            }).join('');
+        }
     }
 
-    renderPageNumbers(totalPages) {
-        const pageNumbersContainer = document.getElementById('pageNumbers');
-        if (!pageNumbersContainer) return;
-
+    generatePageNumbers() {
         const pages = [];
-        const maxVisiblePages = 5;
+        const maxVisible = 5;
         
-        if (totalPages <= maxVisiblePages) {
-            for (let i = 1; i <= totalPages; i++) {
+        if (this.totalPages <= maxVisible) {
+            for (let i = 1; i <= this.totalPages; i++) {
                 pages.push(i);
             }
         } else {
-            if (this.currentPage <= 3) {
-                for (let i = 1; i <= 4; i++) {
+            pages.push(1);
+            
+            if (this.currentPage > 3) {
+                pages.push('...');
+            }
+            
+            const start = Math.max(2, this.currentPage - 1);
+            const end = Math.min(this.totalPages - 1, this.currentPage + 1);
+            
+            for (let i = start; i <= end; i++) {
+                if (!pages.includes(i)) {
                     pages.push(i);
                 }
+            }
+            
+            if (this.currentPage < this.totalPages - 2) {
                 pages.push('...');
-                pages.push(totalPages);
-            } else if (this.currentPage >= totalPages - 2) {
-                pages.push(1);
-                pages.push('...');
-                for (let i = totalPages - 3; i <= totalPages; i++) {
-                    pages.push(i);
-                }
-            } else {
-                pages.push(1);
-                pages.push('...');
-                for (let i = this.currentPage - 1; i <= this.currentPage + 1; i++) {
-                    pages.push(i);
-                }
-                pages.push('...');
-                pages.push(totalPages);
+            }
+            
+            if (!pages.includes(this.totalPages)) {
+                pages.push(this.totalPages);
             }
         }
-
-        pageNumbersContainer.innerHTML = pages.map(page => {
-            if (page === '...') {
-                return '<span class="page-number">...</span>';
-            }
-            return `<button class="page-number ${page === this.currentPage ? 'active' : ''}" onclick="usersPage.goToPage(${page})">${page}</button>`;
-        }).join('');
+        
+        return pages;
     }
 
     goToPage(page) {
-        const totalPages = Math.ceil(this.filteredEmployees.length / this.itemsPerPage);
-        if (page >= 1 && page <= totalPages) {
+        if (page !== this.currentPage && page >= 1 && page <= this.totalPages) {
             this.currentPage = page;
-            this.renderEmployees();
-            this.updatePagination();
+            this.loadUsers();
         }
     }
 
-    // Modal functions
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
+    updateUserCount() {
+        const userCount = document.getElementById('userCount');
+        if (userCount) {
+            userCount.textContent = `${this.totalUsers} users`;
+        }
+    }
+
+    showLoadingState() {
+        const tableBody = document.getElementById('usersTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="loading-row">
+                        <div class="loading-spinner"></div>
+                        <span>Loading users...</span>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    showErrorState() {
+        const tableBody = document.getElementById('usersTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="loading-row">
+                        <div>❌ Error loading users. Please try again.</div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // Utility methods
+    getInitials(firstName, lastName) {
+        return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    }
+
+    formatRole(role) {
+        const roles = {
+            'super_admin': 'Super Admin',
+            'admin': 'Admin',
+            'manager': 'Manager',
+            'employee': 'Employee'
+        };
+        return roles[role] || role;
+    }
+
+    formatStatus(status) {
+        const statuses = {
+            'active': 'Active',
+            'inactive': 'Inactive',
+            'pending': 'Pending'
+        };
+        return statuses[status] || status;
+    }
+
+    formatDate(dateString) {
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Modal methods
+    openAddUserModal() {
+        const modal = document.getElementById('addUserModal');
         if (modal) {
+            modal.classList.add('show');
+            // Reset form
+            const form = document.getElementById('addUserForm');
+            if (form) {
+                form.reset();
+            }
+        }
+    }
+
+    openBulkActionsModal() {
+        const modal = document.getElementById('bulkActionsModal');
+        const selectedCount = document.getElementById('selectedCount');
+        
+        if (modal && this.selectedUsers.size > 0) {
+            if (selectedCount) {
+                selectedCount.textContent = this.selectedUsers.size;
+            }
             modal.classList.add('show');
         }
     }
 
-    hideModal(modal) {
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('show');
         }
     }
 
-    showAddModal() {
-        this.showModal('addEmployeeModal');
-        this.resetStepForm();
-    }
-
-    resetStepForm() {
-        // Reset to first step
-        const steps = document.querySelectorAll('.form-step');
-        steps.forEach(step => step.classList.remove('active'));
-        steps[0].classList.add('active');
-
-        // Reset progress bar
-        this.updateProgressBar(1, 1);
-
-        // Reset buttons
-        this.updateStepButtons(1);
-
-        // Reset form fields
-        const form = document.getElementById('addEmployeeForm');
-        if (form) {
-            form.reset();
-        }
-
-        // Reset radio selection
-        document.querySelectorAll('.radio-option').forEach(option => {
-            option.classList.remove('selected');
-        });
-        const firstRadio = document.querySelector('.radio-option input[type="radio"]');
-        if (firstRadio) {
-            firstRadio.checked = true;
-            firstRadio.closest('.radio-option').classList.add('selected');
-        }
-
-        // Clear uploaded files
-        const uploadedFiles = document.querySelector('.uploaded-files');
-        if (uploadedFiles) {
-            uploadedFiles.innerHTML = '';
-        }
-
-        // Reset validation styles
-        document.querySelectorAll('.form-group input, .form-group select').forEach(field => {
-            field.style.borderColor = '#e5e7eb';
-        });
-
-        // Clear invite code
-        const inviteCodeInput = document.getElementById('inviteCode');
-        if (inviteCodeInput) {
-            inviteCodeInput.value = '';
-        }
-    }
-
-    showEditModal(employee) {
-        // Populate form fields
-        document.getElementById('editEmployeeId').value = employee.id;
-        document.getElementById('editFirstName').value = employee.first_name;
-        document.getElementById('editLastName').value = employee.last_name;
-        document.getElementById('editEmail').value = employee.email;
-        document.getElementById('editDepartment').value = employee.department;
-        document.getElementById('editRole').value = employee.role;
-        document.getElementById('editPhone').value = employee.phone || '';
-        document.getElementById('editStatus').value = employee.status;
-        
-        this.showModal('editEmployeeModal');
-    }
-
-    showDeleteModal(employee) {
-        const deleteEmployeeInfo = document.getElementById('deleteEmployeeInfo');
-        if (deleteEmployeeInfo) {
-            deleteEmployeeInfo.innerHTML = `
-                <strong>${employee.first_name} ${employee.last_name}</strong><br>
-                <span>${employee.email}</span><br>
-                <span>${employee.department} - ${employee.role}</span>
-            `;
-        }
-        this.employeeToDelete = employee;
-        this.showModal('deleteConfirmModal');
-    }
-
-    // Employee actions
-    viewEmployee(id) {
-        const employee = this.employees.find(e => e.id === id);
-        if (employee) {
-            this.showToast(`Viewing ${employee.first_name} ${employee.last_name}`, 'info');
-            // TODO: Implement detailed view modal
-        }
-    }
-
-    editEmployee(id) {
-        const employee = this.employees.find(e => e.id === id);
-        if (employee) {
-            this.showEditModal(employee);
-        }
-    }
-
-    deleteEmployee(id) {
-        const employee = this.employees.find(e => e.id === id);
-        if (employee) {
-            this.showDeleteModal(employee);
-        }
-    }
-
-    async handleAddEmployee(e) {
+    // User actions
+    async handleAddUser(e) {
         e.preventDefault();
         
-        // Check if we're on the final step
-        const currentStep = document.querySelector('.form-step.active');
-        const currentStepNumber = parseInt(currentStep.dataset.step);
-        
-        if (currentStepNumber < 4) {
-            // If not on final step, go to next step
-            this.nextStep();
-            return;
-        }
-        
-        // Only proceed with submission on final step
         const formData = new FormData(e.target);
-        const employeeData = {
-            first_name: formData.get('firstName'),
-            last_name: formData.get('lastName'),
+        const userData = {
+            firstName: formData.get('firstName'),
+            lastName: formData.get('lastName'),
             email: formData.get('email'),
-            phone: formData.get('phone'),
-            employment_type: formData.get('employmentType'),
-            job_title: formData.get('jobTitle'),
-            department: formData.get('department'),
-            work_location: formData.get('workLocation'),
-            reporting_manager_id: null, // Set to null for now since we don't have proper UUIDs
-            employee_status: formData.get('employeeStatus') || 'active',
-            date_of_joining: formData.get('dateOfJoining'),
-            salary: parseFloat(formData.get('salary')) || 0,
-            currency: formData.get('currency') || 'EUR',
-            pay_frequency: formData.get('payFrequency') || 'monthly',
-            annual_bonus: parseFloat(formData.get('bonus')) || 0,
-            benefits_package: formData.get('benefits') || null,
-            work_schedule: formData.get('workSchedule') || 'full_time',
-            work_days: formData.get('workDays') || 'monday-friday',
-            break_time: formData.get('breakTime') || '1 hour',
-            overtime_eligible: formData.get('overtimeEligible') === 'yes',
-            terms_accepted: formData.get('termsAccepted') === 'on',
-            is_active: true
+            role: formData.get('role'),
+            organization: formData.get('organization'),
+            status: formData.get('status')
         };
 
         try {
-            const token = localStorage.getItem('token');
-            
-            // If no token, add to local array for demo
-            if (!token) {
-                console.log('📝 No authentication token found, adding to local array for demo...');
-                const newEmployee = {
-                    id: Date.now().toString(),
-                    ...employeeData,
-                    status: 'active',
-                    performance: Math.floor(Math.random() * 30) + 70
-                };
-                
-                this.employees.unshift(newEmployee);
-                this.applyFilters();
-                this.renderEmployees();
-                this.updateStats();
-                this.updatePagination();
-                
-                this.hideModal(document.getElementById('addEmployeeModal'));
-                this.resetStepForm();
-                this.showToast('Employee added successfully (demo mode)', 'success');
-                return;
-            }
-            
-            // Send to backend API
-            console.log('📝 Creating employee via API...');
-            const response = await this.retryRequest(async () => {
-                return await fetch('/api/users', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(employeeData)
-                });
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(userData)
             });
-            
-            if (!response.ok) {
-                if (response.status === 429) {
-                    const errorData = await response.json();
-                    throw new Error(`Rate limit exceeded. Please try again in ${errorData.retryAfter || 30} seconds.`);
-                }
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to create employee');
-            }
-            
-            const result = await response.json();
-            console.log('✅ Employee created successfully:', result);
-            
-            // Reload employees to get the updated list from the database
-            await this.loadEmployees();
-            
-            this.hideModal(document.getElementById('addEmployeeModal'));
-            this.resetStepForm();
-            
-            // Show success message with invite code
-            if (result.inviteCode) {
-                this.showToast(`Employee added successfully! Invite code: ${result.inviteCode} (sent to ${result.user.email})`, 'success');
+
+            if (response.ok) {
+                this.closeModal('addUserModal');
+                await this.loadUsers();
+                this.showNotification('User created successfully', 'success');
             } else {
-                this.showToast('Employee added successfully', 'success');
+                const error = await response.json();
+                this.showNotification(error.message || 'Failed to create user', 'error');
             }
-            
         } catch (error) {
-            console.error('❌ Failed to add employee:', error);
-            this.showToast(error.message, 'error');
+            console.error('Error creating user:', error);
+            this.showNotification('Failed to create user', 'error');
         }
     }
 
-    async handleEditEmployee(e) {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const employeeId = formData.get('id');
-        const employeeData = {
-            first_name: formData.get('firstName'),
-            last_name: formData.get('lastName'),
-            email: formData.get('email'),
-            department: formData.get('department'),
-            job_title: formData.get('jobTitle'),
-            phone: formData.get('phone'),
-            employment_type: formData.get('employmentType'),
-            work_location: formData.get('workLocation'),
-            reporting_manager_id: null, // Set to null for now since we don't have proper UUIDs
-            employee_status: formData.get('employeeStatus'),
-            salary: parseFloat(formData.get('salary')) || 0,
-            currency: formData.get('currency') || 'EUR',
-            pay_frequency: formData.get('payFrequency') || 'monthly',
-            annual_bonus: parseFloat(formData.get('bonus')) || 0,
-            benefits_package: formData.get('benefits') || null,
-            work_schedule: formData.get('workSchedule') || 'full_time',
-            work_days: formData.get('workDays') || 'monday-friday',
-            break_time: formData.get('breakTime') || '1 hour',
-            overtime_eligible: formData.get('overtimeEligible') === 'yes',
-            is_active: formData.get('status') === 'active'
-        };
-
-        try {
-            const token = localStorage.getItem('token');
-            
-            // If no token, update in local array for demo
-            if (!token) {
-                console.log('📝 No authentication token found, updating in local array for demo...');
-                const index = this.employees.findIndex(e => e.id === employeeId);
-                if (index !== -1) {
-                    this.employees[index] = { ...this.employees[index], ...employeeData };
-                    this.applyFilters();
-                    this.renderEmployees();
-                    this.updateStats();
-                    
-                    this.hideModal(document.getElementById('editEmployeeModal'));
-                    this.showToast('Employee updated successfully (demo mode)', 'success');
-                }
-                return;
-            }
-            
-            // Send to backend API
-            console.log('📝 Updating employee via API...');
-            const response = await this.retryRequest(async () => {
-                return await fetch(`/api/users/${employeeId}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(employeeData)
-                });
-            });
-            
-            if (!response.ok) {
-                if (response.status === 429) {
-                    const errorData = await response.json();
-                    throw new Error(`Rate limit exceeded. Please try again in ${errorData.retryAfter || 30} seconds.`);
-                }
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update employee');
-            }
-            
-            const result = await response.json();
-            console.log('✅ Employee updated successfully:', result);
-            
-            // Reload employees to get the updated list from the database
-            await this.loadEmployees();
-            
-            this.hideModal(document.getElementById('editEmployeeModal'));
-            this.showToast('Employee updated successfully', 'success');
-            
-        } catch (error) {
-            console.error('❌ Failed to update employee:', error);
-            this.showToast(error.message, 'error');
-        }
+    async editUser(userId) {
+        console.log('Editing user:', userId);
+        // TODO: Implement edit user modal
     }
 
-    async handleDeleteEmployee() {
-        if (!this.employeeToDelete) return;
-
-        try {
-            const token = localStorage.getItem('token');
-            
-            // If no token, remove from local array for demo
-            if (!token) {
-                console.log('📝 No authentication token found, removing from local array for demo...');
-                this.employees = this.employees.filter(e => e.id !== this.employeeToDelete.id);
-                this.applyFilters();
-                this.renderEmployees();
-                this.updateStats();
-                this.updatePagination();
-                
-                this.hideModal(document.getElementById('deleteConfirmModal'));
-                this.showToast('Employee deleted successfully (demo mode)', 'success');
-                this.employeeToDelete = null;
-                return;
-            }
-            
-            // Send to backend API
-            console.log('📝 Deleting employee via API...');
-            const response = await this.retryRequest(async () => {
-                return await fetch(`/api/users/${this.employeeToDelete.id}`, {
+    async deleteUser(userId) {
+        if (confirm('Are you sure you want to delete this user?')) {
+            try {
+                const response = await fetch(`/api/users/${userId}`, {
                     method: 'DELETE',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
                     }
                 });
-            });
-            
-            if (!response.ok) {
-                if (response.status === 429) {
-                    const errorData = await response.json();
-                    throw new Error(`Rate limit exceeded. Please try again in ${errorData.retryAfter || 30} seconds.`);
+
+                if (response.ok) {
+                    await this.loadUsers();
+                    this.showNotification('User deleted successfully', 'success');
+                } else {
+                    const error = await response.json();
+                    this.showNotification(error.message || 'Failed to delete user', 'error');
                 }
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to delete employee');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                this.showNotification('Failed to delete user', 'error');
             }
-            
-            console.log('✅ Employee deleted successfully');
-            
-            // Reload employees to get the updated list from the database
-            await this.loadEmployees();
-            
-            this.hideModal(document.getElementById('deleteConfirmModal'));
-            this.showToast('Employee deleted successfully', 'success');
-            this.employeeToDelete = null;
-            
-        } catch (error) {
-            console.error('❌ Failed to delete employee:', error);
-            this.showToast(error.message, 'error');
         }
     }
 
-    exportEmployees() {
-        try {
-            const csvContent = this.generateCSV();
-            const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `employees-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-            
-            this.showToast('Export completed successfully', 'success');
-        } catch (error) {
-            console.error('Export failed:', error);
-            this.showToast('Export failed', 'error');
-        }
-    }
-
-    generateCSV() {
-        const headers = ['Name', 'Email', 'Department', 'Role', 'Status', 'Performance', 'Phone', 'Hire Date'];
-        const rows = this.filteredEmployees.map(employee => [
-            `${employee.first_name} ${employee.last_name}`,
-            employee.email,
-            employee.department,
-            employee.role,
-            employee.status,
-            `${employee.performance}%`,
-            employee.phone || '',
-            employee.hire_date
-        ]);
+    async executeBulkAction(action) {
+        const selectedUserIds = Array.from(this.selectedUsers);
         
-        return [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    }
-
-    showToast(message, type = 'info') {
-        // Simple toast implementation
-        const toast = document.createElement('div');
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            border-radius: 6px;
-            color: white;
-            font-weight: 500;
-            z-index: 10000;
-            animation: slideIn 0.3s ease;
-        `;
-        
-        switch (type) {
-            case 'success':
-                toast.style.background = '#10b981';
-                break;
-            case 'error':
-                toast.style.background = '#ef4444';
-                break;
-            default:
-                toast.style.background = '#4e8cff';
+        if (selectedUserIds.length === 0) {
+            this.showNotification('No users selected', 'warning');
+            return;
         }
-        
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.animation = 'slideOut 0.3s ease';
-            setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 300);
-        }, 3000);
-    }
 
-    // Invite Code Management Functions
-    async regenerateInvite(employeeId) {
-        try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                this.showToast('Please log in to manage invite codes', 'error');
-                return;
-            }
+        const confirmMessages = {
+            'activate': `Activate ${selectedUserIds.length} user(s)?`,
+            'deactivate': `Deactivate ${selectedUserIds.length} user(s)?`,
+            'delete': `Delete ${selectedUserIds.length} user(s)? This action cannot be undone.`,
+            'export': `Export ${selectedUserIds.length} user(s)?`
+        };
 
-            console.log('🔄 Regenerating invite code for employee:', employeeId);
-            
-            const response = await this.retryRequest(async () => {
-                return await fetch(`/api/users/${employeeId}/regenerate-invite`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to regenerate invite code');
-            }
-
-            const result = await response.json();
-            console.log('✅ Invite code regenerated:', result.invite_code);
-            
-            // Reload employees to show the new invite code
-            await this.loadEmployees();
-            
-            this.showToast(`Invite code regenerated: ${result.invite_code}`, 'success');
-            
-        } catch (error) {
-            console.error('❌ Failed to regenerate invite code:', error);
-            this.showToast(error.message, 'error');
-        }
-    }
-
-    async sendInvite(employeeId) {
-        try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                this.showToast('Please log in to send invites', 'error');
-                return;
-            }
-
-            console.log('📧 Sending invite to employee:', employeeId);
-            
-            const response = await this.retryRequest(async () => {
-                return await fetch(`/api/users/${employeeId}/send-invite`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to send invite');
-            }
-
-            const result = await response.json();
-            console.log('✅ Invite sent successfully:', result);
-            
-            // Reload employees to update the invite status
-            await this.loadEmployees();
-            
-            this.showToast(`Invite sent to ${result.employee_name} (${result.email})`, 'success');
-            
-            // Show invite details in a modal or alert
-            this.showInviteDetails(result);
-            
-        } catch (error) {
-            console.error('❌ Failed to send invite:', error);
-            this.showToast(error.message, 'error');
-        }
-    }
-
-    async generateInvite(employeeId) {
-        try {
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                this.showToast('Please log in to generate invite codes', 'error');
-                return;
-            }
-
-            console.log('🔑 Generating invite code for employee:', employeeId);
-            
-            // For now, we'll regenerate the invite code (which will generate a new one if none exists)
-            await this.regenerateInvite(employeeId);
-            
-        } catch (error) {
-            console.error('❌ Failed to generate invite code:', error);
-            this.showToast(error.message, 'error');
-        }
-    }
-
-    generateInviteCodeForModal() {
-        // Generate a random 8-character alphanumeric code
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let result = '';
-        for (let i = 0; i < 8; i++) {
-            result += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        
-        // Update the invite code input
-        const inviteCodeInput = document.getElementById('inviteCode');
-        if (inviteCodeInput) {
-            inviteCodeInput.value = result;
-            inviteCodeInput.style.background = '#dcfce7 !important';
-            inviteCodeInput.style.borderColor = '#10b981 !important';
-            
-            // Reset styling after 2 seconds
-            setTimeout(() => {
-                inviteCodeInput.style.background = '#f3f4f6 !important';
-                inviteCodeInput.style.borderColor = '#e5e7eb !important';
-            }, 2000);
-        }
-        
-        // Show success message
-        this.showToast('Invite code generated successfully!', 'success');
-    }
-
-    showInviteDetails(inviteData) {
-        // Create a modal to show invite details
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
-        `;
-
-        modal.innerHTML = `
-            <div style="
-                background: white;
-                padding: 32px;
-                border-radius: 12px;
-                max-width: 500px;
-                width: 90%;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            ">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                    <h3 style="margin: 0; color: #374151;">📧 Invite Sent Successfully</h3>
-                    <button onclick="this.closest('.modal').remove()" style="
-                        background: none;
-                        border: none;
-                        font-size: 20px;
-                        cursor: pointer;
-                        color: #6b7280;
-                    ">×</button>
-                </div>
+        if (confirm(confirmMessages[action])) {
+            try {
+                let response;
                 
-                <div style="margin-bottom: 20px;">
-                    <p style="margin: 0 0 16px 0; color: #6b7280;">
-                        Invite details for <strong>${inviteData.employee_name}</strong>:
-                    </p>
-                    
-                    <div style="
-                        background: #f3f4f6;
-                        padding: 16px;
-                        border-radius: 8px;
-                        margin-bottom: 16px;
-                    ">
-                        <div style="margin-bottom: 8px;">
-                            <strong>Email:</strong> ${inviteData.email}
-                        </div>
-                        <div style="margin-bottom: 8px;">
-                            <strong>Invite Code:</strong> 
-                            <code style="
-                                background: #e5e7eb;
-                                padding: 4px 8px;
-                                border-radius: 4px;
-                                font-family: monospace;
-                                font-weight: bold;
-                                color: #374151;
-                            ">${inviteData.invite_code}</code>
-                        </div>
-                        <div>
-                            <strong>Expires:</strong> ${new Date(inviteData.expires_at).toLocaleDateString()}
-                        </div>
-                    </div>
-                    
-                    <p style="margin: 0; color: #6b7280; font-size: 14px;">
-                        💡 <strong>Next Steps:</strong> Send this invite code to the employee via email. 
-                        They can use this code to register and join your organization.
-                    </p>
-                </div>
-                
-                <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                    <button onclick="this.closest('.modal').remove()" style="
-                        background: #6b7280;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 6px;
-                        cursor: pointer;
-                    ">Close</button>
-                </div>
-            </div>
-        `;
+                switch (action) {
+                    case 'activate':
+                    case 'deactivate':
+                        response = await fetch('/api/users/bulk-status', {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({
+                                userIds: selectedUserIds,
+                                status: action === 'activate' ? 'active' : 'inactive'
+                            })
+                        });
+                        break;
+                        
+                    case 'delete':
+                        response = await fetch('/api/users/bulk-delete', {
+                            method: 'DELETE',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            },
+                            body: JSON.stringify({ userIds: selectedUserIds })
+                        });
+                        break;
+                        
+                    case 'export':
+                        this.exportSelectedUsers(selectedUserIds);
+                        this.closeModal('bulkActionsModal');
+                        return;
+                }
 
-        document.body.appendChild(modal);
-        
-        // Close modal when clicking outside
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
+                if (response && response.ok) {
+                    this.selectedUsers.clear();
+                    await this.loadUsers();
+                    this.closeModal('bulkActionsModal');
+                    this.showNotification(`Users ${action}d successfully`, 'success');
+                } else {
+                    const error = await response.json();
+                    this.showNotification(error.message || `Failed to ${action} users`, 'error');
+                }
+            } catch (error) {
+                console.error(`Error ${action}ing users:`, error);
+                this.showNotification(`Failed to ${action} users`, 'error');
             }
-        });
-    }
-    
-    async handleLogout() {
-        try {
-            const token = localStorage.getItem('token');
-            if (token) {
-                await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            this.showToast('Logged out successfully', 'success');
-            setTimeout(() => {
-                window.location.href = '/login';
-            }, 1000);
         }
+    }
+
+    async exportUsers() {
+        // TODO: Implement user export functionality
+        console.log('Exporting all users...');
+        this.showNotification('Export functionality coming soon', 'info');
+    }
+
+    async exportSelectedUsers(userIds) {
+        // TODO: Implement selected users export functionality
+        console.log('Exporting selected users:', userIds);
+        this.showNotification('Export functionality coming soon', 'info');
+    }
+
+    showNotification(message, type = 'info') {
+        // TODO: Implement notification system
+        console.log(`${type.toUpperCase()}: ${message}`);
     }
 }
 
-// Initialize users page when DOM is loaded
+// Initialize user management when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.usersPage = new UsersPage();
-});
-
-// Add CSS animations for toast
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-`;
-document.head.appendChild(style); 
+    window.userManagement = new UserManagement();
+}); 

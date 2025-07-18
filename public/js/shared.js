@@ -8,63 +8,41 @@ class EmployeeHub {
         this.isRedirecting = false;
         this.isInitialized = false;
         this.isCheckingAuth = false;
-        this.init();
+        this.initialize();
     }
 
-    async init() {
-        if (this.isInitialized) {
-            console.log('⚠️ Already initialized, skipping...');
-            return;
-        }
-        
+    async initialize() {
         console.log('🚀 Initializing EmployeeHub...');
-        console.log('🔍 Current pathname:', window.location.pathname);
         
-        // Clear any URL parameters to prevent credential exposure
+        // Clear URL parameters first
         this.clearUrlParameters();
         
-        // Show loading screen initially
-        this.showLoadingScreen();
+        // Check organization requirement immediately to prevent flickering
+        this.checkOrganizationRequirement();
+        
+        // Setup event listeners
+        this.setupEventListeners();
+        this.setupNavigationActiveState();
+        
+        // Start date/time updates
+        this.updateDateTime();
+        setInterval(() => this.updateDateTime(), 1000);
         
         // Check authentication
         await this.checkAuth();
         
-        this.isInitialized = true;
         console.log('✅ EmployeeHub initialized');
     }
 
-            async checkAuth() {
+    async checkAuth() {
+        if (this.isCheckingAuth) return;
+        this.isCheckingAuth = true;
+        
         try {
-            console.log('🔍 Checking authentication...');
-            console.log('🔍 Current URL:', window.location.href);
-            console.log('🔍 Current pathname:', window.location.pathname);
-            
-            // Prevent multiple auth checks
-            if (this.isCheckingAuth) {
-                console.log('⚠️ Auth check already in progress, skipping...');
-                return;
-            }
-            this.isCheckingAuth = true;
-            
-
-            
             const token = localStorage.getItem('token');
-            const userEmail = localStorage.getItem('userEmail');
-            console.log('🔍 Token exists:', !!token);
-            console.log('🔍 User email in localStorage:', userEmail);
-            console.log('🔍 Current pathname:', window.location.pathname);
             
-            if (!token) {
-                console.log('❌ No token found, showing auth container');
-                this.showAuthContainer();
-                this.isCheckingAuth = false;
-                return;
-            }
-            
-            // If we're on a protected page and have a token, verify and show app
-            const protectedPages = ['/dashboard', '/users', '/organizations', '/payroll', '/analytics', '/settings'];
-            if (protectedPages.includes(window.location.pathname) && token) {
-                console.log('🔍 Verifying token for protected page...');
+            if (token) {
+                console.log('🔍 Token found, verifying with server...');
                 
                 try {
                     const response = await fetch('/api/auth/profile', {
@@ -77,74 +55,506 @@ class EmployeeHub {
 
                     if (response.ok) {
                         const data = await response.json();
-                        console.log('✅ Token verified, showing app container');
-                        console.log('📥 Profile data received:', data);
-                        this.currentUser = data.profile;
-                        this.isAuthenticated = true;
-                        this.updateUserInfo();
-                        this.showAppContainer();
-                        this.setupEventListeners();
-                        this.updateDateTime();
-                        setInterval(() => this.updateDateTime(), 1000);
+                        console.log('✅ Token valid, user authenticated');
                         
-                        // Load appropriate script for the page
-                        if (window.location.pathname === '/dashboard') {
-                            this.loadDashboardScript();
-                        } else if (window.location.pathname === '/users') {
-                            this.loadUsersScript();
-                        } else if (window.location.pathname === '/analytics') {
-                            // Analytics page is already loaded via script tag
-                            console.log('✅ Analytics page loaded');
-                        }
+                        // Extract profile data (handle nested structure)
+                        this.currentUser = data.profile || data;
+                        console.log('👤 User profile loaded:', this.currentUser);
+                        
+                        // Update user info in the UI
+                        this.updateUserInfo();
+                        
+                        // Update navigation based on role
+                        this.updateNavigationVisibility();
+                        
+                        // Now that we have user data, re-check organization requirement
+                        // This will either show content or organization requirement
+                        this.checkOrganizationRequirement();
+                        
+                        return;
                     } else {
-                        console.error('❌ Token verification failed with status:', response.status);
-                        throw new Error('Token verification failed');
+                        console.log('❌ Token invalid');
+                        localStorage.removeItem('token');
+                        this.currentUser = null;
                     }
                 } catch (error) {
-                    console.error('❌ Token verification failed:', error);
+                    console.error('❌ Auth check failed:', error);
                     localStorage.removeItem('token');
-                    localStorage.removeItem('user');
-                    localStorage.removeItem('userEmail');
-                    if (window.location.pathname !== '/login') {
-                        window.location.href = '/login';
-                    }
+                    this.currentUser = null;
                 }
-                
-                this.isCheckingAuth = false;
-                return;
-            }
-
-            // For login/signup pages, show auth container
-            if (window.location.pathname === '/login' || window.location.pathname === '/signup') {
-                console.log('🔍 On auth page, showing auth container');
-                this.showAuthContainer();
-            } else if (window.location.pathname === '/' || window.location.pathname === '/index.html') {
-                // For root page, redirect to login
-                console.log('🔍 On root page, redirecting to login');
-                window.location.href = '/login';
             } else {
-                // For any other non-protected pages, redirect to login
-                console.log('❌ Not on protected page, redirecting to login');
-                window.location.href = '/login';
+                console.log('❌ No token found');
+                this.currentUser = null;
             }
             
-        } catch (error) {
-            console.error('❌ Auth check failed:', error);
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            if (window.location.pathname !== '/login' && window.location.pathname !== '/signup') {
+            // If we get here, user is not authenticated
+            // Check if we're on a protected page
+            const currentPath = window.location.pathname;
+            const protectedPages = ['/dashboard', '/analytics', '/users', '/settings', '/payroll', '/organizations'];
+            
+            if (protectedPages.some(page => currentPath.includes(page))) {
+                console.log('🔒 Protected page, redirecting to login');
                 window.location.href = '/login';
-            } else {
-                this.showAuthContainer();
+                return;
             }
+            
         } finally {
             this.isCheckingAuth = false;
+        }
+    }
+
+    checkCurrentPageAccess() {
+        if (!this.currentUser) {
+            console.log('❌ No user data available for page access check');
+            return;
+        }
+
+        console.log('🔍 Checking current page access for:', window.location.pathname);
+
+        // Super admin always has access to all pages
+        if (this.currentUser.role === 'super_admin') {
+            console.log('✅ Super admin detected - full page access granted');
+            return;
+        }
+
+        // Pages that require organization for admin and below
+        const restrictedPages = ['/dashboard', '/analytics', '/payroll', '/organizations'];
+        const currentPage = window.location.pathname;
+
+        if (restrictedPages.includes(currentPage)) {
+            // Check if user has organization
+            if (!this.currentUser.organization_id) {
+                console.log('❌ Organization required for page:', currentPage);
+                this.showOrganizationRequirement();
+                return;
+            } else {
+                console.log('✅ Organization check passed for page:', currentPage);
+                this.hideOrganizationRequirement();
+            }
+        } else {
+            // Pages like /users and /settings don't require organization
+            console.log('✅ Page does not require organization:', currentPage);
+            this.hideOrganizationRequirement();
+        }
+    }
+
+    hideOrganizationRequirement() {
+        console.log('✅ Hiding organization requirement screen');
+        const orgRequiredSection = document.getElementById('organizationRequired');
+        
+        if (orgRequiredSection) {
+            orgRequiredSection.style.display = 'none';
+        }
+        
+        // Show main content areas
+        const mainContent = document.getElementById('mainContent');
+        const appContainer = document.querySelector('.app-container');
+        const dashboardContent = document.querySelector('.dashboard-main');
+        const analyticsContent = document.querySelector('.analytics-main');
+        const usersContent = document.querySelector('.users-main');
+        const payrollContent = document.querySelector('.payroll-main');
+        const organizationsContent = document.querySelector('.organizations-main');
+        const settingsContent = document.querySelector('.settings-main');
+        
+        // Show all main content areas
+        [mainContent, appContainer, dashboardContent, analyticsContent, 
+         usersContent, payrollContent, organizationsContent, settingsContent].forEach(element => {
+            if (element) {
+                element.style.display = 'block';
+            }
+        });
+    }
+
+    showOrganizationRequirement() {
+        console.log('🚫 Showing organization required screen');
+        
+        // Remove loading state
+        const loadingState = document.getElementById('orgLoadingState');
+        if (loadingState) {
+            loadingState.remove();
+        }
+        
+        // Hide all main content areas
+        this.hideMainContentImmediately();
+        
+        // Show or create organization requirement section
+        let orgRequiredSection = document.getElementById('organizationRequired');
+        
+        if (!orgRequiredSection) {
+            // Create the organization requirement section
+            orgRequiredSection = document.createElement('div');
+            orgRequiredSection.id = 'organizationRequired';
+            orgRequiredSection.className = 'org-required-section';
+            orgRequiredSection.innerHTML = `
+                <div class="org-required-container">
+                    <div class="org-required-content">
+                        <div class="org-required-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h2>Organization Required</h2>
+                        <p>You need to create an organization in order to view this page.</p>
+                        <div class="org-required-actions">
+                            <a href="/organizations" class="btn-primary">
+                                <i class="fas fa-plus"></i>
+                                Create Organization
+                            </a>
+                            <button onclick="logout()" class="btn-secondary">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add CSS for organization requirement
+            if (!document.getElementById('orgRequiredStyles')) {
+                const style = document.createElement('style');
+                style.id = 'orgRequiredStyles';
+                style.textContent = `
+                    .org-required-section {
+                        position: fixed;
+                        top: 0;
+                        left: 272px; /* Account for sidebar width */
+                        width: calc(100% - 272px);
+                        height: 100vh;
+                        background: #f8fafc;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 10000;
+                        font-family: 'Inter', sans-serif;
+                        transition: left 0.3s ease, width 0.3s ease;
+                    }
+                    
+                    /* Adjust for collapsed sidebar */
+                    .enhanced-sidebar.collapsed ~ * .org-required-section {
+                        left: 70px;
+                        width: calc(100% - 70px);
+                    }
+                    
+                    .org-required-container {
+                        background: #ffffff;
+                        border-radius: 12px;
+                        padding: 48px;
+                        text-align: center;
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                        border: 1px solid #e2e8f0;
+                        max-width: 500px;
+                        width: 90%;
+                        margin: 2rem;
+                        animation: fadeInUp 0.5s ease-out;
+                    }
+                    
+                    @keyframes fadeInUp {
+                        from {
+                            opacity: 0;
+                            transform: translateY(20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+                    
+                    .org-required-icon {
+                        width: 120px;
+                        height: 120px;
+                        background: #f1f5f9;
+                        border: 2px solid #e2e8f0;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        margin: 0 auto 24px;
+                    }
+                    
+                    .org-required-icon i {
+                        font-size: 64px;
+                        color: #64748b;
+                    }
+                    
+                    .org-required-content h2 {
+                        color: #1e293b;
+                        font-size: 28px;
+                        font-weight: 700;
+                        margin-bottom: 12px;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    
+                    .org-required-content p {
+                        color: #64748b;
+                        font-size: 16px;
+                        margin-bottom: 32px;
+                        line-height: 1.6;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    
+                    .org-required-actions {
+                        display: flex;
+                        gap: 12px;
+                        justify-content: center;
+                        flex-wrap: wrap;
+                    }
+                    
+                    .btn-primary, .btn-secondary {
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        text-decoration: none;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+                        transition: all 0.2s ease;
+                        border: none;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-family: 'Inter', sans-serif;
+                        min-width: 140px;
+                        justify-content: center;
+                    }
+                    
+                    .btn-primary {
+                        background: #3b82f6;
+                        color: white;
+                    }
+                    
+                    .btn-primary:hover {
+                        background: #2563eb;
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                    }
+                    
+                    .btn-secondary {
+                        background: #ffffff;
+                        color: #64748b;
+                        border: 1px solid #e2e8f0;
+                    }
+                    
+                    .btn-secondary:hover {
+                        background: #f8fafc;
+                        border-color: #cbd5e1;
+                        color: #475569;
+                        transform: translateY(-1px);
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    }
+                    
+                    /* Responsive design */
+                    @media (max-width: 768px) {
+                        .org-required-section {
+                            left: 0;
+                            width: 100%;
+                        }
+                        
+                        .org-required-container {
+                            padding: 32px 24px;
+                            margin: 1rem;
+                        }
+                        
+                        .org-required-icon {
+                            width: 96px;
+                            height: 96px;
+                        }
+                        
+                        .org-required-icon i {
+                            font-size: 48px;
+                        }
+                        
+                        .org-required-content h2 {
+                            font-size: 24px;
+                        }
+                        
+                        .org-required-actions {
+                            flex-direction: column;
+                            align-items: center;
+                        }
+                        
+                        .btn-primary,
+                        .btn-secondary {
+                            width: 100%;
+                            max-width: 200px;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(orgRequiredSection);
+        } else {
+            orgRequiredSection.style.display = 'flex';
+        }
+    }
+
+    checkOrganizationRequirement() {
+        // Get current page from URL
+        const currentPath = window.location.pathname;
+        const restrictedPages = ['/dashboard', '/analytics', '/payroll', '/organizations'];
+        
+        console.log('🔍 Checking organization requirement for:', currentPath);
+        
+        // Only check for restricted pages
+        if (!restrictedPages.some(page => currentPath.includes(page))) {
+            console.log('✅ Page not restricted, skipping organization check');
+            return false;
+        }
+        
+        // Immediately hide all main content to prevent flickering
+        this.hideMainContentImmediately();
+        
+        // Show loading state
+        this.showOrganizationLoadingState();
+        
+        // Check user data with timeout
+        const checkUser = () => {
+            if (this.currentUser) {
+                console.log('👤 User data available:', this.currentUser.role, 'Org:', this.currentUser.organization_id);
+                
+                // Super admin can access everything
+                if (this.currentUser.role === 'super_admin') {
+                    console.log('✅ Super admin access granted');
+                    this.showMainContent();
+                    return false;
+                }
+                
+                // Other roles need organization
+                if (!this.currentUser.organization_id) {
+                    console.log('🚫 Organization required for role:', this.currentUser.role);
+                    this.showOrganizationRequirement();
+                    return true;
+                } else {
+                    console.log('✅ Organization found, access granted');
+                    this.showMainContent();
+                    return false;
+                }
+            } else {
+                console.log('⏳ User data not yet available, checking again...');
+                return null; // Continue checking
+            }
+        };
+        
+        // Initial check
+        const result = checkUser();
+        if (result !== null) {
+            return result;
+        }
+        
+        // If user data not available, poll with timeout
+        let attempts = 0;
+        const maxAttempts = 30; // 3 seconds total
+        
+        const pollInterval = setInterval(() => {
+            attempts++;
+            const result = checkUser();
+            
+            if (result !== null || attempts >= maxAttempts) {
+                clearInterval(pollInterval);
+                
+                if (result === null && attempts >= maxAttempts) {
+                    console.log('⚠️ Timeout waiting for user data, showing organization requirement');
+                    this.showOrganizationRequirement();
+                }
+            }
+        }, 100);
+        
+        return true; // Assume organization required while checking
+    }
+
+    hideMainContentImmediately() {
+        // Hide all possible main content areas immediately
+        const selectors = [
+            '.dashboard-main', '.analytics-main', '.users-main', 
+            '.settings-main', '.payroll-main', '.organizations-main',
+            '.main-content', '.app-content', '.content-area',
+            '#mainContent', '#appContent'
+        ];
+        
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.style.display = 'none';
+            });
+        });
+    }
+
+    showMainContent() {
+        // Remove organization requirement if it exists
+        const orgRequired = document.querySelector('.org-required-section, #organizationRequired');
+        if (orgRequired) {
+            orgRequired.remove();
+        }
+        
+        // Show main content
+        const selectors = [
+            '.dashboard-main', '.analytics-main', '.users-main', 
+            '.settings-main', '.payroll-main', '.organizations-main',
+            '.main-content', '.app-content', '.content-area',
+            '#mainContent', '#appContent'
+        ];
+        
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.style.display = '';
+            });
+        });
+    }
+
+    showOrganizationLoadingState() {
+        // Remove any existing organization content
+        const existing = document.querySelector('.org-required-section, #organizationRequired');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create loading state
+        const loadingHtml = `
+            <div class="org-required-section" id="orgLoadingState">
+                <div class="org-required-container">
+                    <div class="loading-spinner">
+                        <div class="spinner"></div>
+                    </div>
+                    <p style="margin-top: 16px; color: #64748b;">Checking access permissions...</p>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', loadingHtml);
+        
+        // Add spinner styles
+        if (!document.getElementById('loadingSpinnerStyles')) {
+            const style = document.createElement('style');
+            style.id = 'loadingSpinnerStyles';
+            style.textContent = `
+                .loading-spinner {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                }
+                
+                .spinner {
+                    width: 40px;
+                    height: 40px;
+                    border: 3px solid #e2e8f0;
+                    border-top: 3px solid #3b82f6;
+                    border-radius: 50%;
+                    animation: spin 1s linear infinite;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
         }
     }
 
     updateUserInfo() {
         if (!this.currentUser) return;
 
+        console.log('🔄 Updating user info with:', this.currentUser);
+
+        // Update elements by ID (for compatibility)
         const userNameEl = document.getElementById('userName');
         const userRoleEl = document.getElementById('userRole');
         const userFirstNameEl = document.getElementById('userFirstName');
@@ -163,8 +573,42 @@ class EmployeeHub {
             topUserNameEl.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
         }
 
+        // Update elements by class (for sidebar and other components)
+        const userNameEls = document.querySelectorAll('.user-name');
+        const userEmailEls = document.querySelectorAll('.user-email');
+        const userAvatarEls = document.querySelectorAll('.user-avatar');
+
+        const fullName = `${this.currentUser.first_name || ''} ${this.currentUser.last_name || ''}`.trim();
+        const email = this.currentUser.email || '';
+        const initials = this.getInitials(this.currentUser.first_name, this.currentUser.last_name);
+
+        console.log(`🔄 Updating ${userNameEls.length} name elements with: "${fullName}"`);
+        console.log(`🔄 Updating ${userEmailEls.length} email elements with: "${email}"`);
+        console.log(`🔄 Updating ${userAvatarEls.length} avatar elements with: "${initials}"`);
+
+        userNameEls.forEach((el, index) => {
+            console.log(`📝 Updating user name element ${index + 1} to:`, fullName);
+            el.textContent = fullName || 'User';
+        });
+
+        userEmailEls.forEach((el, index) => {
+            console.log(`📧 Updating user email element ${index + 1} to:`, email);
+            el.textContent = email;
+        });
+
+        userAvatarEls.forEach((el, index) => {
+            console.log(`👤 Updating user avatar element ${index + 1} to:`, initials);
+            el.textContent = initials;
+        });
+
         // Show/hide navigation items based on role
         this.updateNavigationVisibility();
+    }
+
+    getInitials(firstName, lastName) {
+        const first = (firstName || '').charAt(0).toUpperCase();
+        const last = (lastName || '').charAt(0).toUpperCase();
+        return first + last || 'U';
     }
 
     formatRole(role) {
@@ -180,35 +624,65 @@ class EmployeeHub {
     updateNavigationVisibility() {
         if (!this.currentUser) return;
 
-        const employeesNav = document.getElementById('employeesNav');
-        const orgNav = document.getElementById('orgNav');
+        console.log('🔧 Updating navigation visibility for role:', this.currentUser.role);
 
-        // Show employees nav for all roles except organization_member
-        if (employeesNav) {
-            if (this.currentUser.role === 'organization_member') {
-                employeesNav.style.display = 'none';
-            } else {
-                employeesNav.style.display = 'flex';
+        // Get all navigation items
+        const dashboardNav = document.querySelector('a[href="/dashboard"]');
+        const analyticsNav = document.querySelector('a[href="/analytics"]');
+        const usersNav = document.querySelector('a[href="/users"]');
+        const payrollNav = document.querySelector('a[href="/payroll"]');
+        const organizationsNav = document.querySelector('a[href="/organizations"]');
+        const settingsNav = document.querySelector('a[href="/settings"]');
+
+        // Hide all navigation items first
+        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(item => {
+            if (item) {
+                item.style.display = 'none';
             }
+        });
+
+        if (this.currentUser.role === 'super_admin') {
+            // Super Admin Navigation: Dashboard → Analytics → User Management → Settings
+            console.log('🔧 Setting up super_admin navigation');
+            [dashboardNav, analyticsNav, usersNav, settingsNav].forEach(item => {
+                if (item) {
+                    item.style.display = 'flex';
+                }
+            });
+        } else if (['admin', 'manager', 'employee'].includes(this.currentUser.role)) {
+            // Admin and below Navigation: Dashboard → Analytics → Payroll → Organizations → Settings
+            console.log('🔧 Setting up admin/manager/employee navigation');
+            [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(item => {
+                if (item) {
+                    item.style.display = 'flex';
+                }
+            });
+        } else {
+            // Default fallback - show basic navigation
+            console.log('🔧 Setting up default navigation for role:', this.currentUser.role);
+            [dashboardNav, settingsNav].forEach(item => {
+                if (item) {
+                    item.style.display = 'flex';
+                }
+            });
         }
 
-        // Show organization nav for admin and super_admin only
-        if (orgNav) {
-            if (['admin', 'super_admin'].includes(this.currentUser.role)) {
-                orgNav.style.display = 'flex';
-            } else {
-                orgNav.style.display = 'none';
-            }
-        }
+        console.log('✅ Navigation visibility updated for role:', this.currentUser.role);
     }
 
     setupEventListeners() {
-        // Logout button
+        // Logout button - handle both ID and onclick
         const logoutBtn = document.getElementById('logoutBtn');
         
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
         }
+
+        // Set up global logout function for onclick handlers
+        window.logout = () => this.logout();
+
+        // Set up navigation interceptors for organization requirement
+        this.setupNavigationInterceptors();
 
         // Auth form switching
         const showSignupLink = document.getElementById('showSignup');
@@ -227,30 +701,84 @@ class EmployeeHub {
                 this.showLoginForm();
             });
         }
-
-        // Login form submission
-        const loginForm = document.getElementById('loginFormElement');
-        console.log('🔍 Looking for login form:', loginForm);
-        if (loginForm) {
-            console.log('✅ Login form found, attaching event listener');
-            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-        } else {
-            console.log('❌ Login form not found');
+        
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => this.toggleSidebar());
         }
-
-        // Signup form submission
-        const signupForm = document.getElementById('signupFormElement');
+        
+        // Form submissions
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+        }
+        
         if (signupForm) {
             signupForm.addEventListener('submit', (e) => this.handleSignup(e));
         }
 
-        // Navigation active state
-        this.setupNavigationActiveState();
+        // Add event listener for potential logout buttons with class
+        const logoutBtns = document.querySelectorAll('.enhanced-logout-btn');
+        logoutBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.logout();
+            });
+        });
+
+        console.log('✅ Event listeners setup complete');
+    }
+
+    setupNavigationInterceptors() {
+        // Pages that require organization for admin and below
+        const restrictedPages = ['/dashboard', '/analytics', '/payroll', '/organizations'];
         
-        // Fallback: Try to attach event listeners again after a short delay
-        setTimeout(() => {
-            this.attachFormEventListeners();
-        }, 100);
+        // Get all navigation links
+        const navLinks = document.querySelectorAll('a[href^="/"]');
+        
+        navLinks.forEach(link => {
+            const href = link.getAttribute('href');
+            
+            if (restrictedPages.includes(href)) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    if (!this.currentUser) {
+                        console.log('❌ No user data for navigation check');
+                        return;
+                    }
+                    
+                    // Super admin always has access
+                    if (this.currentUser.role === 'super_admin') {
+                        console.log('✅ Super admin navigation - allowing access to:', href);
+                        window.location.href = href;
+                        return;
+                    }
+                    
+                    // Check organization requirement for admin and below
+                    if (!this.currentUser.organization_id) {
+                        console.log('❌ Organization required for navigation to:', href);
+                        this.showOrganizationRequirement();
+                        
+                        // Update URL without triggering page load
+                        window.history.pushState({}, '', href);
+                        return;
+                    }
+                    
+                    // User has organization, allow navigation
+                    console.log('✅ Organization check passed - navigating to:', href);
+                    window.location.href = href;
+                });
+            }
+        });
+        
+        // Handle browser back/forward navigation
+        window.addEventListener('popstate', () => {
+            this.checkCurrentPageAccess();
+        });
     }
     
     attachFormEventListeners() {
@@ -496,24 +1024,45 @@ class EmployeeHub {
     }
 
     async logout() {
+        console.log('🚪 Logout initiated...');
+        
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                await fetch('/api/auth/logout', {
+                console.log('📡 Sending logout request to server...');
+                const response = await fetch('/api/auth/logout', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Content-Type': 'application/json'
                     }
                 });
+                
+                if (response.ok) {
+                    console.log('✅ Server logout successful');
+                } else {
+                    console.log('⚠️ Server logout failed, proceeding with local cleanup');
+                }
             }
         } catch (error) {
-            console.error('Logout error:', error);
+            console.error('❌ Logout server request error:', error);
+            console.log('⚠️ Proceeding with local cleanup despite server error');
         } finally {
+            console.log('🧹 Cleaning up local storage and session...');
+            
+            // Clear all stored data
             localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('refreshToken'); 
             localStorage.removeItem('userProfile');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userEmail');
             sessionStorage.removeItem('employeeHubInitialized');
+            
+            // Clear current user
+            this.currentUser = null;
+            this.isAuthenticated = false;
+            
+            console.log('🔄 Redirecting to login page...');
             window.location.href = '/login';
         }
     }

@@ -1,9 +1,262 @@
 // Payroll Dashboard JavaScript
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeCharts();
-    initializeInteractions();
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check if we have a token
+    const token = localStorage.getItem('token');
+    if (token) {
+        console.log('✅ Token exists, checking organization requirement instantly');
+        // Show organization requirement immediately, then fetch to confirm
+        showOrganizationRequired();
+        await checkOrganizationAndInitialize();
+    } else {
+        console.log('❌ No token found, redirecting to login');
+        window.location.href = '/login';
+    }
 });
+
+async function checkOrganizationAndInitialize() {
+    console.log('🔍 Payroll - Checking organization requirement...');
+    
+    const token = localStorage.getItem('token');
+    if (!token) {
+        console.log('❌ No token found, redirecting to login');
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // Show organization requirement immediately
+    showOrganizationRequired();
+
+    try {
+        // Fast fetch with timeout
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout')), 3000)
+        );
+        
+        const profilePromise = fetch('/api/auth/profile', {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (!response.ok) throw new Error('Profile fetch failed');
+            return response.json();
+        });
+
+        const profile = await Promise.race([profilePromise, timeoutPromise]);
+        
+        console.log('🔍 Payroll - Profile loaded:', profile);
+        
+        // Extract actual profile data if nested
+        const profileData = profile.profile || profile;
+        
+        // Check organization requirement based on role
+        if (profileData.role === 'super_admin') {
+            // Super admin sees website-wide payroll statistics
+            console.log('✅ Super admin detected - showing website payroll statistics');
+            showWebsitePayrollStats();
+        } else if (!profileData.organization_id) {
+            // Admin and employees need organization
+            console.log('❌ Organization required for role:', profileData.role);
+            // Organization requirement already shown, keep it visible
+        } else {
+            // Admin/employee with organization
+            console.log('✅ Organization check passed - showing payroll');
+            hideOrganizationRequired();
+            initializePayroll();
+        }
+        
+    } catch (error) {
+        console.error('⚠️ Payroll initialization error:', error);
+        // Keep organization requirement shown on error
+    }
+}
+
+function showOrganizationRequired() {
+    console.log('🚫 Showing organization requirement screen');
+    const orgRequiredSection = document.getElementById('organizationRequired');
+    const payrollContent = document.querySelector('.payroll-content');
+    
+    if (orgRequiredSection) {
+        orgRequiredSection.style.display = 'block';
+    }
+    
+    // Hide all payroll-related content
+    const elementsToHide = [
+        '.payroll-navigation',
+        '.payroll-charts',
+        '.payroll-content'
+    ];
+    
+    elementsToHide.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) element.style.display = 'none';
+    });
+}
+
+function hideOrganizationRequired() {
+    console.log('✅ Hiding organization requirement screen');
+    const orgRequiredSection = document.getElementById('organizationRequired');
+    
+    if (orgRequiredSection) {
+        orgRequiredSection.style.display = 'none';
+    }
+    
+    // Show all payroll-related content
+    const elementsToShow = [
+        '.payroll-navigation',
+        '.payroll-charts',
+        '.payroll-content'
+    ];
+    
+    elementsToShow.forEach(selector => {
+        const element = document.querySelector(selector);
+        if (element) element.style.display = 'block';
+    });
+}
+
+function showWebsitePayrollStats() {
+    console.log('👑 Showing super admin website payroll statistics');
+    hideOrganizationRequired();
+    
+    // Update page content for super admin
+    const pageTitle = document.querySelector('h1');
+    if (pageTitle) {
+        pageTitle.textContent = 'Website Payroll Analytics';
+    }
+
+    const pageDescription = document.querySelector('.page-description');
+    if (pageDescription) {
+        pageDescription.textContent = 'Monitor payroll statistics across all organizations on the platform';
+    }
+
+    // Load website-wide payroll data
+    initializeWebsitePayrollStats();
+}
+
+async function initializeWebsitePayrollStats() {
+    console.log('💰 Loading website payroll statistics...');
+    
+    try {
+        // Load website-wide payroll data
+        await loadWebsitePayrollMetrics();
+        await loadWebsitePayrollCharts();
+        
+    } catch (error) {
+        console.error('❌ Error loading website payroll statistics:', error);
+    }
+}
+
+async function loadWebsitePayrollMetrics() {
+    // Mock website payroll metrics - replace with actual API calls
+    const metrics = {
+        totalPayroll: 2450000,
+        totalEmployees: 150,
+        averageSalary: 65000,
+        totalOrganizations: 12
+    };
+
+    // Update metric cards
+    const metricCards = document.querySelectorAll('.payroll-metric-card, .stat-card');
+    if (metricCards.length >= 4) {
+        metricCards[0].querySelector('.metric-value, .stat-number').textContent = `$${metrics.totalPayroll.toLocaleString()}`;
+        metricCards[0].querySelector('.metric-label, .stat-label').textContent = 'Total Monthly Payroll';
+        
+        metricCards[1].querySelector('.metric-value, .stat-number').textContent = metrics.totalEmployees;
+        metricCards[1].querySelector('.metric-label, .stat-label').textContent = 'Total Employees';
+        
+        metricCards[2].querySelector('.metric-value, .stat-number').textContent = `$${metrics.averageSalary.toLocaleString()}`;
+        metricCards[2].querySelector('.metric-label, .stat-label').textContent = 'Average Salary';
+        
+        metricCards[3].querySelector('.metric-value, .stat-number').textContent = metrics.totalOrganizations;
+        metricCards[3].querySelector('.metric-label, .stat-label').textContent = 'Organizations';
+    }
+}
+
+async function loadWebsitePayrollCharts() {
+    // Mock chart data for website payroll analytics
+    const payrollByOrgData = {
+        labels: ['Tech Corp', 'Design Studio', 'Finance Group', 'Marketing Inc', 'Others'],
+        datasets: [{
+            label: 'Monthly Payroll by Organization',
+            data: [450000, 180000, 320000, 250000, 200000],
+            backgroundColor: [
+                '#667eea',
+                '#764ba2',
+                '#f093fb',
+                '#4facfe',
+                '#43e97b'
+            ]
+        }]
+    };
+
+    // Update existing charts or create new ones
+    const chartCanvas = document.getElementById('payrollChart');
+    if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        
+        if (window.payrollChart) {
+            window.payrollChart.destroy();
+        }
+        
+        window.payrollChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: payrollByOrgData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Payroll Distribution by Organization'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Create salary distribution chart if canvas exists
+    const salaryChartCanvas = document.getElementById('salaryChart');
+    if (salaryChartCanvas) {
+        const salaryData = {
+            labels: ['$30k-50k', '$50k-70k', '$70k-90k', '$90k-120k', '$120k+'],
+            datasets: [{
+                label: 'Number of Employees',
+                data: [25, 45, 35, 30, 15],
+                backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                borderColor: 'rgba(102, 126, 234, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const ctx = salaryChartCanvas.getContext('2d');
+        
+        if (window.salaryChart) {
+            window.salaryChart.destroy();
+        }
+        
+        window.salaryChart = new Chart(ctx, {
+            type: 'bar',
+            data: salaryData,
+            options: {
+                responsive: true,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Salary Distribution Across All Organizations'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+}
 
 function initializeCharts() {
     // Payroll Cost Overview Chart (Bar Chart)
