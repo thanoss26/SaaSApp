@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireUserManagement } = require('../middleware/auth');
 const { supabase } = require('../config/supabase');
 
 // Get all employees for an organization
@@ -160,8 +160,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Create new employee
-router.post('/', authenticateToken, async (req, res) => {
+// Create new employee (admin/manager/super_admin only)
+router.post('/', authenticateToken, requireUserManagement, async (req, res) => {
     try {
         console.log('➕ Creating new employee');
         

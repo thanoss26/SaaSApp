@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { createClient } = require('@supabase/supabase-js');
-const { authenticateToken } = require('../middleware/auth');
+const { 
+  authenticateToken, 
+  requireGlobalStatsAccess,
+  requireOrganizationOverviewAccess,
+  requirePayrollAccess,
+  requireAnalyticsAccess,
+  requireInviteUsersAccess,
+  requireNotificationsAccess
+} = require('../middleware/auth');
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;

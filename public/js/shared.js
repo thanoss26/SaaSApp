@@ -70,6 +70,9 @@ class EmployeeHub {
                         // Update navigation based on role
                         this.updateNavigationVisibility();
                         
+                        // Apply role-based restrictions
+                        this.applyRoleBasedRestrictions();
+                        
                         // Now that we have user data, re-check organization requirement
                         // This will either show content or organization requirement
                         this.checkOrganizationRequirement();
@@ -197,11 +200,11 @@ class EmployeeHub {
                         <h2>Organization Required</h2>
                         <p>You need to create an organization in order to view this page.</p>
                         <div class="org-required-actions">
-                            <a href="/organizations" class="btn-primary">
+                            <button id="createOrgBtn" class="btn-primary">
                                 <i class="fas fa-plus"></i>
                                 Create Organization
-                            </a>
-                            <button onclick="logout()" class="btn-secondary">
+                            </button>
+                            <button id="logoutBtn" class="btn-secondary">
                                 <i class="fas fa-sign-out-alt"></i>
                                 Logout
                             </button>
@@ -209,6 +212,18 @@ class EmployeeHub {
                     </div>
                 </div>
             `;
+            
+            // Add event listeners for the buttons
+            const createOrgBtn = orgRequiredSection.querySelector('#createOrgBtn');
+            const logoutBtn = orgRequiredSection.querySelector('#logoutBtn');
+            
+            createOrgBtn.addEventListener('click', () => {
+                this.showCreateOrganizationModal();
+            });
+            
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
+            });
             
             // Add CSS for organization requirement
             if (!document.getElementById('orgRequiredStyles')) {
@@ -342,6 +357,186 @@ class EmployeeHub {
                         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
                     }
                     
+                    /* Organization Creation Modal */
+                    .org-modal-overlay {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 20000;
+                        backdrop-filter: blur(4px);
+                    }
+                    
+                    .org-modal {
+                        background: white;
+                        border-radius: 16px;
+                        padding: 40px;
+                        max-width: 600px;
+                        width: 90%;
+                        max-height: 90vh;
+                        overflow-y: auto;
+                        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                        animation: modalSlideIn 0.3s ease-out;
+                    }
+                    
+                    @keyframes modalSlideIn {
+                        from {
+                            opacity: 0;
+                            transform: scale(0.9) translateY(-20px);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: scale(1) translateY(0);
+                        }
+                    }
+                    
+                    .org-modal-header {
+                        text-align: center;
+                        margin-bottom: 32px;
+                    }
+                    
+                    .org-modal-header h2 {
+                        color: #1e293b;
+                        font-size: 28px;
+                        font-weight: 700;
+                        margin-bottom: 8px;
+                    }
+                    
+                    .org-modal-header p {
+                        color: #64748b;
+                        font-size: 16px;
+                    }
+                    
+                    .org-modal-form .form-group {
+                        margin-bottom: 24px;
+                    }
+                    
+                    .org-modal-form label {
+                        display: block;
+                        margin-bottom: 8px;
+                        font-weight: 600;
+                        color: #374151;
+                        font-size: 14px;
+                    }
+                    
+                    .org-modal-form input,
+                    .org-modal-form textarea,
+                    .org-modal-form select {
+                        width: 100%;
+                        padding: 12px 16px;
+                        border: 2px solid #e5e7eb;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        transition: border-color 0.2s ease;
+                        box-sizing: border-box;
+                    }
+                    
+                    .org-modal-form input:focus,
+                    .org-modal-form textarea:focus,
+                    .org-modal-form select:focus {
+                        outline: none;
+                        border-color: #3b82f6;
+                        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+                    }
+                    
+                    .org-modal-form textarea {
+                        resize: vertical;
+                        min-height: 100px;
+                    }
+                    
+                    .org-modal-actions {
+                        display: flex;
+                        gap: 12px;
+                        justify-content: flex-end;
+                        margin-top: 32px;
+                    }
+                    
+                    .org-modal-btn {
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        border: none;
+                        cursor: pointer;
+                        font-size: 14px;
+                        transition: all 0.2s ease;
+                        min-width: 100px;
+                    }
+                    
+                    .org-modal-btn-cancel {
+                        background: #f3f4f6;
+                        color: #374151;
+                    }
+                    
+                    .org-modal-btn-cancel:hover {
+                        background: #e5e7eb;
+                    }
+                    
+                    .org-modal-btn-create {
+                        background: #3b82f6;
+                        color: white;
+                    }
+                    
+                    .org-modal-btn-create:hover {
+                        background: #2563eb;
+                        transform: translateY(-1px);
+                        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                    }
+                    
+                    .org-modal-btn-create:disabled {
+                        background: #9ca3af;
+                        cursor: not-allowed;
+                        transform: none;
+                        box-shadow: none;
+                    }
+                    
+                    .org-modal-loading {
+                        display: none;
+                        text-align: center;
+                        margin-top: 20px;
+                    }
+                    
+                    .org-modal-spinner {
+                        border: 3px solid #f3f4f6;
+                        border-top: 3px solid #3b82f6;
+                        border-radius: 50%;
+                        width: 24px;
+                        height: 24px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 8px;
+                    }
+                    
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+                    
+                    .org-modal-error {
+                        color: #dc2626;
+                        background: #fef2f2;
+                        border: 1px solid #fecaca;
+                        border-radius: 8px;
+                        padding: 12px;
+                        margin-bottom: 20px;
+                        display: none;
+                        font-size: 14px;
+                    }
+                    
+                    .org-modal-success {
+                        color: #059669;
+                        background: #f0fdf4;
+                        border: 1px solid #bbf7d0;
+                        border-radius: 8px;
+                        padding: 12px;
+                        margin-bottom: 20px;
+                        display: none;
+                        font-size: 14px;
+                    }
+                    
                     /* Responsive design */
                     @media (max-width: 768px) {
                         .org-required-section {
@@ -367,15 +562,17 @@ class EmployeeHub {
                             font-size: 24px;
                         }
                         
-                        .org-required-actions {
-                            flex-direction: column;
-                            align-items: center;
+                        .org-modal {
+                            padding: 24px;
+                            margin: 20px;
                         }
                         
-                        .btn-primary,
-                        .btn-secondary {
+                        .org-modal-actions {
+                            flex-direction: column;
+                        }
+                        
+                        .org-modal-btn {
                             width: 100%;
-                            max-width: 200px;
                         }
                     }
                 `;
@@ -668,6 +865,278 @@ class EmployeeHub {
         return roleMap[role] || role;
     }
 
+    // Role-based permission checking functions
+    hasPermission(permission) {
+        if (!this.currentUser) {
+            console.log('❌ No user data for permission check');
+            return false;
+        }
+
+        const permissions = {
+            // User management permissions
+            'manage_users': ['admin', 'manager', 'super_admin'],
+            'create_users': ['admin', 'manager', 'super_admin'],
+            'delete_users': ['admin', 'super_admin'],
+            'promote_users': ['admin', 'super_admin'],
+            
+            // Invitation permissions
+            'send_invites': ['admin', 'super_admin'],
+            'generate_invites': ['admin', 'super_admin'],
+            
+            // Organization management permissions
+            'manage_organization': ['admin', 'super_admin'],
+            'view_analytics': ['admin', 'manager', 'super_admin'],
+            'manage_billing': ['admin', 'super_admin'],
+            
+            // Employee management permissions
+            'manage_employees': ['admin', 'manager', 'super_admin'],
+            'create_employees': ['admin', 'manager', 'super_admin'],
+            'delete_employees': ['admin', 'super_admin'],
+            
+            // Payroll permissions
+            'view_payroll': ['admin', 'hr', 'super_admin'],
+            'view_my_payroll': ['organization_member', 'admin', 'hr', 'super_admin'], // Organization members can view their own payroll
+            'manage_payroll': ['admin', 'hr', 'super_admin'],
+            
+            // Settings permissions
+            'manage_settings': ['admin', 'super_admin'],
+            'view_settings': ['organization_member', 'admin', 'super_admin'], // Organization members can view settings
+            
+            // Profile permissions (everyone can manage their own)
+            'edit_profile': ['organization_member', 'admin', 'manager', 'super_admin'],
+            'view_profiles': ['organization_member', 'admin', 'manager', 'super_admin'],
+            
+            // Dashboard permissions
+            'view_dashboard': ['organization_member', 'admin', 'manager', 'super_admin'],
+            'view_organization_overview': ['organization_member', 'admin', 'manager', 'super_admin'],
+            
+            // Notifications permissions
+            'view_notifications': ['organization_member', 'admin', 'manager', 'super_admin']
+        };
+
+        const allowedRoles = permissions[permission];
+        if (!allowedRoles) {
+            console.log('⚠️ Unknown permission:', permission);
+            return false;
+        }
+
+        const hasPermission = allowedRoles.includes(this.currentUser.role);
+        console.log(`🔐 Permission check: ${permission} for role ${this.currentUser.role} = ${hasPermission}`);
+        return hasPermission;
+    }
+
+    // Check if user is admin or higher
+    isAdmin() {
+        return this.hasPermission('manage_organization');
+    }
+
+    // Check if user is manager or higher
+    isManager() {
+        return this.hasPermission('manage_employees');
+    }
+
+    // Check if user is organization member only
+    isOrganizationMember() {
+        return this.currentUser && this.currentUser.role === 'organization_member';
+    }
+
+    // Apply role-based UI restrictions
+    applyRoleBasedRestrictions() {
+        if (!this.currentUser) {
+            console.log('❌ No user data for role-based restrictions');
+            return;
+        }
+
+        console.log('🔐 Applying role-based restrictions for role:', this.currentUser.role);
+
+        // Apply role-based styling first
+        this.applyRoleBasedStyling();
+
+        // Hide user management features for organization_member
+        if (!this.hasPermission('manage_users')) {
+            this.hideElements([
+                '.user-management-section',
+                '.invite-users-section',
+                '.create-user-btn',
+                '.send-invite-btn',
+                '.delete-user-btn',
+                '.promote-user-btn'
+            ]);
+        }
+
+        // Hide invitation features for non-admins
+        if (!this.hasPermission('send_invites')) {
+            this.hideElements([
+                '.invite-section',
+                '.generate-invite-btn',
+                '.send-invitation-btn'
+            ]);
+        }
+
+        // Hide employee management for non-managers
+        if (!this.hasPermission('manage_employees')) {
+            this.hideElements([
+                '.employee-management-section',
+                '.create-employee-btn',
+                '.delete-employee-btn'
+            ]);
+        }
+
+        // Hide organization management for non-admins
+        if (!this.hasPermission('manage_organization')) {
+            this.hideElements([
+                '.organization-settings-section',
+                '.edit-organization-btn',
+                '.delete-organization-btn'
+            ]);
+        }
+
+        // Hide analytics for non-managers
+        if (!this.hasPermission('view_analytics')) {
+            this.hideElements([
+                '.analytics-section',
+                '.dashboard-metrics',
+                '.reports-section'
+            ]);
+        }
+
+        // Hide payroll for non-HR/admins, but allow organization members to view their own
+        if (!this.hasPermission('view_payroll') && !this.hasPermission('view_my_payroll')) {
+            this.hideElements([
+                '.payroll-section',
+                '.salary-management',
+                '.payroll-reports'
+            ]);
+        } else if (this.hasPermission('view_my_payroll') && !this.hasPermission('view_payroll')) {
+            // Organization members can only see their own payroll
+            this.hideElements([
+                '.payroll-management-section',
+                '.all-employees-payroll',
+                '.payroll-reports'
+            ]);
+            // Show "My Payroll" section for organization members
+            const myPayrollSection = document.querySelector('.my-payroll-section');
+            if (myPayrollSection) {
+                myPayrollSection.style.display = 'block';
+                console.log('✅ Showing My Payroll section for organization member');
+            }
+        }
+
+        // Hide settings for non-admins, but allow organization members to view basic settings
+        if (!this.hasPermission('manage_settings') && !this.hasPermission('view_settings')) {
+            this.hideElements([
+                '.admin-settings-section',
+                '.system-settings',
+                '.settings-section'
+            ]);
+        } else if (this.hasPermission('view_settings') && !this.hasPermission('manage_settings')) {
+            // Organization members can view basic settings but not admin settings
+            this.hideElements([
+                '.admin-settings-section',
+                '.system-settings'
+            ]);
+            // Show basic settings for organization members
+            const basicSettingsSection = document.querySelector('.basic-settings-section');
+            if (basicSettingsSection) {
+                basicSettingsSection.style.display = 'block';
+                console.log('✅ Showing basic settings section for organization member');
+            }
+        }
+
+        // Show appropriate messages for restricted features
+        this.showRestrictedFeatureMessages();
+    }
+
+    // Apply role-based styling for different user roles
+    applyRoleBasedStyling() {
+        if (!this.currentUser) return;
+
+        console.log('🎨 Applying role-based styling for:', this.currentUser.role);
+
+        // Remove all role-based classes from body
+        document.body.classList.remove(
+            'role-super-admin',
+            'role-admin', 
+            'role-manager',
+            'role-organization-member',
+            'role-employee'
+        );
+
+        // Add role-specific class to body
+        const roleClass = `role-${this.currentUser.role.replace('_', '-')}`;
+        document.body.classList.add(roleClass);
+        console.log('✅ Added role class to body:', roleClass);
+
+        // Apply organization_member specific styling
+        if (this.currentUser.role === 'organization_member') {
+            this.applyOrganizationMemberStyling();
+        }
+    }
+
+    // Apply specific styling for organization_member users
+    applyOrganizationMemberStyling() {
+        console.log('🎨 Applying organization_member specific styling');
+
+        // Add organization_member class to main containers
+        const mainContainers = document.querySelectorAll('.app-container, .dashboard-main, .main-content');
+        mainContainers.forEach(container => {
+            container.classList.add('organization-member-view');
+        });
+
+        // Add styling to navigation items
+        const navItems = document.querySelectorAll('.nav-item, .sidebar-nav a');
+        navItems.forEach(item => {
+            item.classList.add('org-member-nav');
+        });
+
+        // Add styling to cards and sections
+        const cards = document.querySelectorAll('.card, .dashboard-card, .stats-card');
+        cards.forEach(card => {
+            card.classList.add('org-member-card');
+        });
+
+        // Add styling to buttons
+        const buttons = document.querySelectorAll('.btn, button');
+        buttons.forEach(button => {
+            button.classList.add('org-member-btn');
+        });
+
+        // Organization member styling applied
+    }
+
+
+
+    // Hide elements by selector
+    hideElements(selectors) {
+        selectors.forEach(selector => {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(element => {
+                element.style.display = 'none';
+                console.log(`🚫 Hidden element: ${selector}`);
+            });
+        });
+    }
+
+    // Show restricted feature messages
+    showRestrictedFeatureMessages() {
+        if (this.isOrganizationMember()) {
+            // Add info messages for organization members
+            const restrictedSections = document.querySelectorAll('.restricted-section');
+            restrictedSections.forEach(section => {
+                const message = document.createElement('div');
+                message.className = 'restricted-message';
+                message.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Restricted Feature:</strong> This feature is only available to administrators and managers.
+                        Contact your organization administrator for access.
+                    </div>
+                `;
+                section.appendChild(message);
+            });
+        }
+    }
+
     updateNavigationVisibility() {
         if (!this.currentUser) return;
 
@@ -679,10 +1148,11 @@ class EmployeeHub {
         const usersNav = document.querySelector('a[href="/users"]');
         const payrollNav = document.querySelector('a[href="/payroll"]');
         const organizationsNav = document.querySelector('a[href="/organizations"]');
+        const profileNav = document.querySelector('a[href="/profile"]');
         const settingsNav = document.querySelector('a[href="/settings"]');
 
         // Hide all navigation items first
-        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, profileNav, settingsNav].forEach(nav => {
             if (nav) {
                 nav.style.display = 'none';
                 nav.style.visibility = 'hidden';
@@ -691,8 +1161,9 @@ class EmployeeHub {
         });
 
         if (this.currentUser.role === 'super_admin') {
-            // Super Admin sees: Dashboard, Analytics, User Management, Settings
-            [dashboardNav, analyticsNav, settingsNav].forEach(nav => {
+            // Super Admin sees: Dashboard, Analytics, User Management, Profile, Settings
+            const profileNav = document.querySelector('a[href="/profile"]');
+            [dashboardNav, analyticsNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
                     nav.style.display = 'flex';
                     nav.style.visibility = 'visible';
@@ -717,10 +1188,11 @@ class EmployeeHub {
                 }
             });
             
-            console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Settings');
-        } else {
-            // Admin/Manager/Employee sees: Dashboard, Analytics, Payroll, Organizations, Settings
-            [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+            console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Profile, Settings');
+        } else if (this.currentUser.role === 'admin') {
+            // Admin sees: Dashboard, Analytics, Payroll, Organizations, Profile, Settings
+            const profileNav = document.querySelector('a[href="/profile"]');
+            [dashboardNav, analyticsNav, payrollNav, organizationsNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
                     nav.style.display = 'flex';
                     nav.style.visibility = 'visible';
@@ -728,14 +1200,65 @@ class EmployeeHub {
                 }
             });
             
-            // COMPLETELY REMOVE User Management for Admin and below
+            // COMPLETELY REMOVE User Management for Admin
             if (usersNav) {
-                // Remove from DOM completely
                 usersNav.remove();
-                console.log('🗑️ Completely removed User Management from shared.js for Admin role and below');
+                console.log('🗑️ Completely removed User Management from shared.js for Admin role');
             }
             
-            console.log('✅ Standard navigation: Dashboard, Analytics, Payroll, Organizations, Settings');
+            console.log('✅ Admin navigation: Dashboard, Analytics, Payroll, Organizations, Profile, Settings');
+        } else if (this.currentUser.role === 'manager') {
+            // Manager sees: Dashboard, Analytics, Payroll, Profile, Settings (no Organizations)
+            const profileNav = document.querySelector('a[href="/profile"]');
+            [dashboardNav, analyticsNav, payrollNav, profileNav, settingsNav].forEach(nav => {
+                if (nav) {
+                    nav.style.display = 'flex';
+                    nav.style.visibility = 'visible';
+                    nav.style.opacity = '1';
+                }
+            });
+            
+            // Remove User Management and Organizations for managers
+            [usersNav, organizationsNav].forEach(nav => {
+                if (nav) {
+                    nav.remove();
+                    console.log('🗑️ Removed navigation item for manager:', nav.href);
+                }
+            });
+            
+            console.log('✅ Manager navigation: Dashboard, Analytics, Payroll, Profile, Settings');
+        } else if (this.currentUser.role === 'organization_member') {
+            // Organization Member sees: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings
+            const profileNav = document.querySelector('a[href="/profile"]');
+            [dashboardNav, organizationsNav, payrollNav, profileNav, settingsNav].forEach(nav => {
+                if (nav) {
+                    nav.style.display = 'flex';
+                    nav.style.visibility = 'visible';
+                    nav.style.opacity = '1';
+                }
+            });
+            
+            // Remove other navigation for organization members
+            [analyticsNav, usersNav].forEach(nav => {
+                if (nav) {
+                    nav.remove();
+                    console.log('🗑️ Removed navigation item for organization member:', nav.href);
+                }
+            });
+            
+            console.log('✅ Organization Member navigation: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings');
+        } else {
+            // Default fallback for other roles
+            const profileNav = document.querySelector('a[href="/profile"]');
+            [dashboardNav, profileNav, settingsNav].forEach(nav => {
+                if (nav) {
+                    nav.style.display = 'flex';
+                    nav.style.visibility = 'visible';
+                    nav.style.opacity = '1';
+                }
+            });
+            
+            console.log('✅ Default navigation: Dashboard, Profile, Settings');
         }
 
         console.log('✅ Navigation visibility updated');
@@ -799,6 +1322,41 @@ class EmployeeHub {
                 this.logout();
             });
         });
+
+        // Add event listener for logout button with ID
+        const logoutBtnById = document.getElementById('logout-btn');
+        if (logoutBtnById) {
+            logoutBtnById.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.logout();
+            });
+        }
+
+        // Add event listeners for organization buttons
+        const createOrgBtn = document.getElementById('create-org-btn');
+        if (createOrgBtn) {
+            createOrgBtn.addEventListener('click', () => {
+                window.location.href = '/create-organization';
+            });
+        }
+
+        const joinOrgBtn = document.getElementById('join-org-btn');
+        if (joinOrgBtn) {
+            joinOrgBtn.addEventListener('click', () => {
+                window.location.href = '/organizations';
+            });
+        }
+
+        // Add event listener for avatar button
+        const avatarBtn = document.getElementById('avatar-btn');
+        if (avatarBtn) {
+            avatarBtn.addEventListener('click', () => {
+                const avatarInput = document.getElementById('avatarInput');
+                if (avatarInput) {
+                    avatarInput.click();
+                }
+            });
+        }
 
         console.log('✅ Event listeners setup complete');
     }
@@ -1316,6 +1874,212 @@ class EmployeeHub {
             script.onload = () => console.log('✅ Users script loaded');
             script.onerror = () => console.error('❌ Failed to load users script');
             document.head.appendChild(script);
+        }
+    }
+
+    showCreateOrganizationModal() {
+        console.log('🏢 Showing organization creation modal');
+        
+        // Remove existing modal if present
+        const existingModal = document.getElementById('orgCreationModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+        
+        // Create modal overlay and content
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'org-modal-overlay';
+        modalOverlay.id = 'orgCreationModal';
+        
+        modalOverlay.innerHTML = `
+            <div class="org-modal">
+                <div class="org-modal-header">
+                    <h2>Create Your Organization</h2>
+                    <p>Set up your organization to start using Chronos HR features</p>
+                </div>
+                
+                <div class="org-modal-error" id="orgModalError"></div>
+                <div class="org-modal-success" id="orgModalSuccess"></div>
+                
+                <form class="org-modal-form" id="orgCreationForm">
+                    <div class="form-group">
+                        <label for="orgName">Organization Name *</label>
+                        <input type="text" id="orgName" name="name" required placeholder="Enter your organization name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgDescription">Description</label>
+                        <textarea id="orgDescription" name="description" placeholder="Brief description of your organization (optional)"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgIndustry">Industry</label>
+                        <select id="orgIndustry" name="industry">
+                            <option value="">Select industry</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Education">Education</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Manufacturing">Manufacturing</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgSize">Company Size</label>
+                        <select id="orgSize" name="size">
+                            <option value="">Select size</option>
+                            <option value="1-10">1-10 employees</option>
+                            <option value="11-50">11-50 employees</option>
+                            <option value="51-200">51-200 employees</option>
+                            <option value="201-500">201-500 employees</option>
+                            <option value="500+">500+ employees</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgWebsite">Website</label>
+                        <input type="url" id="orgWebsite" name="website" placeholder="https://yourcompany.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgAddress">Address</label>
+                        <textarea id="orgAddress" name="address" placeholder="Enter your organization address"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="orgTotalEmployees">Total Employees</label>
+                        <input type="number" id="orgTotalEmployees" name="total_employees" min="1" placeholder="Enter total number of employees">
+                    </div>
+                    
+                    <div class="org-modal-actions">
+                        <button type="button" class="org-modal-btn org-modal-btn-cancel" id="orgModalCancelBtn">
+                            Cancel
+                        </button>
+                        <button type="submit" class="org-modal-btn org-modal-btn-create" id="orgCreateBtn">
+                            Create Organization
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="org-modal-loading" id="orgModalLoading">
+                    <div class="org-modal-spinner"></div>
+                    <p>Creating your organization...</p>
+                </div>
+            </div>
+        `;
+        
+        // Add modal to page
+        document.body.appendChild(modalOverlay);
+        
+        // Setup form submission
+        const form = document.getElementById('orgCreationForm');
+        const createBtn = document.getElementById('orgCreateBtn');
+        const cancelBtn = document.getElementById('orgModalCancelBtn');
+        const loading = document.getElementById('orgModalLoading');
+        const errorDiv = document.getElementById('orgModalError');
+        const successDiv = document.getElementById('orgModalSuccess');
+        
+        // Add event listener for cancel button
+        cancelBtn.addEventListener('click', () => {
+            this.hideCreateOrganizationModal();
+        });
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show loading state
+            createBtn.disabled = true;
+            loading.style.display = 'block';
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            const formData = new FormData(form);
+            const orgData = {
+                name: formData.get('name'),
+                description: formData.get('description'),
+                industry: formData.get('industry'),
+                size: formData.get('size'),
+                website: formData.get('website'),
+                address: formData.get('address'),
+                total_employees: formData.get('total_employees')
+            };
+            
+            try {
+                const response = await fetch('/api/organizations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(orgData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    successDiv.textContent = 'Organization created successfully! Redirecting to dashboard...';
+                    successDiv.style.display = 'block';
+                    
+                    // Update user profile to include organization_id
+                    await this.updateUserProfile();
+                    
+                    // Hide modal and organization requirement
+                    setTimeout(() => {
+                        this.hideCreateOrganizationModal();
+                        this.hideOrganizationRequirement();
+                        this.showMainContent();
+                        
+                        // Redirect to dashboard
+                        window.location.href = '/dashboard';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to create organization');
+                }
+            } catch (error) {
+                console.error('❌ Error creating organization:', error);
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            } finally {
+                createBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+        
+        // Close modal when clicking overlay
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                this.hideCreateOrganizationModal();
+            }
+        });
+    }
+    
+    hideCreateOrganizationModal() {
+        console.log('🏢 Hiding organization creation modal');
+        const modal = document.getElementById('orgCreationModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+    
+    async updateUserProfile() {
+        try {
+            const response = await fetch('/api/auth/profile', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                this.currentUser = data.profile || data;
+                this.updateUserInfo();
+            }
+        } catch (error) {
+            console.error('❌ Error updating user profile:', error);
         }
     }
 }

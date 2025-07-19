@@ -71,6 +71,17 @@ class Dashboard {
           this.showSuperAdminDashboard();
           break;
           
+        case 'organization_member':
+          // Organization members see employee dashboard
+          if (!profileData.organization_id) {
+            console.log('❌ Organization required for organization_member');
+            this.showOrganizationRequired();
+          } else {
+            console.log('👤 Organization member detected - showing employee dashboard');
+            this.showOrganizationMemberDashboard();
+          }
+          break;
+          
         case 'admin':
         case 'employee':
         default:
@@ -95,19 +106,23 @@ class Dashboard {
 
   showOrganizationRequired() {
     console.log('🚫 Showing organization requirement screen');
-    const orgRequiredSection = document.getElementById('organizationRequired');
+    const orgRequiredSection = document.getElementById('orgRequiredSection');
     const mainContent = document.getElementById('mainContent');
     
     if (orgRequiredSection && mainContent) {
       orgRequiredSection.style.display = 'block';
       mainContent.style.display = 'none';
       console.log('✅ Organization requirement screen displayed');
+    } else {
+      console.log('⚠️ Organization required section or main content not found');
+      // Fallback: show a toast message
+      this.showToast('You need to join an organization to access the dashboard', 'warning');
     }
   }
 
   showMainDashboard() {
     console.log('📊 Showing main organization dashboard');
-    const orgRequiredSection = document.getElementById('organizationRequired');
+    const orgRequiredSection = document.getElementById('orgRequiredSection');
     const mainContent = document.getElementById('mainContent');
     
     if (orgRequiredSection && mainContent) {
@@ -122,7 +137,7 @@ class Dashboard {
 
   showSuperAdminDashboard() {
     console.log('👑 Showing super admin dashboard');
-    const orgRequiredSection = document.getElementById('organizationRequired');
+    const orgRequiredSection = document.getElementById('orgRequiredSection');
     const mainContent = document.getElementById('mainContent');
     
     if (orgRequiredSection && mainContent) {
@@ -216,6 +231,403 @@ class Dashboard {
     } catch (error) {
       console.error('❌ Error loading super admin data:', error);
     }
+  }
+
+  showOrganizationMemberDashboard() {
+    console.log('👤 Showing organization member dashboard');
+    const orgRequiredSection = document.getElementById('orgRequiredSection');
+    const mainContent = document.getElementById('mainContent');
+    
+    if (orgRequiredSection && mainContent) {
+      orgRequiredSection.style.display = 'none';
+      mainContent.style.display = 'block';
+      console.log('✅ Organization member dashboard displayed');
+    }
+
+    // Load organization member specific content
+    this.loadOrganizationMemberData();
+  }
+
+  async loadOrganizationMemberData() {
+    console.log('👤 Loading organization member dashboard data...');
+    
+    try {
+      // Update page title and content for organization member
+      const dashboardTitle = document.querySelector('.dashboard-title');
+      if (dashboardTitle) {
+        dashboardTitle.textContent = 'Employee Dashboard';
+      }
+
+      const welcomeSection = document.querySelector('.welcome-section h1');
+      if (welcomeSection) {
+        welcomeSection.textContent = 'Welcome to Your Employee Dashboard';
+      }
+
+      const welcomeText = document.querySelector('.welcome-section p');
+      if (welcomeText) {
+        welcomeText.textContent = 'Access your work information, payroll, and company updates';
+      }
+
+      // Replace the main dashboard content with organization member specific content
+      this.createOrganizationMemberDashboard();
+
+      // Load organization member specific data
+      await this.loadEmployeeData();
+
+      console.log('✅ Organization member dashboard initialization complete');
+
+    } catch (error) {
+      console.error('❌ Error loading organization member data:', error);
+    }
+  }
+
+  createOrganizationMemberDashboard() {
+    console.log('🎨 Creating organization member dashboard layout...');
+    
+    const mainContent = document.getElementById('mainContent');
+    if (!mainContent) {
+      console.error('❌ Main content container not found');
+      return;
+    }
+
+    // Create the organization member dashboard HTML
+    mainContent.innerHTML = `
+      <div class="org-member-dashboard">
+        <!-- Welcome Section -->
+        <div class="welcome-section">
+          <h1>Welcome to Your Employee Dashboard</h1>
+          <p>Access your work information, payroll, and company updates</p>
+        </div>
+
+        <!-- Quick Stats Row -->
+        <div class="quick-stats-row">
+          <div class="stat-card org-member-stat">
+            <div class="stat-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="attendanceStatus">Present</div>
+              <div class="stat-label">Attendance Status</div>
+            </div>
+          </div>
+          
+          <div class="stat-card org-member-stat">
+            <div class="stat-icon">
+              <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="upcomingEvents">3</div>
+              <div class="stat-label">Upcoming Events</div>
+            </div>
+          </div>
+          
+          <div class="stat-card org-member-stat">
+            <div class="stat-icon">
+              <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="latestPayroll">$2,450</div>
+              <div class="stat-label">Latest Payroll</div>
+            </div>
+          </div>
+          
+          <div class="stat-card org-member-stat">
+            <div class="stat-icon">
+              <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value" id="vacationDays">12</div>
+              <div class="stat-label">Vacation Days Left</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="dashboard-grid">
+          <!-- Left Column -->
+          <div class="left-column">
+            <!-- My Schedule -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-calendar"></i> My Schedule</h3>
+              </div>
+              <div class="card-content">
+                <div class="schedule-item">
+                  <div class="schedule-time">9:00 AM - 5:00 PM</div>
+                  <div class="schedule-day">Monday - Friday</div>
+                  <div class="schedule-location">Office</div>
+                </div>
+                <div class="schedule-item">
+                  <div class="schedule-time">10:00 AM - 2:00 PM</div>
+                  <div class="schedule-day">Saturday</div>
+                  <div class="schedule-location">Remote</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- My Payroll -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-money-bill-wave"></i> My Payroll</h3>
+              </div>
+              <div class="card-content">
+                <div class="payroll-summary">
+                  <div class="payroll-item">
+                    <span class="label">Current Pay Period:</span>
+                    <span class="value">$2,450.00</span>
+                  </div>
+                  <div class="payroll-item">
+                    <span class="label">YTD Earnings:</span>
+                    <span class="value">$29,400.00</span>
+                  </div>
+                  <div class="payroll-item">
+                    <span class="label">Next Pay Date:</span>
+                    <span class="value">July 25, 2025</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Recent Payment Breakdowns -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-chart-pie"></i> Recent Payment Breakdown</h3>
+              </div>
+              <div class="card-content">
+                <div class="payment-breakdown">
+                  <div class="breakdown-item">
+                    <span class="label">Base Salary:</span>
+                    <span class="value">$2,200.00</span>
+                  </div>
+                  <div class="breakdown-item">
+                    <span class="label">Overtime:</span>
+                    <span class="value">$150.00</span>
+                  </div>
+                  <div class="breakdown-item">
+                    <span class="label">Bonus:</span>
+                    <span class="value">$100.00</span>
+                  </div>
+                  <div class="breakdown-item total">
+                    <span class="label">Total:</span>
+                    <span class="value">$2,450.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column -->
+          <div class="right-column">
+            <!-- Downloadable Pay Stubs -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-download"></i> Pay Stubs</h3>
+              </div>
+              <div class="card-content">
+                <div class="pay-stub-list">
+                  <div class="pay-stub-item">
+                    <span class="stub-date">July 15, 2025</span>
+                    <button class="btn btn-sm org-member-btn">Download PDF</button>
+                  </div>
+                  <div class="pay-stub-item">
+                    <span class="stub-date">July 1, 2025</span>
+                    <button class="btn btn-sm org-member-btn">Download PDF</button>
+                  </div>
+                  <div class="pay-stub-item">
+                    <span class="stub-date">June 15, 2025</span>
+                    <button class="btn btn-sm org-member-btn">Download PDF</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pay History -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-history"></i> Pay History</h3>
+              </div>
+              <div class="card-content">
+                <div class="pay-history">
+                  <div class="history-item">
+                    <span class="date">July 15, 2025</span>
+                    <span class="amount">$2,450.00</span>
+                  </div>
+                  <div class="history-item">
+                    <span class="date">July 1, 2025</span>
+                    <span class="amount">$2,400.00</span>
+                  </div>
+                  <div class="history-item">
+                    <span class="date">June 15, 2025</span>
+                    <span class="amount">$2,350.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Time Off & Vacation -->
+            <div class="dashboard-card org-member-card">
+              <div class="card-header">
+                <h3><i class="fas fa-umbrella-beach"></i> Time Off & Vacation</h3>
+              </div>
+              <div class="card-content">
+                <div class="time-off-summary">
+                  <div class="time-off-item">
+                    <span class="label">Vacation Days Used:</span>
+                    <span class="value">8 days</span>
+                  </div>
+                  <div class="time-off-item">
+                    <span class="label">Sick Days Used:</span>
+                    <span class="value">2 days</span>
+                  </div>
+                  <div class="time-off-item">
+                    <span class="label">Remaining Vacation:</span>
+                    <span class="value">12 days</span>
+                  </div>
+                </div>
+                <div class="time-off-actions">
+                  <button class="btn org-member-btn">Request Time Off</button>
+                  <button class="btn org-member-btn">View Requests</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="bottom-row">
+          <!-- Organization News & Announcements -->
+          <div class="dashboard-card org-member-card full-width">
+            <div class="card-header">
+              <h3><i class="fas fa-bullhorn"></i> Company News & Announcements</h3>
+            </div>
+            <div class="card-content">
+              <div class="announcements-list">
+                <div class="announcement-item">
+                  <div class="announcement-date">July 19, 2025</div>
+                  <div class="announcement-title">Company Picnic This Friday!</div>
+                  <div class="announcement-content">Join us for our annual company picnic at Central Park. Food, games, and team building activities included!</div>
+                </div>
+                <div class="announcement-item">
+                  <div class="announcement-date">July 18, 2025</div>
+                  <div class="announcement-title">New Sick Leave Policy</div>
+                  <div class="announcement-content">Updated sick leave policy now includes mental health days. Check the employee handbook for details.</div>
+                </div>
+                <div class="announcement-item">
+                  <div class="announcement-date">July 17, 2025</div>
+                  <div class="announcement-title">Office Renovation Complete</div>
+                  <div class="announcement-content">The new break room is now open! Come check out the new coffee machine and seating area.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Support & HR Contact -->
+        <div class="support-section">
+          <div class="dashboard-card org-member-card">
+            <div class="card-header">
+              <h3><i class="fas fa-headset"></i> Support & HR Contact</h3>
+            </div>
+            <div class="card-content">
+              <div class="support-options">
+                <button class="btn org-member-btn">
+                  <i class="fas fa-comment"></i> Message HR
+                </button>
+                <button class="btn org-member-btn">
+                  <i class="fas fa-file-alt"></i> Submit HR Request
+                </button>
+                <button class="btn org-member-btn">
+                  <i class="fas fa-book"></i> Access Policies
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security & Permissions -->
+          <div class="dashboard-card org-member-card">
+            <div class="card-header">
+              <h3><i class="fas fa-shield-alt"></i> Security & Permissions</h3>
+            </div>
+            <div class="card-content">
+              <div class="security-options">
+                <button class="btn org-member-btn">
+                  <i class="fas fa-key"></i> Update Password
+                </button>
+                <button class="btn org-member-btn">
+                  <i class="fas fa-mobile-alt"></i> Manage 2FA
+                </button>
+                <button class="btn org-member-btn">
+                  <i class="fas fa-desktop"></i> View Sessions
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    console.log('✅ Organization member dashboard layout created');
+  }
+
+  async loadEmployeeData() {
+    console.log('👤 Loading employee-specific data...');
+    
+    try {
+      // Load employee data from server
+      const response = await fetch('/api/employee/dashboard', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        this.updateEmployeeDashboard(data);
+      } else {
+        console.log('⚠️ Using mock employee data');
+        this.updateEmployeeDashboardWithMockData();
+      }
+    } catch (error) {
+      console.error('❌ Error loading employee data:', error);
+      console.log('⚠️ Using mock employee data');
+      this.updateEmployeeDashboardWithMockData();
+    }
+  }
+
+  updateEmployeeDashboard(data) {
+    // Update dashboard with real data from server
+    console.log('📊 Updating employee dashboard with real data:', data);
+    
+    // Update attendance status
+    const attendanceStatus = document.getElementById('attendanceStatus');
+    if (attendanceStatus) {
+      attendanceStatus.textContent = data.attendanceStatus || 'Present';
+    }
+
+    // Update other stats
+    const upcomingEvents = document.getElementById('upcomingEvents');
+    if (upcomingEvents) {
+      upcomingEvents.textContent = data.upcomingEvents || '3';
+    }
+
+    const latestPayroll = document.getElementById('latestPayroll');
+    if (latestPayroll) {
+      latestPayroll.textContent = data.latestPayroll || '$2,450';
+    }
+
+    const vacationDays = document.getElementById('vacationDays');
+    if (vacationDays) {
+      vacationDays.textContent = data.vacationDays || '12';
+    }
+  }
+
+  updateEmployeeDashboardWithMockData() {
+    console.log('📊 Updating employee dashboard with mock data');
+    
+    // This will be handled by the static HTML we created
+    // The mock data is already embedded in the HTML structure
   }
 
   async loadWebsiteStats() {
@@ -460,6 +872,17 @@ class Dashboard {
 
     } catch (error) {
       console.error('❌ Dashboard data loading failed:', error);
+      
+      // Check if this is an organization_member without organization_id
+      const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+      const profileData = profile.profile || profile;
+      
+      if (profileData.role === 'organization_member' && !profileData.organization_id) {
+        console.log('⚠️ Organization member without organization - showing organization requirement');
+        this.showOrganizationRequired();
+        return;
+      }
+      
       // If there's an auth error, redirect to login
       if (error.message.includes('401') || error.message.includes('403')) {
         console.log('⚠️ Auth error detected, redirecting to login');

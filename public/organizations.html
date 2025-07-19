@@ -1,243 +1,275 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Organization Dashboard - Chronos HR</title>
-    <link rel="stylesheet" href="/css/organizations.css">
-    <link rel="stylesheet" href="/css/enhanced-sidebar.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        .org-required-section {
-            padding: 60px 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 60vh;
-        }
-        .org-required-content-large {
-            text-align: center;
-            max-width: 600px;
-            background: white;
-            padding: 60px 40px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-        }
-        .org-required-icon {
-            font-size: 6rem;
-            margin-bottom: 30px;
-        }
-        .org-required-content-large h2 {
-            color: #1a1a1a;
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            font-weight: 700;
-        }
-        .org-required-content-large p {
-            color: #666;
-            font-size: 1.3rem;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
-        .org-required-actions {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        .btn-primary-large, .btn-secondary-large {
-            padding: 16px 32px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            min-width: 200px;
-        }
-        .btn-primary-large {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-        }
-        .btn-primary-large:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
-        }
-        .btn-secondary-large {
-            background: white;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
-        .btn-secondary-large:hover {
-            background: #667eea;
-            color: white;
-            transform: translateY(-2px);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronos HR - Organization Management</title>
+  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
+  <link rel="stylesheet" href="css/shared.css?v=1.0.1">
+  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+  <link rel="stylesheet" href="css/organizations.css?v=1.0.1">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="enhanced-sidebar" id="enhanced-sidebar">
-          <div class="enhanced-sidebar-header">
-            <div class="enhanced-sidebar-logo">
-              <div class="logo-icon">⏱️</div>
-              <span class="logo-text">Chronos HR</span>
-            </div>
-            <div class="enhanced-sidebar-controls">
-              <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
-                <i class="fas fa-bars"></i>
-              </button>
-              <button class="enhanced-theme-toggle" id="theme-toggle">
-                <i class="fas fa-moon" id="theme-icon"></i>
-              </button>
-            </div>
+
+<body class="dashboard-bg">
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="enhanced-sidebar" id="enhanced-sidebar">
+      <div class="enhanced-sidebar-header">
+        <div class="enhanced-sidebar-logo">
+          <div class="logo-icon">⏱️</div>
+          <span class="logo-text">Chronos HR</span>
+        </div>
+        <div class="enhanced-sidebar-controls">
+          <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <button class="enhanced-theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon" id="theme-icon"></i>
+          </button>
+        </div>
+      </div>
+
+      <nav class="enhanced-sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-page="dashboard">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="/analytics" class="nav-item" data-page="analytics">
+          <i class="fas fa-chart-bar"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="/users" class="nav-item" data-page="users">
+          <i class="fas fa-users"></i>
+          <span>User Management</span>
+        </a>
+        <a href="/payroll" class="nav-item" data-page="payroll">
+          <i class="fas fa-dollar-sign"></i>
+          <span>Payroll</span>
+        </a>
+        <a href="/organizations" class="nav-item active" data-page="organizations">
+          <i class="fas fa-building"></i>
+          <span>Organizations</span>
+        </a>
+        <a href="/settings" class="nav-item" data-page="settings">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+        <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
+          <i class="fas fa-envelope"></i>
+          <span>Mailbox</span>
+          <span class="mailbox-badge" id="mailbox-badge" style="display: none;">0</span>
+        </a>
+      </nav>
+
+      <div class="enhanced-sidebar-footer">
+        <div class="enhanced-sidebar-user">
+          <div class="user-avatar">TV</div>
+          <div class="user-details">
+            <div class="user-name">Loading...</div>
+            <div class="user-email">Loading...</div>
           </div>
+        </div>
+        <button class="enhanced-logout-btn" id="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Log out</span>
+        </button>
+      </div>
+    </aside>
 
-          <nav class="enhanced-sidebar-nav">
-            <a href="/dashboard" class="nav-item" data-page="dashboard">
-              <i class="fas fa-tachometer-alt"></i>
-              <span>Dashboard</span>
-            </a>
-            <a href="/analytics" class="nav-item" data-page="analytics">
-              <i class="fas fa-chart-bar"></i>
-              <span>Analytics</span>
-            </a>
-            <a href="/users" class="nav-item" data-page="users">
-              <i class="fas fa-users"></i>
-              <span>User Management</span>
-            </a>
-            <a href="/payroll" class="nav-item" data-page="payroll">
-              <i class="fas fa-dollar-sign"></i>
-              <span>Payroll</span>
-            </a>
-            <a href="/organizations" class="nav-item active" data-page="organizations">
-              <i class="fas fa-building"></i>
-              <span>Organizations</span>
-            </a>
-            <a href="/settings" class="nav-item" data-page="settings">
-              <i class="fas fa-cog"></i>
-              <span>Settings</span>
-            </a>
-          </nav>
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Topbar -->
+      <header class="dashboard-topbar">
+        <h1 class="dashboard-title">Organization Management</h1>
+        <div class="dashboard-search">
+          <input type="text" placeholder="Search members..." id="member-search" />
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="dashboard-user">
+          <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User"
+            class="user-avatar" />
+          <div class="user-info">
+            <span class="user-name">Loading...</span>
+            <span class="user-role">Loading...</span>
+          </div>
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </header>
 
-          <div class="enhanced-sidebar-footer">
-            <div class="enhanced-sidebar-user">
-              <div class="user-avatar">TV</div>
-              <div class="user-details">
-                <div class="user-name">Loading...</div>
-                                  <div class="user-email">Loading...</div>
+      <!-- Organization Content -->
+      <section class="dashboard-content">
+        <!-- Loading State -->
+        <div id="loading-state" class="loading-container">
+          <div class="loading-spinner"></div>
+          <p>Loading organization information...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error-state" class="error-container" style="display: none;">
+          <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h3>Unable to Load Organization</h3>
+          <p id="error-message">An error occurred while loading organization information.</p>
+          <button class="btn-primary" id="retry-btn">Try Again</button>
+        </div>
+
+        <!-- Organization Information -->
+        <div id="organization-content" style="display: none;">
+          <!-- Organization Header -->
+          <div class="org-header">
+            <div class="org-info">
+              <div class="org-avatar">
+                <i class="fas fa-building"></i>
+              </div>
+              <div class="org-details">
+                <h2 id="org-name">Organization Name</h2>
+                <p id="org-description">Organization description</p>
+                <div class="org-meta">
+                  <span class="org-meta-item">
+                    <i class="fas fa-calendar"></i>
+                    Created: <span id="org-created">Loading...</span>
+                  </span>
+                  <span class="org-meta-item">
+                    <i class="fas fa-users"></i>
+                    <span id="org-member-count">0</span> Members
+                  </span>
+                </div>
               </div>
             </div>
-            <button class="enhanced-logout-btn" onclick="logout()">
-              <i class="fas fa-sign-out-alt"></i>
-              <span>Log out</span>
-            </button>
-          </div>
-        </aside>
-
-        <main class="main-content org-dashboard-main" id="organizationsMain">
-            <!-- Organization Required Section -->
-            <section class="org-required-section" id="orgRequiredSection" style="display: none;">
-                <div class="org-required-content-large">
-                    <div class="org-required-icon">🏢</div>
-                    <h2>Organization Required</h2>
-                    <p>You need to create or join an organization to access organization management features.</p>
-                    <div class="org-required-actions">
-                        <button class="btn btn-primary-large" onclick="window.location.href='/create-organization'">
-                            Create Organization
-                        </button>
-                        <button class="btn btn-secondary-large" onclick="window.location.href='/organizations'">
-                            Join Organization
-                        </button>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Welcome Section -->
-            <div class="welcome-section" id="organizationsContent">
-                <div class="welcome-card">
-                    <div class="welcome-header">
-                        <div class="welcome-icon">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <h1>Welcome to Chronos HR!</h1>
-                        <p>Create your organization to get started with powerful HR management tools</p>
-                    </div>
-                    
-                    <div class="welcome-features">
-                        <div class="feature-item">
-                            <i class="fas fa-users"></i>
-                            <span>Manage your team efficiently</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Track performance analytics</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-clock"></i>
-                            <span>Monitor attendance & time</span>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span>Handle payroll seamlessly</span>
-                        </div>
-                    </div>
-
-                    <form id="createOrgForm" class="create-org-form">
-                        <div class="form-group">
-                            <label for="orgName">Organization Name *</label>
-                            <input type="text" id="orgName" placeholder="Enter your organization name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="orgDescription">Description</label>
-                            <textarea id="orgDescription" placeholder="Brief description of your organization (optional)"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="orgIndustry">Industry</label>
-                            <select id="orgIndustry">
-                                <option value="">Select industry</option>
-                                <option value="technology">Technology</option>
-                                <option value="healthcare">Healthcare</option>
-                                <option value="finance">Finance</option>
-                                <option value="education">Education</option>
-                                <option value="retail">Retail</option>
-                                <option value="manufacturing">Manufacturing</option>
-                                <option value="consulting">Consulting</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="orgSize">Company Size</label>
-                            <select id="orgSize">
-                                <option value="">Select size</option>
-                                <option value="1-10">1-10 employees</option>
-                                <option value="11-50">11-50 employees</option>
-                                <option value="51-200">51-200 employees</option>
-                                <option value="201-500">201-500 employees</option>
-                                <option value="500+">500+ employees</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="orgWebsite">Website</label>
-                            <input type="url" id="orgWebsite" placeholder="https://yourcompany.com">
-                        </div>
-                        <div class="form-group">
-                            <label for="orgAddress">Address</label>
-                            <textarea id="orgAddress" placeholder="Enter your organization address"></textarea>
-                        </div>
-                        <button type="submit" class="btn-create-org">
-                            <i class="fas fa-plus"></i>
-                            Create Organization
-                        </button>
-                    </form>
-                </div>
+            <div class="org-actions">
+              <button class="btn-secondary" id="edit-org-btn" style="display: none;">
+                <i class="fas fa-edit"></i>
+                Edit Organization
+              </button>
             </div>
-        </main>
-    </div>
+          </div>
 
-    <script src="/js/shared.js"></script>
-    <script src="/js/sidebar.js"></script>
-    <script src="/js/organizations.js"></script>
+          <!-- Organization Creator -->
+          <div class="org-creator-section">
+            <h3>Organization Creator</h3>
+            <div class="creator-card" id="creator-card">
+              <div class="creator-avatar">
+                <i class="fas fa-user"></i>
+              </div>
+              <div class="creator-info">
+                <h4 id="creator-name">Loading...</h4>
+                <p id="creator-email">Loading...</p>
+                <span class="creator-role">Creator</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Organization Members -->
+          <div class="org-members-section">
+            <div class="section-header">
+              <h3>Organization Members</h3>
+              <div class="member-filters">
+                <select id="role-filter" class="filter-select">
+                  <option value="">All Roles</option>
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="organization_member">Organization Member</option>
+                  <option value="employee">Employee</option>
+                </select>
+                <select id="status-filter" class="filter-select">
+                  <option value="">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="members-grid" id="members-grid">
+              <!-- Members will be populated here -->
+            </div>
+
+            <!-- No Members State -->
+            <div id="no-members" class="no-members" style="display: none;">
+              <div class="no-members-icon">
+                <i class="fas fa-users-slash"></i>
+              </div>
+              <h4>No Members Found</h4>
+              <p>This organization doesn't have any members yet.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Edit Organization Modal -->
+  <div id="edit-org-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Edit Organization</h3>
+        <button class="modal-close" id="close-edit-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-org-form">
+          <div class="form-group">
+            <label for="edit-org-name">Organization Name</label>
+            <input type="text" id="edit-org-name" name="name" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-org-description">Description</label>
+            <textarea id="edit-org-description" name="description" rows="3"></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-danger" id="delete-org-btn">
+              <i class="fas fa-trash"></i>
+              Delete Organization
+            </button>
+            <div class="form-actions-right">
+              <button type="button" class="btn-secondary" id="cancel-edit-btn">Cancel</button>
+              <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-org-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Delete Organization</h3>
+        <button class="modal-close" id="close-delete-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="warning-message">
+          <i class="fas fa-exclamation-triangle"></i>
+          <h4>Warning: This action cannot be undone!</h4>
+          <p>Deleting this organization will:</p>
+          <ul>
+            <li>Remove all organization data</li>
+            <li>Disconnect all members from the organization</li>
+            <li>Delete all associated records</li>
+          </ul>
+          <p><strong>Are you sure you want to delete this organization?</strong></p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="cancel-delete-btn">Cancel</button>
+          <button type="button" class="btn-danger" id="confirm-delete-btn">
+            <i class="fas fa-trash"></i>
+            Yes, Delete Organization
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/shared.js"></script>
+  <script src="js/organizations.js"></script>
 </body>
+
 </html> 

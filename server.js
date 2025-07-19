@@ -9,7 +9,16 @@ const organizationRoutes = require('./routes/organizations');
 const userRoutes = require('./routes/users');
 const employeeRoutes = require('./routes/employees');
 const dashboardRoutes = require('./routes/dashboards');
-const { authenticateToken } = require('./middleware/auth');
+const mailboxRoutes = require('./routes/mailbox');
+const { 
+  authenticateToken,
+  requireGlobalStatsAccess,
+  requireOrganizationOverviewAccess,
+  requirePayrollAccess,
+  requireAnalyticsAccess,
+  requireInviteUsersAccess,
+  requireNotificationsAccess
+} = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -226,20 +235,12 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 app.use('/api/dashboards', apiLimiter, authenticateToken, dashboardRoutes);
+app.use('/api/mailbox', apiLimiter, mailboxRoutes);
 
 // Clean URL routes (no .html extensions) with cache busting
 // Note: Authentication will be handled by the frontend JavaScript
 
-app.get('/organizations', (req, res) => {
-  console.log('🔍 /organizations route hit');
-  console.log('🔍 Request URL:', req.url);
-  console.log('🔍 Referrer:', req.headers.referer || 'No referrer');
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('ETag', `"${Date.now()}"`);
-  res.sendFile(__dirname + '/public/organizations.html');
-});
+
 
 app.get('/payroll', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -335,7 +336,7 @@ app.get('/create-organization.html', (req, res) => {
 });
 
 // Dashboard API endpoints
-app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+app.get('/api/dashboard/stats', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
   try {
     const { profile } = req;
     const { supabase } = require('./config/supabase');
@@ -396,6 +397,7 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
     } else {
       // Regular users - filter by their organization
       if (!profile.organization_id) {
+        // Return empty data for users without organization (they can still access mailbox)
         return res.json({
           totalEmployees: 0,
           activeEmployees: 0,
@@ -404,9 +406,13 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
           fullTimeCount: 0,
           partTimeCount: 0,
           contractorCount: 0,
-          recentHires: 0
+          recentHires: 0,
+          message: 'No organization assigned'
         });
       }
+
+      // Check if this is limited access (organization_member)
+      const isLimitedAccess = req.limitedAccess;
 
       const { count: totalEmployees } = await supabase
         .from('employees')
@@ -454,16 +460,32 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
 
       const attendanceRate = totalEmployees > 0 ? Math.round((activeEmployees / totalEmployees) * 100) : 0;
 
-      res.json({
-        totalEmployees: totalEmployees || 0,
-        activeEmployees: activeEmployees || 0,
-        departments: 0,
-        attendanceRate: attendanceRate,
-        fullTimeCount: fullTimeCount || 0,
-        partTimeCount: partTimeCount || 0,
-        contractorCount: contractorCount || 0,
-        recentHires: recentHires || 0
-      });
+      // For organization members, provide limited data
+      if (isLimitedAccess) {
+        res.json({
+          totalEmployees: totalEmployees || 0,
+          activeEmployees: activeEmployees || 0,
+          departments: 0,
+          attendanceRate: attendanceRate,
+          fullTimeCount: 0, // Limited access - don't show detailed breakdown
+          partTimeCount: 0, // Limited access - don't show detailed breakdown
+          contractorCount: 0, // Limited access - don't show detailed breakdown
+          recentHires: 0, // Limited access - don't show recent hires
+          message: 'Limited organization overview'
+        });
+      } else {
+        // Full access for admins
+        res.json({
+          totalEmployees: totalEmployees || 0,
+          activeEmployees: activeEmployees || 0,
+          departments: 0,
+          attendanceRate: attendanceRate,
+          fullTimeCount: fullTimeCount || 0,
+          partTimeCount: partTimeCount || 0,
+          contractorCount: contractorCount || 0,
+          recentHires: recentHires || 0
+        });
+      }
     }
 
   } catch (error) {
@@ -472,7 +494,7 @@ app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/charts', authenticateToken, async (req, res) => {
+app.get('/api/dashboard/charts', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
   try {
     const { profile } = req;
     const { supabase } = require('./config/supabase');
@@ -549,10 +571,19 @@ app.get('/api/dashboard/charts', authenticateToken, async (req, res) => {
       });
     }
 
-    res.json({
-      growth: monthlyCounts,
-      employmentTypes: [employmentCounts.full_time, employmentCounts.part_time, employmentCounts.contractor]
-    });
+    // For organization members, provide limited chart data
+    if (req.limitedAccess) {
+      res.json({
+        growth: monthlyCounts,
+        employmentTypes: [0, 0, 0], // Limited access - don't show detailed breakdown
+        message: 'Limited chart data'
+      });
+    } else {
+      res.json({
+        growth: monthlyCounts,
+        employmentTypes: [employmentCounts.full_time, employmentCounts.part_time, employmentCounts.contractor]
+      });
+    }
 
   } catch (error) {
     console.error('Dashboard charts error:', error);
@@ -560,12 +591,43 @@ app.get('/api/dashboard/charts', authenticateToken, async (req, res) => {
   }
 });
 
-app.get('/api/dashboard/activity', authenticateToken, async (req, res) => {
+app.get('/api/dashboard/activity', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
   try {
     const { profile } = req;
     const { supabase } = require('./config/supabase');
 
-    // Get recent employee updates
+    // Check if user has limited access (organization_member)
+    if (req.limitedAccess) {
+      // Organization members can only see their own activity
+      const { data: userEmployee, error: userEmployeeError } = await supabase
+        .from('employees')
+        .select('first_name, last_name, updated_at, created_at, employee_status')
+        .eq('user_id', req.user.id)
+        .eq('is_deleted', false)
+        .single();
+
+      if (userEmployeeError) {
+        console.error('User employee activity error:', userEmployeeError);
+        return res.json([]);
+      }
+
+      // Return only the user's own activity
+      const activities = [];
+      if (userEmployee) {
+        const isNewEmployee = new Date(userEmployee.created_at).getTime() === new Date(userEmployee.updated_at).getTime();
+        activities.push({
+          type: isNewEmployee ? 'employee_hired' : 'employee_updated',
+          message: isNewEmployee
+            ? `Your profile was created`
+            : `Your profile was updated`,
+          created_at: userEmployee.updated_at
+        });
+      }
+
+      return res.json(activities);
+    }
+
+    // Get recent employee updates (for admin and super_admin)
     let employeeQuery = supabase
       .from('employees')
       .select('first_name, last_name, updated_at, created_at, employee_status')
@@ -650,13 +712,25 @@ app.post('/api/dashboard/export', authenticateToken, async (req, res) => {
 });
 
 // Payroll payment submission
-app.post('/api/payroll/submit', authenticateToken, async (req, res) => {
+app.post('/api/payroll/submit', authenticateToken, requirePayrollAccess, async (req, res) => {
   try {
     const { employee_id, hourly_rate, days_worked, hours_worked, amount, type, payment_method, date, notes, processed_by } = req.body;
+    const { profile } = req;
 
     // Validate required fields
     if (!employee_id || !hourly_rate || !days_worked || !hours_worked || !amount || !type || !payment_method || !date) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Check if user has self-only access (organization_member)
+    if (req.selfOnlyAccess) {
+      // Organization members can only access their own payroll
+      if (employee_id !== req.user.id) {
+        return res.status(403).json({ 
+          error: 'Access denied',
+          message: 'Organization members can only access their own payroll information'
+        });
+      }
     }
 
     // Validate that the calculated amount matches the provided amount
@@ -825,6 +899,8 @@ app.get('/test-simple', (req, res) => {
   }
 });
 
+
+
 // Serve simple login page (minimal JavaScript for debugging)
 app.get('/login-simple', (req, res) => {
   console.log('🔐 Simple login route hit');
@@ -868,6 +944,10 @@ app.get('/users', (req, res) => {
   const filePath = __dirname + '/public/users.html';
   if (fs.existsSync(filePath)) {
     console.log('✅ users.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
     res.sendFile(filePath);
   } else {
     console.log('❌ users.html file not found');
@@ -930,7 +1010,7 @@ app.get('/create-organization', (req, res) => {
 });
 
 // Serve other pages
-const pages = ['/organizations', '/payroll', '/analytics', '/settings'];
+const pages = ['/organizations', '/payroll', '/analytics', '/settings', '/profile'];
 pages.forEach(page => {
   app.get(page, (req, res) => {
     console.log(`🔍 ${page} route hit`);
@@ -939,6 +1019,10 @@ pages.forEach(page => {
     const filePath = __dirname + '/public/' + fileName;
     if (fs.existsSync(filePath)) {
       console.log(`✅ ${fileName} file exists`);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.setHeader('ETag', `"${Date.now()}"`);
       res.sendFile(filePath);
     } else {
       console.log(`❌ ${fileName} file not found`);

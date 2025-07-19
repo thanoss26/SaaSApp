@@ -1,1420 +1,692 @@
-// Modern Organization Dashboard JavaScript - Efficio
-
+// Organizations Page JavaScript
 class OrganizationsManager {
     constructor() {
-        this.organizations = [];
         this.currentUser = null;
-        this.tasks = {
-            new: 3,
-            progress: 6,
-            complete: 12
-        };
+        this.organizationData = null;
+        this.membersData = [];
         this.init();
     }
 
     async init() {
-        // Check if we're in the main app context
-        const isInMainApp = window.location.pathname === '/' || window.location.pathname === '/index.html';
-        
-        if (isInMainApp) {
-            console.log('✅ Running in main app context');
-            // Let the main app handle authentication
-            return;
-        }
-        
-        console.log('🔍 Running in standalone organizations page');
-        
-        // Check authentication before proceeding
-        const isAuthenticated = await this.checkAuthentication();
-        if (!isAuthenticated) {
-            console.log('❌ Not authenticated, redirecting to login');
-            window.location.href = '/login';
-            return;
-        }
-        
-        // Show organization requirement immediately, then check
-        this.showOrganizationRequired();
-        
-        // Check organization requirement
-        const hasOrganization = await this.checkOrganizationRequirement();
-        if (!hasOrganization) {
-            return; // Keep showing organization requirement
-        }
-        
-        await this.loadUserProfile();
-        this.setGreetingAndDate();
-        await this.loadOrganizations();
-        this.setupEventListeners();
-        await this.updateStats();
-        this.setupTaskManagement();
-    }
-    
-    async checkAuthentication() {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.log('❌ No token found');
-            return false;
-        }
+        console.log('🏢 Initializing Organizations Manager...');
         
         try {
-            const response = await fetch('/api/auth/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
+            // Initialize shared functionality
+            if (window.sharedManager) {
+                await window.sharedManager.init();
+                this.currentUser = window.sharedManager.currentUser;
+            }
+
+            // Load organization information
+            await this.loadOrganizationInfo();
             
-            return response.ok;
+            // Set up event listeners
+            this.setupEventListeners();
+            
         } catch (error) {
-            console.error('❌ Authentication check failed:', error);
-            return false;
+            console.error('❌ Error initializing Organizations Manager:', error);
+            this.showError('Failed to initialize organizations page');
         }
     }
 
-    async checkOrganizationRequirement() {
-        console.log('🔍 Organizations - Checking organization requirement...');
+    async loadOrganizationInfo() {
+        console.log('📡 Loading organization information...');
         
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.log('❌ No token found, redirecting to login');
-            window.location.href = '/login.html';
-            return;
-        }
-
-        // Show organization requirement immediately
-        this.showOrganizationRequired();
-
         try {
-            // Fast fetch with timeout
-            const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Timeout')), 3000)
-            );
+            this.showLoading();
             
-            const profilePromise = fetch('/api/auth/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            }).then(response => {
-                if (!response.ok) throw new Error('Profile fetch failed');
-                return response.json();
-            });
-
-            const profile = await Promise.race([profilePromise, timeoutPromise]);
-            
-            console.log('🔍 Organizations - Profile loaded:', profile);
-            
-            // Extract actual profile data if nested
-            const profileData = profile.profile || profile;
-            
-            // Check organization requirement based on role
-            if (profileData.role === 'super_admin') {
-                // Super admin sees all organizations
-                console.log('✅ Super admin detected - showing all organizations');
-                this.showAllOrganizations();
-            } else if (!profileData.organization_id) {
-                // Admin and employees need organization
-                console.log('❌ Organization required for role:', profileData.role);
-                // Organization requirement already shown, keep it visible
-            } else {
-                // Admin/employee with organization
-                console.log('✅ Organization check passed - showing organization management');
-                this.hideOrganizationRequired();
-                this.initialize();
+            // Check if user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Please log in to view organization information');
             }
             
-        } catch (error) {
-            console.error('⚠️ Organizations initialization error:', error);
-            // Keep organization requirement shown on error
-        }
-    }
-
-    showOrganizationRequired() {
-        console.log('🚫 Showing organization requirement screen');
-        const orgRequiredSection = document.getElementById('organizationRequired');
-        const welcomeSection = document.querySelector('.welcome-section');
-        
-        if (orgRequiredSection) {
-            orgRequiredSection.style.display = 'block';
-        }
-        if (welcomeSection) {
-            welcomeSection.style.display = 'none';
-        }
-    }
-
-    hideOrganizationRequired() {
-        console.log('✅ Hiding organization requirement screen');
-        const orgRequiredSection = document.getElementById('organizationRequired');
-        const welcomeSection = document.querySelector('.welcome-section');
-        
-        if (orgRequiredSection) {
-            orgRequiredSection.style.display = 'none';
-        }
-        if (welcomeSection) {
-            welcomeSection.style.display = 'block';
-        }
-    }
-
-    showAllOrganizations() {
-        console.log('👑 Showing super admin all organizations view');
-        this.hideOrganizationRequired();
-        
-        // Update page content for super admin
-        const pageTitle = document.querySelector('h1');
-        if (pageTitle) {
-            pageTitle.textContent = 'All Organizations Management';
-        }
-
-        const pageDescription = document.querySelector('.welcome-section p');
-        if (pageDescription) {
-            pageDescription.textContent = 'Manage all organizations on the platform';
-        }
-
-        // Load all organizations
-        this.loadAllOrganizations();
-    }
-
-    async loadAllOrganizations() {
-        console.log('🏢 Loading all organizations...');
-        
-        try {
-            // Mock data for all organizations - replace with actual API call
-            const allOrganizations = [
-                {
-                    id: 1,
-                    name: 'Tech Corp',
-                    industry: 'Technology',
-                    employees: 45,
-                    created_at: '2024-01-15',
-                    is_active: true
-                },
-                {
-                    id: 2,
-                    name: 'Design Studio',
-                    industry: 'Creative',
-                    employees: 12,
-                    created_at: '2024-02-10',
-                    is_active: true
-                },
-                {
-                    id: 3,
-                    name: 'Finance Group',
-                    industry: 'Finance',
-                    employees: 28,
-                    created_at: '2024-01-20',
-                    is_active: false
+            // Get user profile to check if they have an organization
+            const profileResponse = await fetch('/api/auth/profile', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 }
-            ];
+            });
 
-            // Update stats
-            this.updateOrganizationStats(allOrganizations);
+            if (!profileResponse.ok) {
+                if (profileResponse.status === 401) {
+                    throw new Error('Please log in to view organization information');
+                }
+                throw new Error('Failed to fetch user profile');
+            }
+
+            const profileData = await profileResponse.json();
+            this.currentUser = profileData.profile || profileData; // Handle both nested and direct structure
             
-            // Render organizations
-            this.renderOrganizationsTable(allOrganizations);
+            console.log('👤 User profile data:', profileData);
+            console.log('🏢 Organization ID:', this.currentUser.organization_id);
+            console.log('👑 User role:', this.currentUser.role);
+
+            if (!this.currentUser.organization_id) {
+                console.log('❌ No organization ID found in profile');
+                this.showNoOrganization();
+                return;
+            }
+
+            console.log('✅ Organization ID found, fetching organization details...');
+
+            // Load organization details
+            const orgResponse = await fetch(`/api/organizations/${this.currentUser.organization_id}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            console.log('📡 Organization API response status:', orgResponse.status);
+
+            if (!orgResponse.ok) {
+                const errorData = await orgResponse.json().catch(() => ({}));
+                console.error('❌ Organization API error:', errorData);
+                
+                if (orgResponse.status === 401) {
+                    throw new Error('Please log in to view organization information');
+                } else if (orgResponse.status === 403) {
+                    throw new Error('You do not have permission to view this organization');
+                } else if (orgResponse.status === 404) {
+                    // Handle case where organization doesn't exist but user has organization_id
+                    console.error('❌ Organization not found but user has organization_id. This might be a data inconsistency.');
+                    this.showError('Organization not found. This might be due to a data inconsistency. Please contact your administrator or try logging out and back in.');
+                    return;
+                } else {
+                    throw new Error(`Failed to fetch organization details: ${errorData.error || orgResponse.statusText}`);
+                }
+            }
+
+            const orgData = await orgResponse.json();
+            console.log('✅ Organization data received:', orgData);
+            
+            this.organizationData = orgData.organization;
+            this.membersData = orgData.members || [];
+
+            // Display the data
+            this.displayOrganizationInfo();
+            this.displayMembers();
             
         } catch (error) {
-            console.error('❌ Error loading all organizations:', error);
+            console.error('❌ Error loading organization info:', error);
+            this.showError(`Failed to load organization information: ${error.message}`);
         }
     }
 
-    updateOrganizationStats(organizations) {
-        const totalOrgs = organizations.length;
-        const activeOrgs = organizations.filter(org => org.is_active).length;
-        const totalEmployees = organizations.reduce((sum, org) => sum + org.employees, 0);
+    displayOrganizationInfo() {
+        console.log('📊 Displaying organization information...');
+        
+        const org = this.organizationData;
+        if (!org) return;
 
-        // Update stats if available
-        const statsContainer = document.querySelector('.stats-container');
-        if (statsContainer) {
-            statsContainer.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-number">${totalOrgs}</div>
-                    <div class="stat-label">Total Organizations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${activeOrgs}</div>
-                    <div class="stat-label">Active Organizations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${totalEmployees}</div>
-                    <div class="stat-label">Total Employees</div>
-                </div>
-            `;
+        // Update organization header
+        document.getElementById('org-name').textContent = org.name || 'Unknown Organization';
+        document.getElementById('org-description').textContent = 'Organization details';
+        document.getElementById('org-created').textContent = this.formatDate(org.created_at);
+        document.getElementById('org-member-count').textContent = this.membersData.length;
+        
+        // Update organization creator information
+        if (org.creator) {
+            this.updateElementIfExists('creator-name', org.creator.name);
+            this.updateElementIfExists('creator-email', org.creator.email);
+        } else {
+            this.updateElementIfExists('creator-name', 'No Creator Assigned');
+            this.updateElementIfExists('creator-email', 'N/A');
         }
+
+        // Update additional organization details if elements exist (using default values)
+        this.updateElementIfExists('org-industry', 'Not specified');
+        this.updateElementIfExists('org-size', 'Not specified');
+        this.updateElementIfExists('org-website', 'Not specified');
+        this.updateElementIfExists('org-phone', 'Not specified');
+        this.updateElementIfExists('org-email', 'Not specified');
+        this.updateElementIfExists('org-address', 'Not specified');
+        this.updateElementIfExists('org-founded', 'Not specified');
+        this.updateElementIfExists('org-business-type', 'Not specified');
+        this.updateElementIfExists('org-timezone', 'Not specified');
+        this.updateElementIfExists('org-currency', 'Not specified');
+        this.updateElementIfExists('org-language', 'Not specified');
+
+        // Update metrics if elements exist (using default values)
+        this.updateElementIfExists('org-total-employees', this.membersData.length);
+        this.updateElementIfExists('org-total-revenue', this.formatCurrency(0));
+        this.updateElementIfExists('org-job-applicants', 0);
+        this.updateElementIfExists('org-attendance', '0%');
+        this.updateElementIfExists('org-tasks', 0);
+
+        // Show edit button for admins
+        if (this.currentUser && ['admin', 'super_admin'].includes(this.currentUser.role)) {
+            document.getElementById('edit-org-btn').style.display = 'inline-flex';
+        }
+
+        // Hide loading, show content
+        this.hideLoading();
+        document.getElementById('organization-content').style.display = 'block';
     }
 
-    renderOrganizationsTable(organizations) {
-        // Create or update organizations table
-        let tableContainer = document.querySelector('.organizations-table-container');
-        if (!tableContainer) {
-            tableContainer = document.createElement('div');
-            tableContainer.className = 'organizations-table-container';
-            
-            const welcomeSection = document.querySelector('.welcome-section');
-            if (welcomeSection) {
-                welcomeSection.appendChild(tableContainer);
-            }
+    displayMembers() {
+        console.log('👥 Displaying organization members...');
+        
+        const membersGrid = document.getElementById('members-grid');
+        const noMembers = document.getElementById('no-members');
+        
+        if (!this.membersData || this.membersData.length === 0) {
+            membersGrid.style.display = 'none';
+            noMembers.style.display = 'block';
+            return;
         }
 
-        tableContainer.innerHTML = `
-            <div class="table-header">
-                <h3>Organizations Overview</h3>
+        membersGrid.style.display = 'grid';
+        noMembers.style.display = 'none';
+
+        // Clear existing members
+        membersGrid.innerHTML = '';
+
+        // Add each member
+        this.membersData.forEach(member => {
+            const memberCard = this.createMemberCard(member);
+            membersGrid.appendChild(memberCard);
+        });
+    }
+
+    createMemberCard(member) {
+        const card = document.createElement('div');
+        card.className = 'member-card';
+
+        const initials = this.getInitials(member.first_name, member.last_name);
+        const roleClass = member.role || 'employee';
+        const statusClass = member.is_active ? 'active' : 'inactive';
+
+        card.innerHTML = `
+            <div class="member-header">
+                <div class="member-avatar ${roleClass}">
+                    ${initials}
+                </div>
+                <div class="member-info">
+                    <h4>${member.first_name} ${member.last_name}</h4>
+                    <p>${member.email}</p>
+                    <span class="member-role ${roleClass}">${this.formatRole(member.role)}</span>
+                </div>
             </div>
-            <table class="organizations-table">
-                <thead>
-                    <tr>
-                        <th>Organization</th>
-                        <th>Industry</th>
-                        <th>Employees</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${organizations.map(org => `
-                        <tr>
-                            <td>
-                                <div class="org-info">
-                                    <div class="org-name">${org.name}</div>
-                                </div>
-                            </td>
-                            <td>${org.industry}</td>
-                            <td>${org.employees}</td>
-                            <td>
-                                <span class="status-badge status-${org.is_active ? 'active' : 'inactive'}">
-                                    ${org.is_active ? 'Active' : 'Inactive'}
-                                </span>
-                            </td>
-                            <td>${new Date(org.created_at).toLocaleDateString()}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <button class="btn-icon" onclick="editOrganization(${org.id})" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-icon" onclick="deleteOrganization(${org.id})" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    }
-
-    async loadUserProfile() {
-        try {
-            // Check if user has a token
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('❌ No authentication token found');
-                this.showAuthError();
-                return;
-            }
-
-            const response = await fetch('/api/auth/profile', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.currentUser = data.profile;
-                this.updateUserInfo();
-                console.log('✅ User profile loaded from database:', this.currentUser);
-            } else if (response.status === 401) {
-                console.log('❌ Token expired or invalid');
-                // Clear tokens and show auth error
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                this.showAuthError();
-                return;
-            } else {
-                console.error('❌ Failed to load user profile:', response.status, response.statusText);
-                this.showAuthError();
-                return;
-            }
-        } catch (error) {
-            console.error('❌ Error loading user profile:', error);
-            // Clear tokens and show auth error
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            this.showAuthError();
-            return;
-        }
-    }
-    
-    showAuthError() {
-        // Show a user-friendly authentication error with login form
-        const mainContent = document.querySelector('.main-content');
-        if (mainContent) {
-            mainContent.innerHTML = `
-                <div class="auth-error-container">
-                    <div class="auth-error-card">
-                        <div class="auth-error-icon">
-                            <i class="fas fa-lock"></i>
-                        </div>
-                        <h2>Authentication Required</h2>
-                        <p>Please log in to access the organizations dashboard.</p>
-                        
-                        <form id="loginForm" class="auth-form">
-                            <div class="form-group">
-                                <label for="email">Email</label>
-                                <input type="email" id="email" name="email" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="password">Password</label>
-                                <input type="password" id="password" name="password" required>
-                            </div>
-                            <button type="submit" class="auth-error-btn">
-                                <i class="fas fa-sign-in-alt"></i>
-                                Login
-                            </button>
-                        </form>
-                        
-                        <div class="auth-links">
-                            <a href="/">Go to Main App</a>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // Add login form handler
-            document.getElementById('loginForm').addEventListener('submit', this.handleLogin.bind(this));
-        }
-    }
-    
-    async handleLogin(e) {
-        e.preventDefault();
-        
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ email, password })
-            });
-            
-            const data = await response.json();
-            
-            if (response.ok) {
-                localStorage.setItem('token', data.access_token);
-                localStorage.setItem('refreshToken', data.refresh_token);
-                
-                // Reload the page to initialize with the new token
-                window.location.reload();
-            } else {
-                this.showNotification(data.error || 'Login failed', 'error');
-            }
-        } catch (error) {
-            this.showNotification('Login failed: ' + error.message, 'error');
-        }
-    }
-
-    updateUserInfo() {
-        if (this.currentUser) {
-            // Update main greeting
-            const userNameElement = document.getElementById('orgUserName');
-            if (userNameElement) {
-                userNameElement.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
-            }
-            
-            // Update sidebar user info
-            const sidebarUserName = document.getElementById('sidebarUserName');
-            const sidebarUserRole = document.getElementById('sidebarUserRole');
-            const userAvatar = document.getElementById('userAvatar');
-            
-            if (sidebarUserName) {
-                sidebarUserName.textContent = `${this.currentUser.first_name} ${this.currentUser.last_name}`;
-            }
-            
-            if (sidebarUserRole) {
-                sidebarUserRole.textContent = this.currentUser.role || 'User';
-            }
-            
-            if (userAvatar) {
-                // Generate avatar based on user's name
-                const avatarUrl = this.generateAvatarUrl(this.currentUser.first_name, this.currentUser.last_name);
-                userAvatar.src = avatarUrl;
-            }
-            
-            console.log('✅ User info updated in UI:', {
-                name: `${this.currentUser.first_name} ${this.currentUser.last_name}`,
-                role: this.currentUser.role,
-                email: this.currentUser.email
-            });
-        }
-    }
-    
-    generateAvatarUrl(firstName, lastName) {
-        // Use DiceBear API to generate consistent avatars based on name
-        const seed = `${firstName}${lastName}`.toLowerCase();
-        return `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`;
-    }
-
-    setGreetingAndDate() {
-        const dateElem = document.getElementById('orgDate');
-        if (dateElem) {
-            const now = new Date();
-            const options = { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' };
-            dateElem.textContent = now.toLocaleDateString(undefined, options);
-        }
-    }
-
-    async loadOrganizations() {
-        try {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('❌ No token available for organizations request');
-                return;
-            }
-
-            const response = await fetch('/api/organizations', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                credentials: 'include'
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                this.organizations = data.organizations || [];
-                console.log('✅ Organizations loaded from database:', this.organizations);
-            } else if (response.status === 401) {
-                console.log('❌ Token expired for organizations request');
-                localStorage.removeItem('token');
-                localStorage.removeItem('refreshToken');
-                window.location.href = '/login';
-                return;
-            } else {
-                console.error('❌ Failed to load organizations:', response.status);
-                this.organizations = [];
-            }
-        } catch (error) {
-            console.error('❌ Error loading organizations:', error);
-            this.organizations = [];
-        }
-    }
-
-    async updateStats() {
-        try {
-            console.log('📊 Fetching organization dashboard metrics...');
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                console.log('❌ No token available for metrics request');
-                return;
-            }
-
-            const response = await fetch('/api/organizations/dashboard-metrics', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Dashboard metrics loaded:', data);
-                
-                // Show admin elements
-                this.showAdminElements();
-                
-                if (data.metrics) {
-                    // Update Total Employees card
-                    this.updateMetricCard(1, {
-                        value: data.metrics.totalEmployees.value,
-                        change: data.metrics.totalEmployees.change,
-                        subtitle: data.metrics.totalEmployees.label,
-                        isPositive: data.metrics.totalEmployees.trend === 'up'
-                    });
-
-                    // Update Job Applicants card
-                    this.updateMetricCard(2, {
-                        value: data.metrics.jobApplicants.value,
-                        change: data.metrics.jobApplicants.change,
-                        subtitle: data.metrics.jobApplicants.label,
-                        isPositive: data.metrics.jobApplicants.trend === 'up'
-                    });
-
-                    // Update Attendance Report card
-                    this.updateMetricCard(3, {
-                        value: data.metrics.attendanceReport.value,
-                        change: data.metrics.attendanceReport.change,
-                        subtitle: data.metrics.attendanceReport.label,
-                        isPositive: data.metrics.attendanceReport.trend === 'up'
-                    });
-
-                    // Update Total Revenue card
-                    this.updateMetricCard(4, {
-                        value: data.metrics.totalRevenue.value,
-                        change: data.metrics.totalRevenue.change,
-                        subtitle: data.metrics.totalRevenue.label,
-                        isPositive: data.metrics.totalRevenue.trend === 'up'
-                    });
-
-                    // Update Tasks card
-                    this.updateMetricCard(5, {
-                        value: data.metrics.tasks.value,
-                        change: data.metrics.tasks.change,
-                        subtitle: data.metrics.tasks.label,
-                        isPositive: data.metrics.tasks.trend === 'up'
-                    });
-                }
-
-            } else if (response.status === 403) {
-                console.log('❌ Admin access required for dashboard metrics');
-                this.hideAdminElements();
-                this.showToast('Admin access required to view dashboard metrics', 'error');
-            } else if (response.status === 401) {
-                console.log('❌ Token expired for metrics request');
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            } else {
-                console.error('❌ Failed to load dashboard metrics:', response.status);
-                this.hideAdminElements();
-                this.showLoadingState();
-            }
-
-        } catch (error) {
-            console.error('❌ Error fetching dashboard metrics:', error);
-            this.hideAdminElements();
-            this.showLoadingState();
-        }
-    }
-
-    updateMetricCard(cardIndex, { value, change, subtitle, isPositive }) {
-        // Update metric value
-        const valueElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-value`);
-        if (valueElement) {
-            valueElement.textContent = value;
-        }
-
-        // Update change indicator
-        const changeElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-change`);
-        if (changeElement) {
-            changeElement.className = `metric-change ${isPositive ? 'positive' : 'negative'}`;
-            const icon = changeElement.querySelector('i');
-            const span = changeElement.querySelector('span');
-            
-            if (icon) {
-                icon.className = `fas fa-arrow-${isPositive ? 'up' : 'down'}`;
-            }
-            if (span) {
-                span.textContent = `${change}%`;
-            }
-        }
-
-        // Update subtitle
-        const subtitleElement = document.querySelector(`.metrics-grid:nth-child(${Math.ceil(cardIndex / 2) + 2}) .metric-card:nth-child(${((cardIndex - 1) % 2) + 1}) .metric-subtitle`);
-        if (subtitleElement) {
-            subtitleElement.textContent = subtitle;
-        }
-    }
-
-    showLoadingState() {
-        const metricValues = document.querySelectorAll('.metric-value');
-        metricValues.forEach(element => {
-            if (element) element.textContent = 'Loading...';
-        });
-    }
-
-    showAdminElements() {
-        // Show admin-only dashboard elements
-        const adminElements = document.querySelectorAll('.admin-only');
-        adminElements.forEach(element => {
-            element.style.display = 'block';
-        });
-        console.log('👁️ Admin elements shown');
-    }
-
-    hideAdminElements() {
-        // Hide admin-only dashboard elements
-        const adminElements = document.querySelectorAll('.admin-only');
-        adminElements.forEach(element => {
-            element.style.display = 'none';
-        });
-        
-        // Show non-admin message
-        const nonAdminMessage = document.querySelector('.non-admin-message');
-        if (nonAdminMessage) {
-            nonAdminMessage.style.display = 'block';
-        }
-        console.log('🚫 Admin elements hidden');
-    }
-
-    showToast(message, type = 'info') {
-        // Simple toast notification
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 20px;
-            background: ${type === 'error' ? '#dc3545' : '#28a745'};
-            color: white;
-            border-radius: 4px;
-            z-index: 1000;
-            font-weight: 500;
-        `;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.remove();
-        }, 3000);
-    }
-
-    setupTaskManagement() {
-        // Setup view toggle functionality
-        const viewToggles = document.querySelectorAll('.view-toggle');
-        viewToggles.forEach(toggle => {
-            toggle.addEventListener('click', () => {
-                viewToggles.forEach(t => t.classList.remove('active'));
-                toggle.classList.add('active');
-                this.switchTaskView(toggle.dataset.view);
-            });
-        });
-
-        // Setup add task buttons
-        const addTaskBtns = document.querySelectorAll('.add-task-btn');
-        addTaskBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                this.showAddTaskModal();
-            });
-        });
-
-        // Setup column menu buttons
-        const columnMenus = document.querySelectorAll('.column-menu');
-        columnMenus.forEach(menu => {
-            menu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.showColumnMenu(e.target.closest('.kanban-column'));
-            });
-        });
-    }
-
-    switchTaskView(view) {
-        const kanbanBoard = document.querySelector('.kanban-board');
-        
-        switch(view) {
-            case 'kanban':
-                kanbanBoard.style.display = 'grid';
-                break;
-            case 'table':
-                kanbanBoard.style.display = 'none';
-                this.showTableView();
-                break;
-            case 'list':
-                kanbanBoard.style.display = 'none';
-                this.showListView();
-                break;
-        }
-    }
-
-    showTableView() {
-        const taskSection = document.querySelector('.task-section');
-        const existingTable = taskSection.querySelector('.task-table');
-        
-        if (!existingTable) {
-            const tableHTML = `
-                <div class="task-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Task</th>
-                                <th>Status</th>
-                                <th>Assignee</th>
-                                <th>Due Date</th>
-                                <th>Priority</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Review Q4 reports</td>
-                                <td><span class="status-badge new">New Request</span></td>
-                                <td>John Doe</td>
-                                <td>Mar 15, 2025</td>
-                                <td><span class="priority high">High</span></td>
-                            </tr>
-                            <tr>
-                                <td>Update employee handbook</td>
-                                <td><span class="status-badge progress">In Progress</span></td>
-                                <td>Jane Smith</td>
-                                <td>Mar 20, 2025</td>
-                                <td><span class="priority medium">Medium</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
-            taskSection.insertAdjacentHTML('beforeend', tableHTML);
-        }
-    }
-
-    showListView() {
-        const taskSection = document.querySelector('.task-section');
-        const existingList = taskSection.querySelector('.task-list');
-        
-        if (!existingList) {
-            const listHTML = `
-                <div class="task-list">
-                    <div class="task-item">
-                        <div class="task-checkbox">
-                            <input type="checkbox" id="task1">
-                            <label for="task1"></label>
-                        </div>
-                        <div class="task-content">
-                            <div class="task-title">Review Q4 reports</div>
-                            <div class="task-meta">
-                                <span class="task-status new">New Request</span>
-                                <span class="task-assignee">John Doe</span>
-                                <span class="task-due">Due Mar 15, 2025</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="task-item">
-                        <div class="task-checkbox">
-                            <input type="checkbox" id="task2">
-                            <label for="task2"></label>
-                        </div>
-                        <div class="task-content">
-                            <div class="task-title">Update employee handbook</div>
-                            <div class="task-meta">
-                                <span class="task-status progress">In Progress</span>
-                                <span class="task-assignee">Jane Smith</span>
-                                <span class="task-due">Due Mar 20, 2025</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            taskSection.insertAdjacentHTML('beforeend', listHTML);
-        }
-    }
-
-    showAddTaskModal() {
-        // Create modal for adding tasks
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Add New Task</h3>
-                    <button class="modal-close">&times;</button>
-                </div>
-                <form class="task-form">
-                    <div class="form-group">
-                        <label>Task Title</label>
-                        <input type="text" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea name="description" rows="3"></textarea>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select name="status">
-                                <option value="new">New Request</option>
-                                <option value="progress">In Progress</option>
-                                <option value="complete">Complete</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Priority</label>
-                            <select name="priority">
-                                <option value="low">Low</option>
-                                <option value="medium">Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Due Date</label>
-                        <input type="date" name="dueDate">
-                    </div>
-                    <div class="modal-actions">
-                        <button type="button" class="btn-secondary">Cancel</button>
-                        <button type="submit" class="btn-primary">Create Task</button>
-                    </div>
-                </form>
+            <div class="member-status">
+                <div class="status-indicator ${statusClass}"></div>
+                <span class="status-text">${member.is_active ? 'Active' : 'Inactive'}</span>
             </div>
         `;
 
-        document.body.appendChild(modal);
-
-        // Setup modal events
-        const closeBtn = modal.querySelector('.modal-close');
-        const cancelBtn = modal.querySelector('.btn-secondary');
-        const form = modal.querySelector('.task-form');
-
-        closeBtn.addEventListener('click', () => this.closeModal(modal));
-        cancelBtn.addEventListener('click', () => this.closeModal(modal));
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.createTask(new FormData(form));
-            this.closeModal(modal);
-        });
-
-        // Close on overlay click
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                this.closeModal(modal);
-            }
-        });
+        return card;
     }
 
-    closeModal(modal) {
-        modal.remove();
+    getInitials(firstName, lastName) {
+        const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+        const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+        return first + last;
     }
 
-    createTask(formData) {
-        const taskData = {
-            title: formData.get('title'),
-            description: formData.get('description'),
-            status: formData.get('status'),
-            priority: formData.get('priority'),
-            dueDate: formData.get('dueDate')
+    formatRole(role) {
+        if (!role) return 'Employee';
+        
+        const roleMap = {
+            'super_admin': 'Super Admin',
+            'admin': 'Admin',
+            'manager': 'Manager',
+            'organization_member': 'Organization Member',
+            'employee': 'Employee'
         };
-
-        // Update task counts
-        this.tasks[taskData.status]++;
-        this.updateTaskCounts();
-
-        // Show success notification
-        this.showNotification('Task created successfully!', 'success');
+        
+        return roleMap[role] || role;
     }
 
-    updateTaskCounts() {
-        const taskCounts = document.querySelectorAll('.task-count');
-        taskCounts[0].textContent = this.tasks.new;
-        taskCounts[1].textContent = this.tasks.progress;
-        taskCounts[2].textContent = this.tasks.complete;
+    formatDate(dateString) {
+        if (!dateString) return 'Unknown';
+        
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     }
 
-    showColumnMenu(column) {
-        // Implementation for column menu dropdown
-        console.log('Show column menu for:', column);
+    formatSize(size) {
+        if (!size) return 'Unknown';
+        
+        const sizeMap = {
+            'startup': 'Startup',
+            'small': 'Small (1-50)',
+            'medium': 'Medium (51-200)',
+            'large': 'Large (201-1000)',
+            'enterprise': 'Enterprise (1000+)'
+        };
+        
+        return sizeMap[size] || size;
+    }
+
+    formatAddress(org) {
+        // Since the current schema doesn't have address fields, return a default message
+        return 'Address not available';
+    }
+
+    formatCurrency(amount) {
+        if (!amount) return '$0.00';
+        
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(amount);
+    }
+
+    updateElementIfExists(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.textContent = value || 'N/A';
+        }
     }
 
     setupEventListeners() {
         // Search functionality
-        const searchInput = document.querySelector('.search-input');
+        const searchInput = document.getElementById('member-search');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                this.handleSearch(e.target.value);
+                this.filterMembers(e.target.value);
             });
         }
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                switch(e.key) {
-                    case 'k':
-                        e.preventDefault();
-                        searchInput?.focus();
-                        break;
+        // Role filter
+        const roleFilter = document.getElementById('role-filter');
+        if (roleFilter) {
+            roleFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+
+        // Status filter
+        const statusFilter = document.getElementById('status-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
+
+        // Edit organization button
+        const editBtn = document.getElementById('edit-org-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', () => {
+                this.editOrganization();
+            });
+        }
+
+        // Edit organization modal events
+        const editForm = document.getElementById('edit-org-form');
+        if (editForm) {
+            editForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = {
+                    name: document.getElementById('edit-org-name').value,
+                    description: document.getElementById('edit-org-description').value
+                };
+                this.updateOrganization(formData);
+            });
+        }
+
+        // Modal close buttons
+        const closeEditModal = document.getElementById('close-edit-modal');
+        if (closeEditModal) {
+            closeEditModal.addEventListener('click', () => {
+                this.closeEditModal();
+            });
+        }
+
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        if (cancelEditBtn) {
+            cancelEditBtn.addEventListener('click', () => {
+                this.closeEditModal();
+            });
+        }
+
+        // Delete organization button
+        const deleteOrgBtn = document.getElementById('delete-org-btn');
+        if (deleteOrgBtn) {
+            deleteOrgBtn.addEventListener('click', () => {
+                this.showDeleteConfirmation();
+            });
+        }
+
+        // Delete confirmation modal events
+        const closeDeleteModal = document.getElementById('close-delete-modal');
+        if (closeDeleteModal) {
+            closeDeleteModal.addEventListener('click', () => {
+                this.closeDeleteModal();
+            });
+        }
+
+        const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+        if (cancelDeleteBtn) {
+            cancelDeleteBtn.addEventListener('click', () => {
+                this.closeDeleteModal();
+            });
+        }
+
+        const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+        if (confirmDeleteBtn) {
+            confirmDeleteBtn.addEventListener('click', () => {
+                this.deleteOrganization();
+            });
+        }
+
+        // Close modals when clicking outside
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
                 }
-            }
+            });
         });
 
-        // Metric card interactions
-        const metricCards = document.querySelectorAll('.metric-card');
-        metricCards.forEach(card => {
-            const detailsBtn = card.querySelector('.metric-details-btn');
-            if (detailsBtn) {
-                detailsBtn.addEventListener('click', () => {
-                    this.showMetricDetails(card);
-                });
-            }
-        });
-
-        // User menu functionality
-        const userMenuBtn = document.getElementById('userMenuBtn');
-        if (userMenuBtn) {
-            userMenuBtn.addEventListener('click', () => {
-                this.showUserMenu();
+        // Logout button
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                if (window.sharedManager && window.sharedManager.logout) {
+                    window.sharedManager.logout();
+                } else {
+                    // Fallback logout
+                    localStorage.removeItem('token');
+                    window.location.href = '/login.html';
+                }
             });
         }
 
-        // Sidebar toggle
-        const sidebarToggle = document.getElementById('sidebarToggle');
-        if (sidebarToggle) {
-            sidebarToggle.addEventListener('click', () => {
-                this.toggleSidebar();
+        // Retry button
+        const retryBtn = document.getElementById('retry-btn');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                this.loadOrganizationInfo();
             });
+        }
+
+        // Add event listeners for any buttons with data-action attributes
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-action]')) {
+                const action = e.target.getAttribute('data-action');
+                this.handleAction(action, e.target);
+            }
+        });
+    }
+
+    handleAction(action, element) {
+        switch (action) {
+            case 'edit-organization':
+                this.editOrganization();
+                break;
+            case 'view-member':
+                const memberId = element.getAttribute('data-member-id');
+                this.viewMember(memberId);
+                break;
+            case 'edit-member':
+                const memberIdToEdit = element.getAttribute('data-member-id');
+                this.editMember(memberIdToEdit);
+                break;
+            default:
+                console.log('Unknown action:', action);
         }
     }
 
-    handleSearch(query) {
-        // Implement search functionality
-        console.log('Searching for:', query);
+    filterMembers(searchTerm) {
+        const memberCards = document.querySelectorAll('.member-card');
+        
+        memberCards.forEach(card => {
+            const name = card.querySelector('h4').textContent.toLowerCase();
+            const email = card.querySelector('p').textContent.toLowerCase();
+            const searchLower = searchTerm.toLowerCase();
+            
+            if (name.includes(searchLower) || email.includes(searchLower)) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 
-    showMetricDetails(card) {
-        const title = card.querySelector('.metric-title span').textContent;
-        this.showNotification(`Viewing details for ${title}`, 'info');
+    applyFilters() {
+        const roleFilter = document.getElementById('role-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        const memberCards = document.querySelectorAll('.member-card');
+        
+        memberCards.forEach(card => {
+            const role = card.querySelector('.member-role').textContent.toLowerCase();
+            const status = card.querySelector('.status-text').textContent.toLowerCase();
+            
+            const roleMatch = !roleFilter || role === roleFilter.toLowerCase();
+            const statusMatch = !statusFilter || status === statusFilter.toLowerCase();
+            
+            if (roleMatch && statusMatch) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
     }
 
-    showUserMenu() {
-        // Create user menu dropdown
-        const existingMenu = document.querySelector('.user-menu-dropdown');
-        if (existingMenu) {
-            existingMenu.remove();
+    editOrganization() {
+        console.log('✏️ Edit organization clicked');
+        
+        if (!this.organizationData) {
+            console.error('❌ No organization data available');
             return;
         }
 
-        const menu = document.createElement('div');
-        menu.className = 'user-menu-dropdown';
-        menu.innerHTML = `
-            <div class="user-menu-item" onclick="window.location.href='/settings'">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </div>
-            <div class="user-menu-item" onclick="window.location.href='/settings'">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-            </div>
-            <div class="user-menu-divider"></div>
-            <div class="user-menu-item" onclick="organizationsManager.logout()">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </div>
-        `;
-
-        const userProfile = document.querySelector('.user-profile');
-        userProfile.appendChild(menu);
-
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!menu.contains(e.target) && !e.target.closest('.user-menu-btn')) {
-                menu.remove();
-            }
-        });
+        // Populate the modal with current data
+        document.getElementById('edit-org-name').value = this.organizationData.name || '';
+        document.getElementById('edit-org-description').value = this.organizationData.description || '';
+        
+        // Show the modal
+        document.getElementById('edit-org-modal').style.display = 'flex';
     }
 
-    async logout() {
+    async updateOrganization(formData) {
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('/api/auth/logout', {
-                method: 'POST',
+            console.log('📝 Updating organization...');
+            
+            const response = await fetch(`/api/organizations/${this.currentUser.organization_id}`, {
+                method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                credentials: 'include'
+                body: JSON.stringify(formData)
             });
 
-            // Always clear tokens regardless of response
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-
-            if (response.ok) {
-                console.log('✅ Logout successful');
-            } else {
-                console.error('❌ Logout failed:', response.status);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update organization');
             }
+
+            const result = await response.json();
+            console.log('✅ Organization updated:', result);
             
-            // Always redirect to login page
-            window.location.href = '/login';
+            // Update local data
+            this.organizationData = { ...this.organizationData, ...result.organization };
+            
+            // Refresh the display
+            this.displayOrganizationInfo();
+            
+            // Close modal
+            this.closeEditModal();
+            
+            // Show success message
+            this.showSuccessMessage('Organization updated successfully!');
+            
         } catch (error) {
-            console.error('❌ Logout error:', error);
-            // Clear tokens and redirect to login page
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            window.location.href = '/login';
+            console.error('❌ Error updating organization:', error);
+            this.showErrorMessage(`Failed to update organization: ${error.message}`);
         }
     }
 
-    toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.querySelector('.main-content');
-        
-        if (sidebar.classList.contains('collapsed')) {
-            sidebar.classList.remove('collapsed');
-            mainContent.style.marginLeft = '280px';
-        } else {
-            sidebar.classList.add('collapsed');
-            mainContent.style.marginLeft = '0';
+    async deleteOrganization() {
+        try {
+            console.log('🗑️ Deleting organization...');
+            
+            const response = await fetch(`/api/organizations/${this.currentUser.organization_id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete organization');
+            }
+
+            const result = await response.json();
+            console.log('✅ Organization deleted:', result);
+            
+            // Close modal
+            this.closeDeleteModal();
+            
+            // Show success message and redirect
+            this.showSuccessMessage('Organization deleted successfully! Redirecting...');
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+                window.location.href = '/dashboard.html';
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Error deleting organization:', error);
+            this.showErrorMessage(`Failed to delete organization: ${error.message}`);
         }
     }
 
-    showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas fa-${this.getNotificationIcon(type)}"></i>
-                <span>${message}</span>
-            </div>
-            <button class="notification-close">&times;</button>
+    closeEditModal() {
+        document.getElementById('edit-org-modal').style.display = 'none';
+    }
+
+    closeDeleteModal() {
+        document.getElementById('delete-org-modal').style.display = 'none';
+    }
+
+    showDeleteConfirmation() {
+        document.getElementById('delete-org-modal').style.display = 'flex';
+    }
+
+    showSuccessMessage(message) {
+        // Create a temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.className = 'success-message';
+        successDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            font-weight: 500;
         `;
-
-        // Add to page
-        document.body.appendChild(notification);
-
-        // Auto remove after 3 seconds
+        successDiv.textContent = message;
+        
+        document.body.appendChild(successDiv);
+        
+        // Remove after 3 seconds
         setTimeout(() => {
-            notification.remove();
+            if (successDiv.parentNode) {
+                successDiv.parentNode.removeChild(successDiv);
+            }
         }, 3000);
-
-        // Manual close
-        const closeBtn = notification.querySelector('.notification-close');
-        closeBtn.addEventListener('click', () => notification.remove());
     }
 
-    getNotificationIcon(type) {
-        switch(type) {
-            case 'success': return 'check-circle';
-            case 'error': return 'exclamation-circle';
-            case 'warning': return 'exclamation-triangle';
-            default: return 'info-circle';
-        }
+    showErrorMessage(message) {
+        // Create a temporary error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #dc2626;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 10000;
+            font-weight: 500;
+        `;
+        errorDiv.textContent = message;
+        
+        document.body.appendChild(errorDiv);
+        
+        // Remove after 5 seconds
+        setTimeout(() => {
+            if (errorDiv.parentNode) {
+                errorDiv.parentNode.removeChild(errorDiv);
+            }
+        }, 5000);
+    }
+
+    viewMember(memberId) {
+        console.log('👤 View member clicked:', memberId);
+        // TODO: Implement member viewing
+        alert('Member viewing feature coming soon!');
+    }
+
+    editMember(memberId) {
+        console.log('✏️ Edit member clicked:', memberId);
+        // TODO: Implement member editing
+        alert('Member editing feature coming soon!');
+    }
+
+    showLoading() {
+        document.getElementById('loading-state').style.display = 'flex';
+        document.getElementById('error-state').style.display = 'none';
+        document.getElementById('organization-content').style.display = 'none';
+    }
+
+    hideLoading() {
+        document.getElementById('loading-state').style.display = 'none';
+    }
+
+    showError(message) {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('organization-content').style.display = 'none';
+        document.getElementById('error-state').style.display = 'flex';
+        document.getElementById('error-message').textContent = message;
+    }
+
+    showNoOrganization() {
+        document.getElementById('loading-state').style.display = 'none';
+        document.getElementById('organization-content').style.display = 'none';
+        document.getElementById('error-state').style.display = 'flex';
+        document.getElementById('error-message').innerHTML = `
+            <h3>No Organization Found</h3>
+            <p>You are not currently part of any organization.</p>
+            <p>To join an organization, you can:</p>
+            <ul>
+                <li>Ask your administrator to send you an invitation</li>
+                <li>Use an invitation code if you have one</li>
+                <li>Create a new organization if you're an administrator</li>
+            </ul>
+            <p>If you believe this is an error, please contact your system administrator.</p>
+            <p><strong>Note:</strong> You need to be assigned to an organization to view organization details.</p>
+        `;
     }
 }
 
 // Initialize when DOM is loaded
-let organizationsManager;
 document.addEventListener('DOMContentLoaded', () => {
-    organizationsManager = new OrganizationsManager();
+    console.log('🏢 Organizations page loaded');
+    window.organizationsManager = new OrganizationsManager();
 });
 
-// Add notification styles
-const notificationStyles = `
-<style>
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: white;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    border-left: 4px solid #3b82f6;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 300px;
-    animation: slideIn 0.3s ease-out;
-}
-
-.notification-success {
-    border-left-color: #10b981;
-}
-
-.notification-error {
-    border-left-color: #ef4444;
-}
-
-.notification-warning {
-    border-left-color: #f59e0b;
-}
-
-.notification-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex: 1;
-}
-
-.notification-close {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #6b7280;
-    padding: 0;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
+// Global function for retry
+function loadOrganizationInfo() {
+    if (window.organizationsManager) {
+        window.organizationsManager.loadOrganizationInfo();
     }
 }
 
-/* Task table and list styles */
-.task-table table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 16px;
-}
-
-.task-table th,
-.task-table td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.task-table th {
-    background: #f9fafb;
-    font-weight: 600;
-    color: #374151;
-}
-
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.status-badge.new {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.status-badge.progress {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.priority {
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-.priority.high {
-    background: #fee2e2;
-    color: #dc2626;
-}
-
-.priority.medium {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.task-list {
-    margin-top: 16px;
-}
-
-.task-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.task-checkbox input[type="checkbox"] {
-    display: none;
-}
-
-.task-checkbox label {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #d1d5db;
-    border-radius: 4px;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.2s;
-}
-
-.task-checkbox input[type="checkbox"]:checked + label {
-    background: #3b82f6;
-    border-color: #3b82f6;
-}
-
-.task-checkbox input[type="checkbox"]:checked + label::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.task-content {
-    flex: 1;
-}
-
-.task-title {
-    font-weight: 500;
-    color: #111827;
-    margin-bottom: 4px;
-}
-
-.task-meta {
-    display: flex;
-    gap: 12px;
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.task-status {
-    padding: 2px 6px;
-    border-radius: 8px;
-    font-weight: 500;
-}
-
-.task-status.new {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.task-status.progress {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-/* Modal styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-}
-
-.modal-header h3 {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #6b7280;
-    padding: 0;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.task-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.form-group label {
-    font-weight: 500;
-    color: #374151;
-    font-size: 14px;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 14px;
-    transition: border-color 0.2s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    margin-top: 8px;
-}
-
-.btn-primary,
-.btn-secondary {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-}
-
-.btn-primary {
-    background: #3b82f6;
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #2563eb;
-}
-
-.btn-secondary {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.btn-secondary:hover {
-    background: #e5e7eb;
-}
-</style>
-`;
-
-document.head.insertAdjacentHTML('beforeend', notificationStyles); 
+ 

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { supabase } = require('../config/supabase');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireUserManagement } = require('../middleware/auth');
 const { sendInviteEmail } = require('../utils/emailService');
 
 // Get all users/employees
@@ -108,8 +108,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Create new user/employee
-router.post('/', authenticateToken, async (req, res) => {
+// Create new user/employee (admin/manager/super_admin only)
+router.post('/', authenticateToken, requireUserManagement, async (req, res) => {
     try {
         const {
             first_name,
@@ -532,8 +532,8 @@ router.post('/:id/regenerate-invite', authenticateToken, async (req, res) => {
     }
 });
 
-// Send invite email to employee
-router.post('/:id/send-invite', authenticateToken, async (req, res) => {
+// Send invite email to employee (admin/manager/super_admin only)
+router.post('/:id/send-invite', authenticateToken, requireUserManagement, async (req, res) => {
     try {
         const { id } = req.params;
         console.log('📧 Sending invite email to employee:', id);
