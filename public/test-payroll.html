@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payroll Button Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-button {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Payroll Button Test</h1>
+    <p>This is a simple test to verify the + New Payroll button functionality.</p>
+    
+    <button class="test-button" id="test-payroll-btn">
+        <i class="fas fa-plus"></i>
+        + New Payroll
+    </button>
+    
+    <div id="test-modal" class="modal">
+        <div class="modal-content">
+            <h3>Test Modal</h3>
+            <p>The button is working correctly!</p>
+            <button onclick="closeModal()">Close</button>
+        </div>
+    </div>
+    
+    <script>
+        console.log('🧪 Payroll button test initialized');
+        
+        const testBtn = document.getElementById('test-payroll-btn');
+        const modal = document.getElementById('test-modal');
+        
+        console.log('🔍 Test button found:', testBtn);
+        console.log('🔍 Modal found:', modal);
+        
+        if (testBtn) {
+            testBtn.addEventListener('click', function() {
+                console.log('🖱️ Test button clicked!');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    console.log('✅ Test modal displayed');
+                }
+            });
+            console.log('✅ Event listener added to test button');
+        }
+        
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html> 

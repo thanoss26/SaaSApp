@@ -1,16 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { createClient } = require('@supabase/supabase-js');
+const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireNotificationsAccess } = require('../middleware/auth');
 const { sendInvitationAcceptanceEmail } = require('../utils/emailService');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
 // GET /api/mailbox/invitations - Get user's invitations (no organization required)
-router.get('/invitations', authenticateToken, requireNotificationsAccess, async (req, res) => {
+router.get('/invitations', authenticateToken, async (req, res) => {
     console.log('📬 GET /api/mailbox/invitations - Fetching user invitations');
     
     try {
@@ -93,7 +88,7 @@ router.get('/invitations', authenticateToken, requireNotificationsAccess, async 
 });
 
 // POST /api/mailbox/invitations/:id/accept - Accept an invitation (no organization required)
-router.post('/invitations/:id/accept', authenticateToken, requireNotificationsAccess, async (req, res) => {
+router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
     console.log('✅ POST /api/mailbox/invitations/:id/accept - Accepting invitation');
     
     try {
