@@ -2008,7 +2008,7 @@ class EmployeeHub {
             };
             
             try {
-                const response = await fetch('/api/organizations', {
+                const response = await fetch('/api/auth/create-organization', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

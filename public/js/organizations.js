@@ -157,6 +157,7 @@ class OrganizationsManager {
         // Show edit button for admins
         if (this.currentUser && ['admin', 'super_admin'].includes(this.currentUser.role)) {
             document.getElementById('edit-org-btn').style.display = 'inline-flex';
+            document.getElementById('invite-members-btn').style.display = 'inline-flex';
         }
 
         // Hide loading, show content
@@ -337,6 +338,58 @@ class OrganizationsManager {
             });
         }
 
+        // Invite members button
+        const inviteBtn = document.getElementById('invite-members-btn');
+        if (inviteBtn) {
+            inviteBtn.addEventListener('click', () => {
+                this.showInviteModal();
+            });
+        }
+
+        // Invite modal events
+        const closeInviteModal = document.getElementById('close-invite-modal');
+        if (closeInviteModal) {
+            closeInviteModal.addEventListener('click', () => {
+                this.closeInviteModal();
+            });
+        }
+
+        const cancelInviteBtn = document.getElementById('cancel-invite-btn');
+        if (cancelInviteBtn) {
+            cancelInviteBtn.addEventListener('click', () => {
+                this.closeInviteModal();
+            });
+        }
+
+        const generateInviteBtn = document.getElementById('generate-invite-btn');
+        if (generateInviteBtn) {
+            generateInviteBtn.addEventListener('click', () => {
+                this.generateInviteLink();
+            });
+        }
+
+        const copyInviteLinkBtn = document.getElementById('copy-invite-link');
+        if (copyInviteLinkBtn) {
+            copyInviteLinkBtn.addEventListener('click', () => {
+                this.copyInviteLink();
+            });
+        }
+
+        const generateNewInviteBtn = document.getElementById('generate-new-invite');
+        if (generateNewInviteBtn) {
+            generateNewInviteBtn.addEventListener('click', () => {
+                this.resetInviteForm();
+            });
+        }
+
+        const closeInviteResultBtn = document.getElementById('close-invite-result');
+        if (closeInviteResultBtn) {
+            closeInviteResultBtn.addEventListener('click', () => {
+                this.closeInviteModal();
+            });
+        }
+
+        // Cancel edit button
         const cancelEditBtn = document.getElementById('cancel-edit-btn');
         if (cancelEditBtn) {
             cancelEditBtn.addEventListener('click', () => {
@@ -673,6 +726,98 @@ class OrganizationsManager {
             <p>If you believe this is an error, please contact your system administrator.</p>
             <p><strong>Note:</strong> You need to be assigned to an organization to view organization details.</p>
         `;
+    }
+
+    // Invite functionality methods
+    showInviteModal() {
+        console.log('📧 Showing invite modal');
+        document.getElementById('invite-members-modal').style.display = 'flex';
+        this.resetInviteForm();
+    }
+
+    closeInviteModal() {
+        console.log('📧 Closing invite modal');
+        document.getElementById('invite-members-modal').style.display = 'none';
+    }
+
+    resetInviteForm() {
+        console.log('🔄 Resetting invite form');
+        document.getElementById('invite-role').value = 'organization_member';
+        document.getElementById('invite-expiry').value = '7';
+        document.getElementById('invite-result').style.display = 'none';
+        document.getElementById('generate-invite-btn').classList.remove('loading');
+        document.getElementById('generate-invite-btn').disabled = false;
+    }
+
+    async generateInviteLink() {
+        try {
+            console.log('🔗 Generating invite link...');
+            
+            const generateBtn = document.getElementById('generate-invite-btn');
+            generateBtn.classList.add('loading');
+            generateBtn.disabled = true;
+
+            const role = document.getElementById('invite-role').value;
+            const expiryDays = document.getElementById('invite-expiry').value;
+
+            const response = await fetch('/api/auth/generate-invite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify({
+                    role: role,
+                    expiry_days: parseInt(expiryDays)
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to generate invite link');
+            }
+
+            const result = await response.json();
+            console.log('✅ Invite link generated:', result);
+
+            // Display the invite link
+            document.getElementById('invite-link').value = result.invite_link;
+            document.getElementById('invite-result').style.display = 'block';
+
+            // Show success message
+            this.showSuccessMessage('Invite link generated successfully!');
+
+        } catch (error) {
+            console.error('❌ Error generating invite link:', error);
+            this.showErrorMessage(`Failed to generate invite link: ${error.message}`);
+        } finally {
+            const generateBtn = document.getElementById('generate-invite-btn');
+            generateBtn.classList.remove('loading');
+            generateBtn.disabled = false;
+        }
+    }
+
+    async copyInviteLink() {
+        try {
+            const inviteLink = document.getElementById('invite-link');
+            await navigator.clipboard.writeText(inviteLink.value);
+            
+            const copyBtn = document.getElementById('copy-invite-link');
+            copyBtn.textContent = 'Copied!';
+            copyBtn.classList.add('copied');
+            
+            this.showSuccessMessage('Invite link copied to clipboard!');
+            
+            // Reset button after 2 seconds
+            setTimeout(() => {
+                copyBtn.textContent = 'Copy';
+                copyBtn.classList.remove('copied');
+            }, 2000);
+            
+        } catch (error) {
+            console.error('❌ Error copying invite link:', error);
+            this.showErrorMessage('Failed to copy invite link to clipboard');
+        }
     }
 }
 

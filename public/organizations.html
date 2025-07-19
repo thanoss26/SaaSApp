@@ -141,6 +141,10 @@
               </div>
             </div>
             <div class="org-actions">
+              <button class="btn-primary" id="invite-members-btn" style="display: none;">
+                <i class="fas fa-user-plus"></i>
+                Invite Members
+              </button>
               <button class="btn-secondary" id="edit-org-btn" style="display: none;">
                 <i class="fas fa-edit"></i>
                 Edit Organization
@@ -262,6 +266,177 @@
             <i class="fas fa-trash"></i>
             Yes, Delete Organization
           </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Members Modal -->
+  <div id="invite-members-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Invite Members</h2>
+        <button id="close-invite-modal" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Invite Type Selection -->
+        <div class="invite-type-selector">
+          <label class="invite-type-option">
+            <input type="radio" name="invite-type" value="email" checked>
+            <span class="radio-custom"></span>
+            <div class="option-content">
+              <h4>Invite by Email</h4>
+              <p>Send invitation to specific people by email</p>
+            </div>
+          </label>
+          <label class="invite-type-option">
+            <input type="radio" name="invite-type" value="link">
+            <span class="radio-custom"></span>
+            <div class="option-content">
+              <h4>Generate Invite Link</h4>
+              <p>Create a shareable link for anyone to join</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Email Invitation Form -->
+        <div id="email-invite-form" class="invite-form-section">
+          <h3>Send Email Invitation</h3>
+          <form id="email-invite-form-element">
+            <div class="form-group">
+              <label for="invite-email">Email Address *</label>
+              <input type="email" id="invite-email" name="email" required placeholder="Enter email address">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="invite-first-name">First Name *</label>
+                <input type="text" id="invite-first-name" name="first_name" required placeholder="Enter first name">
+              </div>
+              <div class="form-group">
+                <label for="invite-last-name">Last Name *</label>
+                <input type="text" id="invite-last-name" name="last_name" required placeholder="Enter last name">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="invite-role-email">Role</label>
+              <select id="invite-role-email" name="role">
+                <option value="organization_member">Organization Member</option>
+                <option value="employee">Employee</option>
+                <option value="manager">Manager</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="invite-message">Message (Optional)</label>
+              <textarea id="invite-message" name="message" rows="3" placeholder="Add a personal message to the invitation..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="cancel-invite-btn" class="btn-secondary">Cancel</button>
+              <button type="submit" id="send-invite-btn" class="btn-primary">
+                <span class="btn-text">Send Invitation</span>
+                <span class="btn-loading" style="display: none;">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Sending...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Generic Link Form -->
+        <div id="link-invite-form" class="invite-form-section" style="display: none;">
+          <h3>Generate Invite Link</h3>
+          <form id="link-invite-form-element">
+            <div class="form-group">
+              <label for="invite-role">Role</label>
+              <select id="invite-role" name="role">
+                <option value="organization_member">Organization Member</option>
+                <option value="employee">Employee</option>
+                <option value="manager">Manager</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="invite-expiry">Expiry (Days)</label>
+              <select id="invite-expiry" name="expiry_days">
+                <option value="1">1 Day</option>
+                <option value="3">3 Days</option>
+                <option value="7" selected>7 Days</option>
+                <option value="14">14 Days</option>
+                <option value="30">30 Days</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="cancel-link-btn" class="btn-secondary">Cancel</button>
+              <button type="submit" id="generate-invite-btn" class="btn-primary">
+                <span class="btn-text">Generate Link</span>
+                <span class="btn-loading" style="display: none;">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  Generating...
+                </span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Invite Result Section -->
+        <div id="invite-result" class="invite-result-section" style="display: none;">
+          <div class="result-header">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h3>Invitation Sent Successfully!</h3>
+          </div>
+          <div class="result-content">
+            <p>The invitation has been sent to the recipient's email address. They will receive a notification in their mailbox to accept or decline the invitation.</p>
+            <div class="invite-details">
+              <div class="detail-item">
+                <span class="detail-label">Recipient:</span>
+                <span id="result-recipient" class="detail-value"></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Role:</span>
+                <span id="result-role" class="detail-value"></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Expires:</span>
+                <span id="result-expires" class="detail-value"></span>
+              </div>
+            </div>
+          </div>
+          <div class="result-actions">
+            <button id="send-another-invite" class="btn-secondary">Send Another Invitation</button>
+            <button id="close-invite-result" class="btn-primary">Close</button>
+          </div>
+        </div>
+
+        <!-- Link Result Section -->
+        <div id="link-result" class="invite-result-section" style="display: none;">
+          <div class="result-header">
+            <i class="fas fa-link success-icon"></i>
+            <h3>Invite Link Generated!</h3>
+          </div>
+          <div class="result-content">
+            <p>Share this link with anyone you want to invite to your organization:</p>
+            <div class="invite-link-container">
+              <input type="text" id="invite-link" readonly>
+              <button id="copy-invite-link" class="btn-secondary">
+                <i class="fas fa-copy"></i>
+                Copy
+              </button>
+            </div>
+            <div class="invite-details">
+              <div class="detail-item">
+                <span class="detail-label">Role:</span>
+                <span id="link-result-role" class="detail-value"></span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Expires:</span>
+                <span id="link-result-expires" class="detail-value"></span>
+              </div>
+            </div>
+          </div>
+          <div class="result-actions">
+            <button id="generate-new-invite" class="btn-secondary">Generate New Link</button>
+            <button id="close-link-result" class="btn-primary">Close</button>
+          </div>
         </div>
       </div>
     </div>

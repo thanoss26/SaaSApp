@@ -169,14 +169,14 @@ function initFormHandling() {
             
             try {
                 // Make API call
-                const response = await fetch('/api/auth/signup', {
+                const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        firstName,
-                        lastName,
+                        first_name: firstName,
+                        last_name: lastName,
                         email,
                         password,
                         marketingEmails
@@ -191,6 +191,7 @@ function initFormHandling() {
                     // Store any provided token
                     if (data.token) {
                         localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('token', data.token); // Store in both locations for compatibility
                     }
                     
                     // Redirect to dashboard after a short delay

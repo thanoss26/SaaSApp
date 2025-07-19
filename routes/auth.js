@@ -558,18 +558,25 @@ router.get('/verify', async (req, res) => {
 });
 
 // Create organization (admin only)
-router.post('/create-organization', [
+router.post('/create-organization', authenticateToken, [
   body('name').trim().isLength({ min: 1, max: 100 }),
   body('description').optional().trim().isLength({ max: 500 })
 ], async (req, res) => {
   try {
+    console.log('🔍 Create organization request received');
+    console.log('Request body:', req.body);
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const userId = req.user?.id;
+    console.log('🔍 Using user ID:', userId);
+    
     if (!userId) {
+      console.log('❌ No user ID available');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
@@ -580,37 +587,73 @@ router.post('/create-organization', [
       .eq('id', userId)
       .single();
 
+    console.log('🔍 Profile fetch result:', { profile, error: profileError });
+
     if (profileError) {
+      console.log('❌ Profile fetch error:', profileError);
       return res.status(500).json({ error: 'Failed to fetch user profile' });
     }
 
     // Only admins can create organizations
     if (profile.role !== 'admin') {
+      console.log('❌ User role not admin:', profile.role);
       return res.status(403).json({ error: 'Only admins can create organizations' });
     }
 
     // Check if user already has an organization
     if (profile.organization_id) {
+      console.log('❌ User already has organization:', profile.organization_id);
       return res.status(400).json({ error: 'User already belongs to an organization' });
     }
 
     const { name, description } = req.body;
     const joinCode = generateJoinCode();
+    
+    console.log('🔍 Creating organization with:', { name, description, joinCode });
 
-    // Create organization
+    // Create organization with organization_creator field
     const { data: organization, error: orgError } = await supabase
       .from('organizations')
       .insert({
         name,
         description: description || null,
         join_code: joinCode,
-        created_by: userId
+        organization_creator: userId
       })
       .select()
       .single();
 
+    console.log('🔍 Organization creation result:', { organization, error: orgError });
+
     if (orgError) {
-      return res.status(500).json({ error: 'Failed to create organization: ' + orgError.message });
+      console.log('❌ Organization creation error:', orgError);
+      
+      // If the error is about organization_creator field not existing, try without it
+      if (orgError.message && orgError.message.includes('organization_creator')) {
+        console.log('🔄 Trying without organization_creator field...');
+        
+        const { data: organization2, error: orgError2 } = await supabase
+          .from('organizations')
+          .insert({
+            name,
+            description: description || null,
+            join_code: joinCode
+          })
+          .select()
+          .single();
+          
+        console.log('🔍 Organization creation result (without creator):', { organization2, error: orgError2 });
+        
+        if (orgError2) {
+          console.log('❌ Organization creation still failed:', orgError2);
+          return res.status(500).json({ error: 'Failed to create organization: ' + orgError2.message });
+        }
+        
+        // Use the second result
+        organization = organization2;
+      } else {
+        return res.status(500).json({ error: 'Failed to create organization: ' + orgError.message });
+      }
     }
 
     // Update user profile with organization_id
@@ -619,10 +662,14 @@ router.post('/create-organization', [
       .update({ organization_id: organization.id })
       .eq('id', userId);
 
+    console.log('🔍 Profile update result:', { error: updateError });
+
     if (updateError) {
+      console.log('❌ Profile update error:', updateError);
       return res.status(500).json({ error: 'Failed to update user profile' });
     }
 
+    console.log('✅ Organization created successfully');
     res.status(201).json({
       message: 'Organization created successfully',
       organization: {
@@ -633,23 +680,14 @@ router.post('/create-organization', [
     });
 
   } catch (error) {
-    console.error('Create organization error:', error);
+    console.error('❌ Create organization error:', error);
     res.status(500).json({ error: 'Failed to create organization' });
   }
 });
 
 // Generate invite link for employee (admin/super_admin only)
-router.post('/generate-invite', requireInviteUsersAccess, [
-  body('email').isEmail().normalizeEmail(),
-  body('first_name').trim().isLength({ min: 1, max: 100 }),
-  body('last_name').trim().isLength({ min: 1, max: 100 })
-], async (req, res) => {
+router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Authentication required' });
@@ -667,12 +705,63 @@ router.post('/generate-invite', requireInviteUsersAccess, [
     }
 
     // Only admins can generate invites
-    if (profile.role !== 'admin') {
+    if (profile.role !== 'admin' && profile.role !== 'super_admin') {
       return res.status(403).json({ error: 'Only admins can generate invites' });
     }
 
     if (!profile.organization_id) {
       return res.status(400).json({ error: 'You must belong to an organization to generate invites' });
+    }
+
+    // Check if this is a simplified invite generation (for generic invite links)
+    if (req.body.role && req.body.expiry_days) {
+      const { role, expiry_days } = req.body;
+      
+      // Generate unique invite code
+      const inviteCode = Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + (expiry_days || 7)); // Default to 7 days
+
+      // Create generic invite record
+      const { data: invite, error: inviteError } = await supabase
+        .from('invites')
+        .insert({
+          organization_id: profile.organization_id,
+          email: 'generic@invite.local', // Placeholder email for generic invites
+          first_name: 'Generic', // Placeholder first name
+          last_name: 'Invite', // Placeholder last name
+          role: role || 'organization_member',
+          invite_code: inviteCode,
+          expires_at: expiresAt.toISOString(),
+          created_by: userId
+        })
+        .select()
+        .single();
+
+      if (inviteError) {
+        return res.status(500).json({ error: 'Failed to create invite: ' + inviteError.message });
+      }
+
+      // Generate invite link - use dynamic base URL
+      const baseUrl = process.env.FRONTEND_URL || 
+                     (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000');
+      const inviteLink = `${baseUrl}/invite/${inviteCode}`;
+
+      res.status(201).json({
+        message: 'Invite link generated successfully',
+        invite_link: inviteLink,
+        invite_code: inviteCode,
+        expires_at: invite.expires_at,
+        role: invite.role
+      });
+      
+      return;
+    }
+
+    // Original format validation for specific user invites
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, first_name, last_name } = req.body;
@@ -694,7 +783,7 @@ router.post('/generate-invite', requireInviteUsersAccess, [
     }
 
     // Generate unique invite code
-    const inviteCode = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const inviteCode = Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
 
