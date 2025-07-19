@@ -260,6 +260,9 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: background 0.2s;
+    /* Ensure button is visible by default */
+    visibility: visible;
+    opacity: 1;
 }
 
 .new-payroll-btn:hover {
@@ -659,4 +662,1052 @@ body {
     .search-filter {
         max-width: none;
     }
+}
+
+/* Payroll Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 24px 0 24px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-bottom: 24px;
+}
+
+.modal-header h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.modal-body {
+    padding: 0 24px 24px 24px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #f1f5f9;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+/* Payroll Details Styles */
+.payroll-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.payroll-detail-item:last-child {
+    border-bottom: none;
+}
+
+.payroll-detail-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.payroll-detail-value {
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.payroll-detail-value.amount {
+    color: #059669;
+}
+
+.payroll-detail-value.status {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.payroll-detail-value.status.completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.payroll-detail-value.status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .modal-header {
+        padding: 20px 20px 0 20px;
+    }
+    
+    .modal-body {
+        padding: 0 20px 20px 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions button {
+        width: 100%;
+    }
+} 
+
+/* Enhanced Payroll Modal - Professional Design */
+.enhanced-payroll-modal {
+    max-width: 1000px;
+    width: 95%;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 1px solid #e5e7eb;
+}
+
+.enhanced-payroll-modal .modal-content {
+    background: white;
+    border-radius: 16px;
+    margin: 0;
+    overflow: hidden;
+}
+
+.enhanced-payroll-modal .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-bottom: none;
+    position: relative;
+}
+
+.enhanced-payroll-modal .modal-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px 16px 0 0;
+}
+
+.enhanced-payroll-modal .modal-header h3 {
+    color: white;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.enhanced-payroll-modal .modal-header h3 i {
+    font-size: 1.5rem;
+    opacity: 0.9;
+}
+
+.enhanced-payroll-modal .modal-body {
+    padding: 2rem;
+    background: #fafbfc;
+}
+
+/* Form Sections */
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.form-section:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-section h4 {
+    color: #1f2937;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.form-section h4 i {
+    color: #667eea;
+    font-size: 1.1rem;
+}
+
+/* Section Headers with Step Numbers */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+
+/* Form Groups */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 1rem;
+    color: #9ca3af;
+    font-size: 1rem;
+    z-index: 1;
+}
+
+.input-with-icon input,
+.input-with-icon select,
+.input-with-icon textarea {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #fafbfc;
+}
+
+.input-with-icon input:focus,
+.input-with-icon select:focus,
+.input-with-icon textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.input-with-icon input::placeholder {
+    color: #9ca3af;
+}
+
+/* Form Rows */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Calculation Summary */
+.calculation-summary {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    margin-top: 1.5rem;
+}
+
+.calculation-summary h5 {
+    color: #1e293b;
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.calculation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.calculation-item:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transform: translateX(2px);
+}
+
+.calculation-item:last-child {
+    margin-bottom: 0;
+}
+
+.calculation-formula {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.calculation-result {
+    color: #059669;
+    font-size: 1.125rem;
+    font-weight: 700;
+    background: #ecfdf5;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #a7f3d0;
+}
+
+/* Final Summary */
+.final-summary {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    color: white;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 0.875rem;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-row.total {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #fbbf24;
+    border-top: 2px solid rgba(255, 255, 255, 0.2);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+.summary-row.deductions {
+    color: #fca5a5;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 2rem;
+    background: #f8fafc;
+    border-top: 1px solid #e5e7eb;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 0.875rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .enhanced-payroll-modal {
+        width: 98%;
+        margin: 1rem;
+    }
+    
+    .enhanced-payroll-modal .modal-body {
+        padding: 1rem;
+    }
+    
+    .form-section {
+        padding: 1.5rem;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        padding: 1.5rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Animation for calculation updates */
+.calculation-item {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading state for calculations */
+.calculating {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.calculating::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #667eea;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 
+
+/* Payment Modal Styles */
+.payment-modal {
+    z-index: 10000;
+}
+
+.payment-modal-content {
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.payment-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+}
+
+.payment-summary h4 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+}
+
+.payment-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-row:last-child {
+    border-bottom: none;
+}
+
+.payment-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.payment-methods {
+    margin-bottom: 24px;
+}
+
+.payment-methods h4 {
+    margin-bottom: 16px;
+    color: #1a1a1a;
+}
+
+.payment-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.payment-option:hover {
+    border-color: #667eea;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.payment-option.selected {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.payment-option-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 16px;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.payment-option.selected .payment-option-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.payment-option-text {
+    flex: 1;
+}
+
+.payment-option-text h5 {
+    margin: 0 0 4px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.payment-option-text p {
+    margin: 0;
+    font-size: 0.875rem;
+    opacity: 0.8;
+}
+
+.payment-option-radio {
+    margin-left: 16px;
+}
+
+.payment-option-radio input[type="radio"] {
+    display: none;
+}
+
+.payment-option-radio label {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    display: block;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.payment-option-radio input[type="radio"]:checked + label {
+    border-color: #667eea;
+    background: #667eea;
+}
+
+.payment-option-radio input[type="radio"]:checked + label::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+}
+
+/* Payment Forms */
+.payment-forms {
+    margin-bottom: 24px;
+}
+
+.payment-form {
+    padding: 24px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+}
+
+/* Card Payment Form */
+.card-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    perspective: 1000px;
+}
+
+.card-front, .card-back {
+    width: 100%;
+    height: 250px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+.card-front {
+    transform: rotateY(0deg);
+}
+
+.card-back {
+    transform: rotateY(180deg);
+}
+
+.card-container {
+    height: 250px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.card-chip {
+    width: 50px;
+    height: 40px;
+    background: linear-gradient(45deg, #ffd700, #ffed4e);
+    border-radius: 8px;
+    position: relative;
+}
+
+.card-chip::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+.card-brand {
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.card-number {
+    margin-bottom: 30px;
+}
+
+.card-number input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 2px;
+    outline: none;
+}
+
+.card-number input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.card-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.card-holder, .card-expiry {
+    flex: 1;
+}
+
+.card-holder label, .card-expiry label {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.card-holder input, .card-expiry input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1rem;
+    outline: none;
+    text-transform: uppercase;
+}
+
+.card-holder input::placeholder, .card-expiry input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Card Back */
+.card-stripe {
+    width: 100%;
+    height: 40px;
+    background: #1a1a1a;
+    margin-bottom: 20px;
+}
+
+.card-cvv {
+    text-align: right;
+}
+
+.card-cvv label {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.card-cvv input {
+    width: 80px;
+    background: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    color: #1a1a1a;
+    font-size: 1rem;
+    text-align: center;
+    outline: none;
+}
+
+.card-flip-indicator {
+    text-align: center;
+    margin-top: 16px;
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* Bank Transfer Form */
+.bank-details h5 {
+    margin: 0 0 16px 0;
+    color: #1a1a1a;
+}
+
+.bank-info {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.bank-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.bank-row:last-child {
+    border-bottom: none;
+}
+
+.bank-row span:first-child {
+    font-weight: 600;
+    color: #374151;
+}
+
+.bank-row span:last-child {
+    font-family: 'Courier New', monospace;
+    color: #1a1a1a;
+}
+
+.bank-note {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+}
+
+/* External Payment Form */
+.external-payment-info {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.external-payment-icon {
+    font-size: 4rem;
+    color: #667eea;
+    margin-bottom: 24px;
+}
+
+.external-payment-info h5 {
+    margin: 0 0 16px 0;
+    color: #1a1a1a;
+    font-size: 1.5rem;
+}
+
+.external-payment-info p {
+    margin: 0 0 32px 0;
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+/* Payment Actions */
+.payment-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Payment Button in Table */
+.btn-payment {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-right: 8px;
+}
+
+.btn-payment:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+/* No Data State */
+.no-data {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.no-data-content {
+    color: #6b7280;
+}
+
+.no-data-content i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.no-data-content p {
+    margin: 0 0 8px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.no-data-content small {
+    font-size: 0.875rem;
+    opacity: 0.7;
 } 

@@ -5,19 +5,20 @@ const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
-const organizationRoutes = require('./routes/organizations');
-const userRoutes = require('./routes/users');
-const employeeRoutes = require('./routes/employees');
 const dashboardRoutes = require('./routes/dashboards');
-const mailboxRoutes = require('./routes/mailbox');
+const employeeRoutes = require('./routes/employees');
+const organizationRoutes = require('./routes/organizations');
+const payrollRoutes = require('./routes/payroll');
+const userRoutes = require('./routes/users');
+const paymentRoutes = require('./routes/payment');
+// const mailboxRoutes = require('./routes/mailbox'); // Temporarily commented out due to route error
 const { 
   authenticateToken,
   requireGlobalStatsAccess,
   requireOrganizationOverviewAccess,
   requirePayrollAccess,
   requireAnalyticsAccess,
-  requireInviteUsersAccess,
-  requireNotificationsAccess
+  requireInviteUsersAccess
 } = require('./middleware/auth');
 
 const app = express();
@@ -235,7 +236,9 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 app.use('/api/dashboards', apiLimiter, authenticateToken, dashboardRoutes);
-app.use('/api/mailbox', apiLimiter, mailboxRoutes);
+// app.use('/api/mailbox', apiLimiter, mailboxRoutes); // Temporarily commented out due to route error
+app.use('/api/payroll', apiLimiter, authenticateToken, payrollRoutes);
+app.use('/api/payment', apiLimiter, authenticateToken, paymentRoutes);
 
 // Clean URL routes (no .html extensions) with cache busting
 // Note: Authentication will be handled by the frontend JavaScript
@@ -939,7 +942,7 @@ app.get('/dashboard', (req, res) => {
 
 // Serve users page
 app.get('/users', (req, res) => {
-  console.log('🔍 Users route hit');
+  console.log('�� Users route hit');
   const fs = require('fs');
   const filePath = __dirname + '/public/users.html';
   if (fs.existsSync(filePath)) {

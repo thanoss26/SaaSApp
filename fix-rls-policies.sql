@@ -78,3 +78,61 @@ SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual
 FROM pg_policies 
 WHERE tablename = 'profiles'
 ORDER BY policyname; 
+
+-- Fix RLS policies for payrolls table
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view payrolls from their organization" ON payrolls;
+DROP POLICY IF EXISTS "Admins can create payrolls for their organization" ON payrolls;
+DROP POLICY IF EXISTS "Admins can update payrolls from their organization" ON payrolls;
+DROP POLICY IF EXISTS "Admins can delete payrolls from their organization" ON payrolls;
+
+-- Create new policies that allow proper access
+-- Policy for viewing payrolls (users can see payrolls from their organization)
+CREATE POLICY "Users can view payrolls from their organization" ON payrolls
+    FOR SELECT USING (
+        organization_id IN (
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
+        )
+    );
+
+-- Policy for creating payrolls (admins can create payrolls for their organization)
+CREATE POLICY "Admins can create payrolls for their organization" ON payrolls
+    FOR INSERT WITH CHECK (
+        organization_id IN (
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
+        ) AND
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'super_admin')
+        )
+    );
+
+-- Policy for updating payrolls (admins can update payrolls from their organization)
+CREATE POLICY "Admins can update payrolls from their organization" ON payrolls
+    FOR UPDATE USING (
+        organization_id IN (
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
+        ) AND
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'super_admin')
+        )
+    );
+
+-- Policy for deleting payrolls (admins can delete payrolls from their organization)
+CREATE POLICY "Admins can delete payrolls from their organization" ON payrolls
+    FOR DELETE USING (
+        organization_id IN (
+            SELECT organization_id FROM profiles WHERE id = auth.uid()
+        ) AND
+        EXISTS (
+            SELECT 1 FROM profiles 
+            WHERE id = auth.uid() 
+            AND role IN ('admin', 'super_admin')
+        )
+    );
+
+-- Enable RLS on payrolls table if not already enabled
+ALTER TABLE payrolls ENABLE ROW LEVEL SECURITY; 

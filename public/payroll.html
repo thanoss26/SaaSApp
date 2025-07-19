@@ -284,6 +284,13 @@
                             <i class="fas fa-plus"></i>
                             + New Payroll
                         </button>
+                        <!-- Debug button for testing -->
+                        <button onclick="testNewPayroll()" style="background: #ef4444; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; margin-left: 10px;">
+                            🧪 Test Modal
+                        </button>
+                        <button onclick="testLoadEmployees()" style="background: #10b981; color: white; padding: 0.75rem 1.5rem; border: none; border-radius: 8px; margin-left: 10px;">
+                            👥 Test Employees
+                        </button>
                </div>
                </div>
               
@@ -422,117 +429,219 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>PYRL120124</td>
-                                    <td>
-                                        <div class="employee-info">
-                                            <div class="employee-avatar">HN</div>
-                                            <span>Hazel Nutt</span>
-              </div>
-                                    </td>
-                                    <td>Lead UI/UX Designer</td>
-                                    <td>21 Jun, 2024 - 05.05 pm</td>
-                                    <td>$2.500.00</td>
-                                    <td>$500.00</td>
-                                    <td><span class="status-badge completed">Completed</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <i class="fas fa-eye action-icon"></i>
-                                            <i class="fas fa-ellipsis-v action-icon"></i>
-                 </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>PYRL120124</td>
-                                    <td>
-                                        <div class="employee-info">
-                                            <div class="employee-avatar">SC</div>
-                                            <span>Simon Cyrene</span>
-                 </div>
-                                    </td>
-                                    <td>Sr UI/UX Designer</td>
-                                    <td>21 Jun, 2024 - 05.03 pm</td>
-                                    <td>$2.300.00</td>
-                                    <td>$100.00</td>
-                                    <td><span class="status-badge completed">Completed</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <i class="fas fa-eye action-icon"></i>
-                                            <i class="fas fa-ellipsis-v action-icon"></i>
-                 </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>PYRL120124</td>
-                                    <td>
-                                        <div class="employee-info">
-                                            <div class="employee-avatar">AB</div>
-                                            <span>Aida Bugg</span>
-                 </div>
-                                    </td>
-                                    <td>Jr Graphics Designer</td>
-                                    <td>21 Jun, 2024 - 05.01 pm</td>
-                                    <td>$2.000.00</td>
-                                    <td>$1.000.00</td>
-                                    <td><span class="status-badge pending">Pending</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <i class="fas fa-eye action-icon"></i>
-                                            <i class="fas fa-ellipsis-v action-icon"></i>
-                 </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>PYRL120124</td>
-                                    <td>
-                                        <div class="employee-info">
-                                            <div class="employee-avatar">PL</div>
-                                            <span>Peg Legge</span>
-                 </div>
-                                    </td>
-                                    <td>Jr Animator</td>
-                                    <td>21 Jun, 2024 - 05.00 pm</td>
-                                    <td>$2.100.00</td>
-                                    <td>$500.00</td>
-                                    <td><span class="status-badge pending">Pending</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <i class="fas fa-eye action-icon"></i>
-                                            <i class="fas fa-ellipsis-v action-icon"></i>
-                 </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td><input type="checkbox"></td>
-                                    <td>PYRL120124</td>
-                                    <td>
-                                        <div class="employee-info">
-                                            <div class="employee-avatar">SC</div>
-                                            <span>Simon Cyrene</span>
-                 </div>
-                                    </td>
-                                    <td>Sr UI/UX Designer</td>
-                                    <td>21 Jun, 2024 - 05.03 pm</td>
-                                    <td>$2.300.00</td>
-                                    <td>$100.00</td>
-                                    <td><span class="status-badge completed">Completed</span></td>
-                                    <td>
-                                        <div class="action-buttons">
-                                            <i class="fas fa-eye action-icon"></i>
-                                            <i class="fas fa-ellipsis-v action-icon"></i>
-               </div>
-                                    </td>
-                                </tr>
+                                <!-- Payroll data will be populated by JavaScript -->
                             </tbody>
                         </table>
           </div>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- New Payroll Modal -->
+  <div id="new-payroll-modal" class="modal" style="display: none;">
+    <div class="modal-content enhanced-payroll-modal">
+      <div class="modal-header">
+        <h3><i class="fas fa-plus-circle"></i> Create New Payroll</h3>
+        <button class="modal-close" id="close-new-payroll-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="new-payroll-form">
+          <!-- Step 1: Employee Selection -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="step-number">1</div>
+              <h4>Employee Information</h4>
+            </div>
+            <div class="form-group">
+              <label for="payroll-employee">Employee</label>
+              <select id="payroll-employee" name="employee_id" required>
+                <option value="">Choose an employee...</option>
+              </select>
+              <small class="form-text text-muted">
+                <i class="fas fa-info-circle"></i> 
+                Note: Organization admins cannot create payroll for themselves.
+              </small>
+            </div>
+          </div>
+
+          <!-- Step 2: Pay Period -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="step-number">2</div>
+              <h4>Pay Period</h4>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="payroll-period">Pay Period Type</label>
+                <select id="payroll-period" name="pay_period" required>
+                  <option value="">Select Pay Period</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="biweekly">Bi-weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="payroll-start-date">Start Date</label>
+                <input type="date" id="payroll-start-date" name="start_date" required>
+              </div>
+              <div class="form-group">
+                <label for="payroll-end-date">End Date</label>
+                <input type="date" id="payroll-end-date" name="end_date" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Payment Calculation -->
+          <div class="form-section">
+              <h4><i class="fas fa-calculator"></i> Payment Calculation</h4>
+              <p style="color: #64748b; margin-bottom: 1rem;">Enter the hourly rate and see the automatic calculations below.</p>
+              
+              <div class="form-row">
+                  <div class="form-group">
+                      <label for="hourly-rate">Hourly Rate ($)</label>
+                      <div class="input-with-icon">
+                          <i class="fas fa-dollar-sign"></i>
+                          <input type="number" id="hourly-rate" name="hourly-rate" step="0.01" min="0" placeholder="15.00" required>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Automatic Calculation Summary -->
+              <div class="calculation-summary">
+                  <h5>📊 Automatic Calculations</h5>
+                  
+                  <div id="daily-pay" class="calculation-item">
+                      <div class="calculation-formula">Hourly Rate × 8 hours = Daily Pay</div>
+                      <div class="calculation-result">$0.00</div>
+                  </div>
+                  
+                  <div id="weekly-pay" class="calculation-item">
+                      <div class="calculation-formula">Daily Pay × 7 days = Weekly Pay</div>
+                      <div class="calculation-result">$0.00</div>
+                  </div>
+                  
+                  <div id="monthly-pay" class="calculation-item">
+                      <div class="calculation-formula">Weekly Pay × 4 weeks = Monthly Pay</div>
+                      <div class="calculation-result">$0.00</div>
+                  </div>
+                  <div id="yearly-pay" class="calculation-item">
+                      <div class="calculation-formula">Monthly Pay × 12 months = Yearly Pay</div>
+                      <div class="calculation-result">$0.00</div>
+                  </div>
+              </div>
+          </div>
+
+          <!-- Step 4: Additional Payments -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="step-number">4</div>
+              <h4>Additional Payments</h4>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="payroll-bonus">Bonus ($)</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-gift"></i>
+                  <input type="number" id="payroll-bonus" name="bonus" step="0.01" min="0" value="0">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="payroll-reimbursement">Reimbursement ($)</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-receipt"></i>
+                  <input type="number" id="payroll-reimbursement" name="reimbursement" step="0.01" min="0" value="0">
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="payroll-deductions">Deductions ($)</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-minus-circle"></i>
+                  <input type="number" id="payroll-deductions" name="deductions" step="0.01" min="0" value="0">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Final Summary -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="step-number">5</div>
+              <h4>Final Summary</h4>
+            </div>
+            
+            <div class="final-summary">
+              <div class="summary-row">
+                <span>Base Salary:</span>
+                <span id="final-base-salary">$0.00</span>
+              </div>
+              <div class="summary-row">
+                <span>Bonus:</span>
+                <span id="final-bonus">$0.00</span>
+              </div>
+              <div class="summary-row">
+                <span>Reimbursement:</span>
+                <span id="final-reimbursement">$0.00</span>
+              </div>
+              <div class="summary-row deductions">
+                <span>Deductions:</span>
+                <span id="final-deductions">-$0.00</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total Amount:</span>
+                <span id="final-total">$0.00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Notes -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="step-number">6</div>
+              <h4>Additional Notes</h4>
+            </div>
+            <div class="form-group">
+              <label for="payroll-notes">Notes (Optional)</label>
+              <textarea id="payroll-notes" name="notes" rows="3" placeholder="Add any additional notes or comments..."></textarea>
+            </div>
+          </div>
+
+          <!-- Hidden fields for form submission -->
+          <input type="hidden" id="payroll-base-salary" name="base_salary" value="0">
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" id="cancel-new-payroll-btn">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-check"></i> Create Payroll
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Payroll Modal -->
+  <div id="view-payroll-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Payroll Details</h3>
+        <button class="modal-close" id="close-view-payroll-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="payroll-details">
+          <!-- Payroll details will be populated here -->
+        </div>
+      </div>
+    </div>
   </div>
   
     <script src="js/shared.js"></script>
