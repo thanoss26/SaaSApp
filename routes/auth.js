@@ -713,8 +713,8 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
       return res.status(400).json({ error: 'You must belong to an organization to generate invites' });
     }
 
-    // Check if this is a simplified invite generation (for generic invite links)
-    if (req.body.role && req.body.expiry_days) {
+    // Check if this is a generic invite link generation (for shareable links)
+    if (req.body.role && req.body.expiry_days && !req.body.email) {
       const { role, expiry_days } = req.body;
       
       // Generate unique invite code
@@ -758,13 +758,12 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
       return;
     }
 
-    // Original format validation for specific user invites
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
+    // Email-based invitation validation
+    const { email, first_name, last_name, role, message } = req.body;
 
-    const { email, first_name, last_name } = req.body;
+    if (!email || !first_name || !last_name) {
+      return res.status(400).json({ error: 'Email, first name, and last name are required for email invitations' });
+    }
 
     // Check if user already exists - but allow invitations to existing users
     const { data: existingUser } = await supabase
@@ -785,7 +784,18 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
     // Generate unique invite code
     const inviteCode = Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24); // Expires in 24 hours
+    expiresAt.setDate(expiresAt.getDate() + 7); // Expires in 7 days
+
+    // Get organization details for email
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', profile.organization_id)
+      .single();
+
+    if (orgError) {
+      return res.status(500).json({ error: 'Failed to fetch organization details' });
+    }
 
     // Create invite record
     const { data: invite, error: inviteError } = await supabase
@@ -795,10 +805,11 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
         first_name,
         last_name,
         organization_id: profile.organization_id,
-        role: 'organization_member', // Default role for invited users
+        role: role || 'organization_member',
         invite_code: inviteCode,
         expires_at: expiresAt.toISOString(),
-        created_by: userId
+        created_by: userId,
+        message: message || null
       })
       .select()
       .single();
@@ -807,21 +818,46 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
       return res.status(500).json({ error: 'Failed to create invite: ' + inviteError.message });
     }
 
+    // Send invitation email
+    try {
+      const { sendInviteEmail } = require('../utils/emailService');
+      
+      const emailResult = await sendInviteEmail({
+        email,
+        first_name,
+        last_name,
+        job_title: role || 'Organization Member',
+        department: 'General'
+      }, inviteCode);
+
+      if (!emailResult.success) {
+        console.error('❌ Failed to send invitation email:', emailResult.error);
+        // Don't fail the whole operation, just log the error
+      } else {
+        console.log('📧 Invitation email sent successfully');
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending invitation email:', emailError);
+      // Don't fail the whole operation if email fails
+    }
+
     // Generate invite link - use dynamic base URL
     const baseUrl = process.env.FRONTEND_URL || 
                    (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000');
     const inviteLink = `${baseUrl}/invite/${inviteCode}`;
 
     res.status(201).json({
-      message: 'Invite generated successfully',
+      message: 'Email invitation sent successfully',
       invite: {
         id: invite.id,
         email,
         first_name,
         last_name,
+        role: role || 'organization_member',
         invite_code: inviteCode,
         invite_link: inviteLink,
-        expires_at: invite.expires_at
+        expires_at: invite.expires_at,
+        organization_name: organization.name
       }
     });
 

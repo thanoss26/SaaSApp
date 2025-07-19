@@ -346,6 +346,32 @@ class OrganizationsManager {
             });
         }
 
+        // Invite type selector
+        const inviteTypeRadios = document.querySelectorAll('input[name="invite-type"]');
+        inviteTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.switchInviteType(e.target.value);
+            });
+        });
+
+        // Email invite form
+        const emailInviteForm = document.getElementById('email-invite-form-element');
+        if (emailInviteForm) {
+            emailInviteForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.sendEmailInvitation();
+            });
+        }
+
+        // Link invite form
+        const linkInviteForm = document.getElementById('link-invite-form-element');
+        if (linkInviteForm) {
+            linkInviteForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.generateInviteLink();
+            });
+        }
+
         // Invite modal events
         const closeInviteModal = document.getElementById('close-invite-modal');
         if (closeInviteModal) {
@@ -361,10 +387,10 @@ class OrganizationsManager {
             });
         }
 
-        const generateInviteBtn = document.getElementById('generate-invite-btn');
-        if (generateInviteBtn) {
-            generateInviteBtn.addEventListener('click', () => {
-                this.generateInviteLink();
+        const cancelLinkBtn = document.getElementById('cancel-link-btn');
+        if (cancelLinkBtn) {
+            cancelLinkBtn.addEventListener('click', () => {
+                this.closeInviteModal();
             });
         }
 
@@ -386,6 +412,20 @@ class OrganizationsManager {
         if (closeInviteResultBtn) {
             closeInviteResultBtn.addEventListener('click', () => {
                 this.closeInviteModal();
+            });
+        }
+
+        const closeLinkResultBtn = document.getElementById('close-link-result');
+        if (closeLinkResultBtn) {
+            closeLinkResultBtn.addEventListener('click', () => {
+                this.closeInviteModal();
+            });
+        }
+
+        const sendAnotherInviteBtn = document.getElementById('send-another-invite');
+        if (sendAnotherInviteBtn) {
+            sendAnotherInviteBtn.addEventListener('click', () => {
+                this.resetInviteForm();
             });
         }
 
@@ -740,13 +780,125 @@ class OrganizationsManager {
         document.getElementById('invite-members-modal').style.display = 'none';
     }
 
+    switchInviteType(type) {
+        console.log('🔄 Switching invite type to:', type);
+        
+        const emailForm = document.getElementById('email-invite-form');
+        const linkForm = document.getElementById('link-invite-form');
+        
+        if (type === 'email') {
+            emailForm.style.display = 'block';
+            linkForm.style.display = 'none';
+        } else {
+            emailForm.style.display = 'none';
+            linkForm.style.display = 'block';
+        }
+        
+        // Hide any result sections
+        document.getElementById('invite-result').style.display = 'none';
+        document.getElementById('link-result').style.display = 'none';
+    }
+
     resetInviteForm() {
         console.log('🔄 Resetting invite form');
-        document.getElementById('invite-role').value = 'organization_member';
-        document.getElementById('invite-expiry').value = '7';
+        
+        // Reset email form
+        const emailForm = document.getElementById('email-invite-form-element');
+        if (emailForm) {
+            emailForm.reset();
+        }
+        
+        // Reset link form
+        const linkForm = document.getElementById('link-invite-form-element');
+        if (linkForm) {
+            linkForm.reset();
+            document.getElementById('invite-expiry').value = '7';
+        }
+        
+        // Hide result sections
         document.getElementById('invite-result').style.display = 'none';
-        document.getElementById('generate-invite-btn').classList.remove('loading');
-        document.getElementById('generate-invite-btn').disabled = false;
+        document.getElementById('link-result').style.display = 'none';
+        
+        // Show email form by default
+        this.switchInviteType('email');
+        
+        // Reset button states
+        const sendBtn = document.getElementById('send-invite-btn');
+        const generateBtn = document.getElementById('generate-invite-btn');
+        
+        if (sendBtn) {
+            sendBtn.classList.remove('loading');
+            sendBtn.disabled = false;
+            sendBtn.querySelector('.btn-text').style.display = 'inline';
+            sendBtn.querySelector('.btn-loading').style.display = 'none';
+        }
+        
+        if (generateBtn) {
+            generateBtn.classList.remove('loading');
+            generateBtn.disabled = false;
+            generateBtn.querySelector('.btn-text').style.display = 'inline';
+            generateBtn.querySelector('.btn-loading').style.display = 'none';
+        }
+    }
+
+    async sendEmailInvitation() {
+        try {
+            console.log('📧 Sending email invitation...');
+            
+            const sendBtn = document.getElementById('send-invite-btn');
+            sendBtn.classList.add('loading');
+            sendBtn.disabled = true;
+            sendBtn.querySelector('.btn-text').style.display = 'none';
+            sendBtn.querySelector('.btn-loading').style.display = 'flex';
+
+            const formData = new FormData(document.getElementById('email-invite-form-element'));
+            const inviteData = {
+                email: formData.get('email'),
+                first_name: formData.get('first_name'),
+                last_name: formData.get('last_name'),
+                role: formData.get('role'),
+                message: formData.get('message')
+            };
+
+            const response = await fetch('/api/auth/generate-invite', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(inviteData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to send invitation');
+            }
+
+            const result = await response.json();
+            console.log('✅ Email invitation sent:', result);
+
+            // Display success result
+            document.getElementById('result-recipient').textContent = `${inviteData.first_name} ${inviteData.last_name} (${inviteData.email})`;
+            document.getElementById('result-role').textContent = this.formatRole(inviteData.role);
+            document.getElementById('result-expires').textContent = this.formatDate(result.invite.expires_at);
+            
+            document.getElementById('invite-result').style.display = 'block';
+            document.getElementById('email-invite-form').style.display = 'none';
+            document.getElementById('link-invite-form').style.display = 'none';
+
+            // Show success message
+            this.showSuccessMessage('Email invitation sent successfully!');
+
+        } catch (error) {
+            console.error('❌ Error sending email invitation:', error);
+            this.showErrorMessage(`Failed to send invitation: ${error.message}`);
+        } finally {
+            const sendBtn = document.getElementById('send-invite-btn');
+            sendBtn.classList.remove('loading');
+            sendBtn.disabled = false;
+            sendBtn.querySelector('.btn-text').style.display = 'inline';
+            sendBtn.querySelector('.btn-loading').style.display = 'none';
+        }
     }
 
     async generateInviteLink() {
@@ -756,9 +908,14 @@ class OrganizationsManager {
             const generateBtn = document.getElementById('generate-invite-btn');
             generateBtn.classList.add('loading');
             generateBtn.disabled = true;
+            generateBtn.querySelector('.btn-text').style.display = 'none';
+            generateBtn.querySelector('.btn-loading').style.display = 'flex';
 
-            const role = document.getElementById('invite-role').value;
-            const expiryDays = document.getElementById('invite-expiry').value;
+            const formData = new FormData(document.getElementById('link-invite-form-element'));
+            const inviteData = {
+                role: formData.get('role'),
+                expiry_days: parseInt(formData.get('expiry_days'))
+            };
 
             const response = await fetch('/api/auth/generate-invite', {
                 method: 'POST',
@@ -766,10 +923,7 @@ class OrganizationsManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                body: JSON.stringify({
-                    role: role,
-                    expiry_days: parseInt(expiryDays)
-                })
+                body: JSON.stringify(inviteData)
             });
 
             if (!response.ok) {
@@ -782,7 +936,12 @@ class OrganizationsManager {
 
             // Display the invite link
             document.getElementById('invite-link').value = result.invite_link;
-            document.getElementById('invite-result').style.display = 'block';
+            document.getElementById('link-result-role').textContent = this.formatRole(inviteData.role);
+            document.getElementById('link-result-expires').textContent = this.formatDate(result.expires_at);
+            
+            document.getElementById('link-result').style.display = 'block';
+            document.getElementById('email-invite-form').style.display = 'none';
+            document.getElementById('link-invite-form').style.display = 'none';
 
             // Show success message
             this.showSuccessMessage('Invite link generated successfully!');
@@ -794,6 +953,8 @@ class OrganizationsManager {
             const generateBtn = document.getElementById('generate-invite-btn');
             generateBtn.classList.remove('loading');
             generateBtn.disabled = false;
+            generateBtn.querySelector('.btn-text').style.display = 'inline';
+            generateBtn.querySelector('.btn-loading').style.display = 'none';
         }
     }
 

@@ -34,15 +34,20 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
     try {
         const transporter = createTransporter();
         
+        // Generate invite link
+        const baseUrl = process.env.FRONTEND_URL || 
+                       (process.env.NODE_ENV === 'production' ? 'https://chronoshr.onrender.com' : 'http://localhost:3000');
+        const inviteLink = `${baseUrl}/invite/${inviteCode}`;
+        
         const mailOptions = {
             from: process.env.EMAIL_FROM || 'noreply@company.com',
             to: employeeData.email,
-            subject: 'Welcome to the Team! Your Invitation Code',
+            subject: 'You\'ve been invited to join our organization!',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                     <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                         <div style="text-align: center; margin-bottom: 30px;">
-                            <h1 style="color: #333; margin: 0;">🎉 Welcome to the Team!</h1>
+                            <h1 style="color: #667eea; margin: 0;">🎉 You're Invited!</h1>
                         </div>
                         
                         <div style="margin-bottom: 25px;">
@@ -50,39 +55,39 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
                                 Hi <strong>${employeeData.first_name} ${employeeData.last_name}</strong>,
                             </p>
                             <p style="color: #555; font-size: 16px; line-height: 1.6;">
-                                Welcome to our organization! We're excited to have you join our team as a <strong>${employeeData.job_title}</strong> in the <strong>${employeeData.department}</strong> department.
+                                You've been invited to join our organization as a <strong>${employeeData.job_title}</strong>. We're excited to have you on board!
                             </p>
                         </div>
                         
                         <div style="background-color: #f8f9fa; padding: 25px; border-radius: 8px; margin: 25px 0; text-align: center;">
-                            <h2 style="color: #333; margin: 0 0 15px 0; font-size: 18px;">Your Invitation Code</h2>
-                            <div style="background-color: #007bff; color: white; padding: 15px; border-radius: 6px; font-size: 24px; font-weight: bold; letter-spacing: 3px; margin: 10px 0;">
-                                ${inviteCode}
-                            </div>
+                            <h2 style="color: #333; margin: 0 0 15px 0; font-size: 18px;">Join Our Team</h2>
+                            <a href="${inviteLink}" style="display: inline-block; background-color: #667eea; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; margin: 10px 0;">
+                                Accept Invitation
+                            </a>
                             <p style="color: #666; font-size: 14px; margin: 10px 0 0 0;">
-                                Use this code to complete your account setup
+                                Or copy this link: <span style="font-family: monospace; background: #f1f3f4; padding: 4px 8px; border-radius: 4px;">${inviteLink}</span>
                             </p>
                         </div>
                         
                         <div style="margin-bottom: 25px;">
-                            <h3 style="color: #333; margin: 0 0 15px 0;">Next Steps:</h3>
+                            <h3 style="color: #333; margin: 0 0 15px 0;">What happens next?</h3>
                             <ol style="color: #555; font-size: 16px; line-height: 1.6; padding-left: 20px;">
-                                <li>Visit our employee portal</li>
-                                <li>Enter your invitation code</li>
-                                <li>Complete your profile setup</li>
+                                <li>Click the "Accept Invitation" button above</li>
+                                <li>Complete your account setup</li>
                                 <li>Set up your password</li>
+                                <li>Start collaborating with your team!</li>
                             </ol>
                         </div>
                         
                         <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 25px 0;">
                             <p style="color: #856404; font-size: 14px; margin: 0;">
-                                <strong>Important:</strong> This invitation code expires in 7 days. Please complete your setup before then.
+                                <strong>Important:</strong> This invitation expires in 7 days. Please complete your setup before then.
                             </p>
                         </div>
                         
                         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
                             <p style="color: #666; font-size: 14px; margin: 0;">
-                                If you have any questions, please contact your HR department or IT support.
+                                If you have any questions, please contact your administrator or IT support.
                             </p>
                         </div>
                     </div>
@@ -92,7 +97,7 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
         
         const info = await transporter.sendMail(mailOptions);
         
-        console.log('📧 Invite email sent successfully');
+        console.log('📧 Invitation email sent successfully');
         console.log('📧 Message ID:', info.messageId);
         
         if (process.env.NODE_ENV !== 'production') {
@@ -106,7 +111,7 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
         };
         
     } catch (error) {
-        console.error('❌ Error sending invite email:', error);
+        console.error('❌ Error sending invitation email:', error);
         return {
             success: false,
             error: error.message
