@@ -1083,4 +1083,80 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+// Update payment settings
+router.post('/update-payment-settings', authenticateToken, async (req, res) => {
+    try {
+        console.log('💰 Updating payment settings for user:', req.user.id);
+        
+        const { iban, bank_name, account_number, routing_number, stripe_enabled, stripe_api_key } = req.body;
+        
+        // Validate IBAN if provided
+        if (iban && !validateIBAN(iban)) {
+            return res.status(400).json({ error: 'Invalid IBAN format' });
+        }
+        
+        // Update profile with payment information
+        const { data: profile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .update({
+                iban: iban || null,
+                bank_name: bank_name || null,
+                account_number: account_number || null,
+                routing_number: routing_number || null,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', req.user.id)
+            .select()
+            .single();
+            
+        if (profileError) {
+            console.error('❌ Error updating profile:', profileError);
+            return res.status(500).json({ error: 'Failed to update payment settings' });
+        }
+        
+        // If Stripe is enabled, create or update Stripe customer
+        if (stripe_enabled && stripe_api_key) {
+            try {
+                // In a real implementation, you would:
+                // 1. Validate the Stripe API key
+                // 2. Create or update Stripe customer
+                // 3. Store Stripe customer ID in database
+                
+                console.log('💳 Stripe integration enabled for user:', req.user.id);
+                
+                // For now, just log the intent
+                // In production, you would integrate with Stripe API here
+                
+            } catch (stripeError) {
+                console.error('❌ Stripe integration error:', stripeError);
+                return res.status(500).json({ error: 'Failed to configure Stripe integration' });
+            }
+        }
+        
+        console.log('✅ Payment settings updated successfully');
+        res.json({ 
+            success: true, 
+            message: 'Payment settings updated successfully',
+            profile: profile
+        });
+        
+    } catch (error) {
+        console.error('❌ Error updating payment settings:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// IBAN validation function
+function validateIBAN(iban) {
+    if (!iban) return true; // Empty is valid
+    
+    // Remove spaces and convert to uppercase
+    const cleanIban = iban.replace(/\s/g, '').toUpperCase();
+    
+    // Basic IBAN validation regex
+    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/;
+    
+    return ibanRegex.test(cleanIban);
+}
+
 module.exports = router; 
