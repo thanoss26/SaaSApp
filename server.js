@@ -244,7 +244,14 @@ app.use('/api/payment', apiLimiter, authenticateToken, paymentRoutes);
 // Clean URL routes (no .html extensions) with cache busting
 // Note: Authentication will be handled by the frontend JavaScript
 
-
+// Landing page route
+app.get('/', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}"`);
+  res.sendFile(__dirname + '/public/landing.html');
+});
 
 app.get('/payroll', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
