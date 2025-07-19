@@ -6,6 +6,7 @@
     <title>Chronos HR - User Management</title>
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/enhanced-sidebar.css">
+    <link rel="stylesheet" href="css/mailbox.css">
     <link rel="stylesheet" href="css/users.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -188,10 +189,15 @@
                     <i class="fas fa-building"></i>
                     <span>Organizations</span>
                 </a>
-                <a href="/settings" class="nav-item" data-page="settings">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
+                        <a href="/settings" class="nav-item" data-page="settings">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+        <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
+          <i class="fas fa-envelope"></i>
+          <span>Mailbox</span>
+          <span class="mailbox-badge" id="mailbox-badge" style="display: none;">0</span>
+        </a>
             </nav>
 
             <script src="js/anti-flicker.js"></script>
@@ -204,14 +210,70 @@
                         <div class="user-email">Loading...</div>
                     </div>
                 </div>
-                <button class="enhanced-logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Log out</span>
-                </button>
+                        <button class="enhanced-logout-btn" id="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Log out</span>
+        </button>
             </div>
-        </aside>
+            </aside>
 
-        <!-- Main Content -->
+    <!-- Mailbox Modal -->
+    <div id="mailbox-modal" class="mailbox-modal">
+      <div class="mailbox-modal-content">
+        <div class="mailbox-modal-header">
+          <h2><i class="fas fa-envelope"></i> Mailbox</h2>
+          <button class="mailbox-close-btn" id="mailbox-close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="mailbox-modal-body">
+          <div class="mailbox-tabs">
+            <button class="mailbox-tab active" data-tab="invitations">
+              <i class="fas fa-user-plus"></i>
+              Invitations
+            </button>
+            <button class="mailbox-tab" data-tab="notifications">
+              <i class="fas fa-bell"></i>
+              Notifications
+            </button>
+          </div>
+          
+          <div class="mailbox-content">
+            <!-- Invitations Tab -->
+            <div id="invitations-tab" class="mailbox-tab-content active">
+              <div class="mailbox-loading" id="invitations-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading invitations...</span>
+              </div>
+              <div class="mailbox-empty" id="invitations-empty" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <span>No invitations found</span>
+              </div>
+              <div class="mailbox-list" id="invitations-list" style="display: none;">
+                <!-- Invitations will be populated here -->
+              </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="mailbox-tab-content">
+              <div class="mailbox-loading" id="notifications-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading notifications...</span>
+              </div>
+              <div class="mailbox-empty" id="notifications-empty" style="display: none;">
+                <i class="fas fa-bell-slash"></i>
+                <span>No notifications</span>
+              </div>
+              <div class="mailbox-list" id="notifications-list" style="display: none;">
+                <!-- Notifications will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
         <main class="users-main">
             <!-- Organization Required Section -->
             <section class="org-required-section" id="organizationRequired" style="display: none;">
@@ -220,10 +282,10 @@
                     <h2>Organization Required</h2>
                     <p>You need to create or join an organization to access user management features.</p>
                     <div class="org-required-actions">
-                        <button class="btn btn-primary-large" onclick="window.location.href='/create-organization'">
+                        <button class="btn btn-primary-large" id="create-org-btn">
                             Create Organization
                         </button>
-                        <button class="btn btn-secondary-large" onclick="window.location.href='/organizations'">
+                        <button class="btn btn-secondary-large" id="join-org-btn">
                             Join Organization
                         </button>
                     </div>
@@ -472,6 +534,8 @@
     </div>
 
     <script src="js/shared.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/mailbox.js"></script>
     <script src="js/users.js"></script>
 </body>
 </html>

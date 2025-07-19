@@ -76,6 +76,232 @@ const requireSuperAdmin = (req, res, next) => {
   next();
 };
 
+// New middleware for role-based access control
+const requireRole = (allowedRoles) => {
+  return (req, res, next) => {
+    if (!req.profile) {
+      return res.status(403).json({ error: 'Authentication required' });
+    }
+    
+    if (!allowedRoles.includes(req.profile.role)) {
+      return res.status(403).json({ 
+        error: 'Insufficient permissions',
+        requiredRoles: allowedRoles,
+        userRole: req.profile.role
+      });
+    }
+    
+    next();
+  };
+};
+
+// Middleware to restrict organization_member actions
+const restrictOrganizationMember = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // organization_member users have restricted access
+  if (req.profile.role === 'organization_member') {
+    return res.status(403).json({ 
+      error: 'This action is restricted for organization members',
+      userRole: req.profile.role,
+      message: 'Only administrators and managers can perform this action'
+    });
+  }
+  
+  next();
+};
+
+// Middleware for Global Stats (Super Admin only)
+const requireGlobalStatsAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  if (req.profile.role !== 'super_admin') {
+    return res.status(403).json({ 
+      error: 'Global stats access denied',
+      userRole: req.profile.role,
+      message: 'Only super administrators can access global statistics'
+    });
+  }
+  
+  next();
+};
+
+// Middleware for Organization Overview (Admin and Member with restrictions)
+const requireOrganizationOverviewAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // Super admin can access everything
+  if (req.profile.role === 'super_admin') {
+    return next();
+  }
+  
+  // Admin can access full organization overview
+  if (req.profile.role === 'admin') {
+    return next();
+  }
+  
+  // Organization member can only access limited (self) overview
+  if (req.profile.role === 'organization_member') {
+    // Add flag to request for limited access
+    req.limitedAccess = true;
+    return next();
+  }
+  
+  return res.status(403).json({ 
+    error: 'Organization overview access denied',
+    userRole: req.profile.role
+  });
+};
+
+// Middleware for Payroll Access (Admin: all, Member: self only)
+const requirePayrollAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // Super admin can access everything
+  if (req.profile.role === 'super_admin') {
+    return next();
+  }
+  
+  // Admin can access all payroll
+  if (req.profile.role === 'admin') {
+    return next();
+  }
+  
+  // Organization member can only access their own payroll
+  if (req.profile.role === 'organization_member') {
+    req.selfOnlyAccess = true;
+    return next();
+  }
+  
+  return res.status(403).json({ 
+    error: 'Payroll access denied',
+    userRole: req.profile.role
+  });
+};
+
+// Middleware for Analytics Access (Admin only, Member: no access)
+const requireAnalyticsAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // Super admin can access everything
+  if (req.profile.role === 'super_admin') {
+    return next();
+  }
+  
+  // Admin can access organization-wide analytics
+  if (req.profile.role === 'admin') {
+    return next();
+  }
+  
+  // Organization member has no access to analytics
+  if (req.profile.role === 'organization_member') {
+    return res.status(403).json({ 
+      error: 'Analytics access denied',
+      userRole: req.profile.role,
+      message: 'Organization members cannot access analytics'
+    });
+  }
+  
+  return res.status(403).json({ 
+    error: 'Analytics access denied',
+    userRole: req.profile.role
+  });
+};
+
+// Middleware for Invite Users (Admin only)
+const requireInviteUsersAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // Super admin can invite users
+  if (req.profile.role === 'super_admin') {
+    return next();
+  }
+  
+  // Admin can invite users
+  if (req.profile.role === 'admin') {
+    return next();
+  }
+  
+  // Organization member cannot invite users
+  if (req.profile.role === 'organization_member') {
+    return res.status(403).json({ 
+      error: 'Invite users access denied',
+      userRole: req.profile.role,
+      message: 'Organization members cannot invite users'
+    });
+  }
+  
+  return res.status(403).json({ 
+    error: 'Invite users access denied',
+    userRole: req.profile.role
+  });
+};
+
+// Middleware for Notifications/Inbox (All roles)
+const requireNotificationsAccess = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  // All roles can access notifications/inbox
+  if (['super_admin', 'admin', 'organization_member'].includes(req.profile.role)) {
+    return next();
+  }
+  
+  return res.status(403).json({ 
+    error: 'Notifications access denied',
+    userRole: req.profile.role
+  });
+};
+
+// Middleware to check if user can manage users (admin, manager, super_admin only)
+const requireUserManagement = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  const allowedRoles = ['admin', 'manager', 'super_admin'];
+  if (!allowedRoles.includes(req.profile.role)) {
+    return res.status(403).json({ 
+      error: 'User management access required',
+      userRole: req.profile.role,
+      message: 'Only administrators and managers can manage users'
+    });
+  }
+  
+  next();
+};
+
+// Middleware to check if user can send invitations (admin, super_admin only)
+const requireInvitePermission = (req, res, next) => {
+  if (!req.profile) {
+    return res.status(403).json({ error: 'Authentication required' });
+  }
+  
+  const allowedRoles = ['admin', 'super_admin'];
+  if (!allowedRoles.includes(req.profile.role)) {
+    return res.status(403).json({ 
+      error: 'Invitation permission required',
+      userRole: req.profile.role,
+      message: 'Only administrators can send invitations'
+    });
+  }
+  
+  next();
+};
+
 // Middleware to check if user belongs to organization
 const requireOrganizationAccess = (req, res, next) => {
   if (!req.profile || !req.profile.organization_id) {
@@ -155,5 +381,15 @@ module.exports = {
   requireOrganizationAccess,
   requireOrganizationMembership,
   requireOrganization,
-  checkOrganizationStatus
+  checkOrganizationStatus,
+  requireRole,
+  restrictOrganizationMember,
+  requireUserManagement,
+  requireInvitePermission,
+  requireGlobalStatsAccess,
+  requireOrganizationOverviewAccess,
+  requirePayrollAccess,
+  requireAnalyticsAccess,
+  requireInviteUsersAccess,
+  requireNotificationsAccess
 }; 

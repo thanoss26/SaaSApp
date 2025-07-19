@@ -114,6 +114,74 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
     }
 };
 
+// Send invitation acceptance notification to admin
+const sendInvitationAcceptanceEmail = async (invitationData, userData, adminData) => {
+    try {
+        const transporter = createTransporter();
+        
+        const mailOptions = {
+            from: process.env.EMAIL_FROM || 'noreply@company.com',
+            to: adminData.email,
+            subject: `Invitation Accepted - ${userData.first_name} ${userData.last_name} joined your organization`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+                    <div style="background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        <div style="text-align: center; margin-bottom: 30px;">
+                            <h1 style="color: #28a745; margin: 0;">🎉 New Team Member Joined!</h1>
+                        </div>
+                        
+                        <div style="margin-bottom: 25px;">
+                            <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                                Hi <strong>${adminData.first_name} ${adminData.last_name}</strong>,
+                            </p>
+                            <p style="color: #555; font-size: 16px; line-height: 1.6;">
+                                Great news! <strong>${userData.first_name} ${userData.last_name}</strong> has accepted your invitation to join <strong>${invitationData.organization_name}</strong>.
+                            </p>
+                        </div>
+                        
+                        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 6px; margin: 25px 0;">
+                            <h3 style="color: #155724; margin: 0 0 15px 0;">New Member Details:</h3>
+                            <ul style="color: #155724; font-size: 16px; line-height: 1.6; margin: 0; padding-left: 20px;">
+                                <li><strong>Name:</strong> ${userData.first_name} ${userData.last_name}</li>
+                                <li><strong>Email:</strong> ${userData.email}</li>
+                                <li><strong>Role:</strong> ${invitationData.role || 'Organization Member'}</li>
+                                <li><strong>Joined:</strong> ${new Date().toLocaleDateString()}</li>
+                            </ul>
+                        </div>
+                        
+                        <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 25px 0;">
+                            <p style="color: #856404; font-size: 14px; margin: 0;">
+                                <strong>Next Steps:</strong> You can now manage this user's permissions and assign them to teams through your admin dashboard.
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+                            <p style="color: #666; font-size: 14px; margin: 0;">
+                                Welcome to the team! We're excited to have you on board.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+        
+        const info = await transporter.sendMail(mailOptions);
+        
+        console.log('📧 Invitation acceptance email sent successfully');
+        return {
+            success: true,
+            messageId: info.messageId
+        };
+        
+    } catch (error) {
+        console.error('❌ Error sending invitation acceptance email:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
+
 // Send welcome email after successful registration
 const sendWelcomeEmail = async (employeeData) => {
     try {
@@ -178,5 +246,6 @@ const sendWelcomeEmail = async (employeeData) => {
 
 module.exports = {
     sendInviteEmail,
-    sendWelcomeEmail
+    sendWelcomeEmail,
+    sendInvitationAcceptanceEmail
 }; 

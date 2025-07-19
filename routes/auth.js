@@ -1,7 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { supabase, supabaseAdmin } = require('../config/supabase');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, requireInvitePermission, requireInviteUsersAccess } = require('../middleware/auth');
 const router = express.Router();
 
 // Helper function to determine user role based on email
@@ -638,8 +638,8 @@ router.post('/create-organization', [
   }
 });
 
-// Generate invite link for employee
-router.post('/generate-invite', [
+// Generate invite link for employee (admin/super_admin only)
+router.post('/generate-invite', requireInviteUsersAccess, [
   body('email').isEmail().normalizeEmail(),
   body('first_name').trim().isLength({ min: 1, max: 100 }),
   body('last_name').trim().isLength({ min: 1, max: 100 })
@@ -677,15 +677,20 @@ router.post('/generate-invite', [
 
     const { email, first_name, last_name } = req.body;
 
-    // Check if email already exists
+    // Check if user already exists - but allow invitations to existing users
     const { data: existingUser } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, organization_id')
       .eq('email', email)
       .single();
 
-    if (existingUser) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+    // If user exists and already belongs to an organization, check if it's the same organization
+    if (existingUser && existingUser.organization_id) {
+      if (existingUser.organization_id === profile.organization_id) {
+        return res.status(400).json({ error: 'User is already a member of this organization' });
+      } else {
+        return res.status(400).json({ error: 'User already belongs to another organization' });
+      }
     }
 
     // Generate unique invite code
@@ -701,6 +706,7 @@ router.post('/generate-invite', [
         first_name,
         last_name,
         organization_id: profile.organization_id,
+        role: 'organization_member', // Default role for invited users
         invite_code: inviteCode,
         expires_at: expiresAt.toISOString(),
         created_by: userId
@@ -823,70 +829,141 @@ router.post('/accept-invite', [
       return res.status(400).json({ error: 'Invite has expired' });
     }
 
-    // Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: invite.email,
-      password
-    });
-
-    if (authError) {
-      return res.status(400).json({ error: authError.message });
-    }
-
-    const user = authData.user;
-
-    // Create profile record
-    const profileData = {
-      id: user.id,
-      email: invite.email,
-      first_name: invite.first_name,
-      last_name: invite.last_name,
-      role: 'organization_member',
-      organization_id: invite.organization_id,
-      phone: phone || null
-    };
-
-    const { error: profileError } = await supabase
+    // Check if user already exists
+    const { data: existingUser } = await supabase
       .from('profiles')
-      .insert(profileData);
+      .select('id, organization_id')
+      .eq('email', invite.email)
+      .single();
+
+    let user;
+    let profileError;
+
+    if (existingUser) {
+      // User exists, update their profile to join the organization
+      user = { id: existingUser.id };
+      
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          organization_id: invite.organization_id,
+          role: 'organization_member',
+          phone: phone || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingUser.id);
+
+      profileError = updateError;
+    } else {
+      // User doesn't exist, create new user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: invite.email,
+        password
+      });
+
+      if (authError) {
+        return res.status(400).json({ error: authError.message });
+      }
+
+      user = authData.user;
+
+      // Create profile record
+      const profileData = {
+        id: user.id,
+        email: invite.email,
+        first_name: invite.first_name,
+        last_name: invite.last_name,
+        role: 'organization_member',
+        organization_id: invite.organization_id,
+        phone: phone || null
+      };
+
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert(profileData);
+
+      profileError = insertError;
+    }
 
     if (profileError) {
-      // Clean up auth user if profile creation fails
-      await supabase.auth.admin.deleteUser(user.id);
-      return res.status(500).json({ error: 'Failed to create user profile: ' + profileError.message });
+      // Clean up auth user if profile creation/update fails
+      if (!existingUser) {
+        await supabase.auth.admin.deleteUser(user.id);
+      }
+      return res.status(500).json({ error: 'Failed to create/update user profile: ' + profileError.message });
     }
 
-    // Create employee record
-    const employeeData = {
-      first_name: invite.first_name,
-      last_name: invite.last_name,
-      email: invite.email,
-      phone: phone || null,
-      employment_type,
-      job_title,
-      department,
-      work_location,
-      employee_status: 'active',
-      date_of_joining,
-      salary: salary || null,
-      currency: currency || 'USD',
-      organization_id: invite.organization_id,
-      profile_id: user.id,
-      created_by: invite.created_by,
-      updated_by: invite.created_by,
-      is_active: true,
-      is_deleted: false
-    };
-
-    const { error: employeeError } = await supabase
+    // Check if employee record already exists
+    const { data: existingEmployee } = await supabase
       .from('employees')
-      .insert(employeeData);
+      .select('id')
+      .eq('email', invite.email)
+      .eq('is_deleted', false)
+      .single();
+
+    let employeeError;
+
+    if (existingEmployee) {
+      // Update existing employee record
+      const { error: updateError } = await supabase
+        .from('employees')
+        .update({
+          organization_id: invite.organization_id,
+          profile_id: user.id,
+          phone: phone || null,
+          employment_type,
+          job_title,
+          department,
+          work_location,
+          employee_status: 'active',
+          date_of_joining,
+          salary: salary || null,
+          currency: currency || 'USD',
+          updated_by: invite.created_by,
+          updated_at: new Date().toISOString(),
+          is_active: true,
+          is_deleted: false
+        })
+        .eq('id', existingEmployee.id);
+
+      employeeError = updateError;
+    } else {
+      // Create new employee record
+      const employeeData = {
+        first_name: invite.first_name,
+        last_name: invite.last_name,
+        email: invite.email,
+        phone: phone || null,
+        employment_type,
+        job_title,
+        department,
+        work_location,
+        employee_status: 'active',
+        date_of_joining,
+        salary: salary || null,
+        currency: currency || 'USD',
+        organization_id: invite.organization_id,
+        profile_id: user.id,
+        created_by: invite.created_by,
+        updated_by: invite.created_by,
+        is_active: true,
+        is_deleted: false
+      };
+
+      const { error: insertError } = await supabase
+        .from('employees')
+        .insert(employeeData);
+
+      employeeError = insertError;
+    }
 
     if (employeeError) {
-      // Clean up if employee creation fails
-      await supabase.auth.admin.deleteUser(user.id);
-      await supabase.from('profiles').delete().eq('id', user.id);
-      return res.status(500).json({ error: 'Failed to create employee record: ' + employeeError.message });
+      // Clean up if employee creation/update fails
+      if (!existingUser) {
+        await supabase.auth.admin.deleteUser(user.id);
+        await supabase.from('profiles').delete().eq('id', user.id);
+      }
+      return res.status(500).json({ error: 'Failed to create/update employee record: ' + employeeError.message });
     }
 
     // Mark invite as used
@@ -914,6 +991,78 @@ router.post('/accept-invite', [
   } catch (error) {
     console.error('Accept invite error:', error);
     res.status(500).json({ error: 'Failed to accept invite' });
+  }
+});
+
+// Leave organization
+router.post('/leave-organization', authenticateToken, async (req, res) => {
+  try {
+    console.log('🚪 Leave organization request for user:', req.user.id);
+    
+    // Get current user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('organization_id, role')
+      .eq('id', req.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('❌ Error fetching user profile:', profileError);
+      return res.status(500).json({ error: 'Failed to fetch user profile' });
+    }
+
+    if (!profile.organization_id) {
+      return res.status(400).json({ error: 'User is not part of any organization' });
+    }
+
+    // Check if user is the organization owner (super admin or admin)
+    if (profile.role === 'super_admin' || profile.role === 'admin') {
+      return res.status(403).json({ 
+        error: 'Organization owners cannot leave their organization. Please transfer ownership or delete the organization instead.' 
+      });
+    }
+
+    // Update user profile to remove organization_id
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ 
+        organization_id: null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', req.user.id);
+
+    if (updateError) {
+      console.error('❌ Error updating user profile:', updateError);
+      return res.status(500).json({ error: 'Failed to leave organization' });
+    }
+
+    // Also update employee record if it exists
+    const { error: employeeUpdateError } = await supabase
+      .from('employees')
+      .update({ 
+        organization_id: null,
+        employee_status: 'inactive',
+        updated_at: new Date().toISOString()
+      })
+      .eq('profile_id', req.user.id);
+
+    if (employeeUpdateError) {
+      console.log('⚠️ Warning: Could not update employee record:', employeeUpdateError);
+      // Don't fail the request if employee update fails
+    }
+
+    console.log('✅ User successfully left organization');
+    res.json({ 
+      message: 'Successfully left the organization',
+      user: {
+        id: req.user.id,
+        organization_id: null
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Leave organization error:', error);
+    res.status(500).json({ error: 'Failed to leave organization' });
   }
 });
 
