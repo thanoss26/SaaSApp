@@ -372,8 +372,8 @@ class PayrollManager {
             const statusClass = payroll.status === 'completed' ? 'completed' : 'pending';
             const statusText = payroll.status === 'completed' ? 'Completed' : 'Pending';
             
-            // Add payment button for pending payrolls
-            const actionButtons = payroll.status === 'pending' 
+            // Add payment button for pending payrolls (admin only)
+            const actionButtons = payroll.status === 'pending' && this.isAdmin
                 ? `
                     <div class="action-buttons">
                         <button class="btn-payment" onclick="payrollManager.proceedToPayment('${payroll.id}')" title="Proceed to Payment">
@@ -1359,7 +1359,8 @@ class PayrollManager {
                                 </div>
                                 <div class="card-flip-indicator">
                                     <i class="fas fa-info-circle"></i>
-                                    Click on the card to flip and enter CVV
+                                    <span>Click on the card to flip and enter CVV</span>
+                                    <i class="fas fa-arrow-right flip-arrow"></i>
                                 </div>
                             </div>
 
@@ -1547,17 +1548,36 @@ class PayrollManager {
                 e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
             });
 
-            // Card flip functionality
-            cardFront.addEventListener('click', () => {
-                cardFront.style.transform = 'rotateY(180deg)';
-                cardBack.style.transform = 'rotateY(0deg)';
-                cardCvvInput.focus();
+            // Prevent card flip when clicking on input fields
+            const cardInputs = [cardNumberInput, cardCvvInput, cardExpiryInput, document.getElementById('card-holder')];
+            cardInputs.forEach(input => {
+                if (input) {
+                    input.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                    });
+                    input.addEventListener('focus', (e) => {
+                        e.stopPropagation();
+                    });
+                }
             });
 
-            cardBack.addEventListener('click', () => {
-                cardBack.style.transform = 'rotateY(180deg)';
-                cardFront.style.transform = 'rotateY(0deg)';
-                cardNumberInput.focus();
+            // Card flip functionality - only when clicking on non-input areas
+            cardFront.addEventListener('click', (e) => {
+                // Only flip if not clicking on an input field
+                if (!e.target.matches('input, label')) {
+                    cardFront.style.transform = 'rotateY(180deg)';
+                    cardBack.style.transform = 'rotateY(0deg)';
+                    cardCvvInput.focus();
+                }
+            });
+
+            cardBack.addEventListener('click', (e) => {
+                // Only flip if not clicking on an input field
+                if (!e.target.matches('input, label')) {
+                    cardBack.style.transform = 'rotateY(180deg)';
+                    cardFront.style.transform = 'rotateY(0deg)';
+                    cardNumberInput.focus();
+                }
             });
 
             // Focus on card number when card form is shown
@@ -1610,15 +1630,14 @@ class PayrollManager {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/payment/card', {
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    payroll_id: this.currentPaymentPayroll.id,
-                    amount: amount,
+                    payment_method: 'card',
                     card_number: cardNumber,
                     card_holder: cardHolder,
                     card_expiry: cardExpiry,
@@ -1628,16 +1647,16 @@ class PayrollManager {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to process card payment');
+                throw new Error(errorData.error || 'Failed to process payment');
             }
 
             const data = await response.json();
-            console.log('✅ Card payment processed successfully:', data);
-            this.showToast('Card payment processed successfully!', 'success');
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('Payment processed successfully!', 'success');
             this.closePaymentModal();
             await this.loadPayrolls(); // Refresh payroll list to update status
         } catch (error) {
-            console.error('❌ Error processing card payment:', error);
+            console.error('❌ Error processing payment:', error);
             this.showToast(error.message, 'error');
         }
     }
@@ -1653,49 +1672,96 @@ class PayrollManager {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/payment/bank', {
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    payroll_id: this.currentPaymentPayroll.id,
-                    amount: amount,
+                    payment_method: 'bank',
                     bank_reference: bankReference
                 })
             });
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to process bank transfer');
+                throw new Error(errorData.error || 'Failed to process payment');
             }
 
             const data = await response.json();
-            console.log('✅ Bank transfer processed successfully:', data);
-            this.showToast('Bank transfer processed successfully!', 'success');
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('Payment processed successfully!', 'success');
             this.closePaymentModal();
             await this.loadPayrolls(); // Refresh payroll list to update status
         } catch (error) {
-            console.error('❌ Error processing bank transfer:', error);
+            console.error('❌ Error processing payment:', error);
             this.showToast(error.message, 'error');
         }
     }
 
     async processRevolutPayment(amount) {
-        console.log('�� Processing Revolut Payment...');
-        // In a real application, you would redirect to a Revolut payment page
-        // For demonstration, we'll just show a toast
-        this.showToast('Revolut payment selected. Redirecting to Revolut app...', 'info');
-        // Example: window.location.href = '/revolut-payment-redirect';
+        console.log('💳 Processing Revolut Payment...');
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payment_method: 'revolut'
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to process payment');
+            }
+
+            const data = await response.json();
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('Revolut payment processed successfully!', 'success');
+            this.closePaymentModal();
+            await this.loadPayrolls(); // Refresh payroll list to update status
+        } catch (error) {
+            console.error('❌ Error processing payment:', error);
+            this.showToast(error.message, 'error');
+        }
     }
 
     async processPaypalPayment(amount) {
         console.log('💳 Processing PayPal Payment...');
-        // In a real application, you would redirect to a PayPal payment page
-        // For demonstration, we'll just show a toast
-        this.showToast('PayPal payment selected. Redirecting to PayPal...', 'info');
-        // Example: window.location.href = '/paypal-payment-redirect';
+        
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payment_method: 'paypal'
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to process payment');
+            }
+
+            const data = await response.json();
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('PayPal payment processed successfully!', 'success');
+            this.closePaymentModal();
+            await this.loadPayrolls(); // Refresh payroll list to update status
+        } catch (error) {
+            console.error('❌ Error processing payment:', error);
+            this.showToast(error.message, 'error');
+        }
     }
 }
 

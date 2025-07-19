@@ -48,6 +48,7 @@ app.use(helmet({
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", 'https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', "'sha256-9wF3mPmFam0b5SxsZhkDUfTOUicPsMdY547xLFPUNMo='"],
+      scriptSrcAttr: ["'unsafe-inline'"], // Allow inline event handlers
       imgSrc: ["'self'", 'data:', 'https://randomuser.me', 'https://api.dicebear.com', 'https://ui-avatars.com'],
       styleSrc: ["'self'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', "'unsafe-inline'"],
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],

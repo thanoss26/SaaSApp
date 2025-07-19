@@ -273,6 +273,140 @@ router.post('/', authenticateToken, requireOrganization, async (req, res) => {
     }
 });
 
+// POST /api/payroll/:id/proceed-to-payment - Proceed to payment for a payroll
+router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
+    console.log('💳 POST /api/payroll/:id/proceed-to-payment - Proceeding to payment');
+    
+    try {
+        const payrollId = req.params.id;
+        const userId = req.user.id;
+        
+        console.log('🔍 Payroll ID:', payrollId);
+        console.log('🔍 User ID:', userId);
+        
+        // Get user profile to check permissions
+        const { data: userProfile, error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+        if (profileError || !userProfile) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+        
+        // Check if user has permission to process payments
+        if (!['admin', 'super_admin'].includes(userProfile.role)) {
+            console.error('❌ User does not have permission to process payments');
+            return res.status(403).json({ error: 'Insufficient permissions to process payments' });
+        }
+        
+        // Get the payroll record
+        const { data: payroll, error: payrollError } = await supabaseAdmin
+            .from('payrolls')
+            .select(`
+                *,
+                employee:profiles!payrolls_employee_id_fkey(
+                    id,
+                    first_name,
+                    last_name,
+                    email
+                )
+            `)
+            .eq('id', payrollId)
+            .eq('organization_id', userProfile.organization_id)
+            .single();
+            
+        if (payrollError || !payroll) {
+            console.error('❌ Payroll not found:', payrollError);
+            return res.status(404).json({ error: 'Payroll not found' });
+        }
+        
+        // Check if payroll is already paid
+        if (payroll.status === 'paid') {
+            console.log('❌ Payroll is already paid');
+            return res.status(400).json({ error: 'Payroll is already paid' });
+        }
+        
+        // Check if payroll is cancelled
+        if (payroll.status === 'cancelled') {
+            console.log('❌ Payroll is cancelled');
+            return res.status(400).json({ error: 'Cannot process payment for cancelled payroll' });
+        }
+        
+        console.log('📋 Payroll details:', {
+            id: payroll.id,
+            payroll_id: payroll.payroll_id,
+            employee: payroll.employee?.first_name + ' ' + payroll.employee?.last_name,
+            total_amount: payroll.total_amount,
+            status: payroll.status
+        });
+        
+        // Generate payment reference
+        const paymentReference = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        
+        // Update payroll status to paid
+        const { error: updateError } = await supabaseAdmin
+            .from('payrolls')
+            .update({
+                status: 'paid',
+                paid_at: new Date().toISOString(),
+                payment_reference: paymentReference,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', payrollId);
+            
+        if (updateError) {
+            console.error('❌ Error updating payroll status:', updateError);
+            return res.status(500).json({ error: 'Failed to update payroll status' });
+        }
+        
+        // Create payment record
+        const paymentData = {
+            payment_reference: paymentReference,
+            payroll_id: payrollId,
+            employee_id: payroll.employee_id,
+            organization_id: payroll.organization_id,
+            amount: payroll.total_amount,
+            payment_method: 'bank_transfer', // Default payment method
+            status: 'completed',
+            processed_by: userId,
+            processed_at: new Date().toISOString(),
+            notes: `Payment processed for payroll ${payroll.payroll_id}`
+        };
+        
+        const { data: payment, error: paymentError } = await supabaseAdmin
+            .from('payments')
+            .insert(paymentData)
+            .select()
+            .single();
+            
+        if (paymentError) {
+            console.error('❌ Error creating payment record:', paymentError);
+            // Don't fail the whole operation, just log the error
+            console.log('⚠️ Payment record creation failed, but payroll status updated');
+        } else {
+            console.log('✅ Payment record created:', payment.id);
+        }
+        
+        console.log('🎉 Payment processing completed successfully');
+        
+        res.json({
+            success: true,
+            message: 'Payment processed successfully',
+            payment_reference: paymentReference,
+            payroll_id: payroll.payroll_id,
+            amount: payroll.total_amount,
+            employee: payroll.employee?.first_name + ' ' + payroll.employee?.last_name
+        });
+        
+    } catch (error) {
+        console.error('❌ Error in proceed-to-payment:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Get specific payroll details
 router.get('/:id', authenticateToken, requireOrganization, async (req, res) => {
     try {
