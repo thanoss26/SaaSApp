@@ -1322,6 +1322,34 @@ class PayrollManager {
                                         <label for="bank-payment"></label>
                                     </div>
                                 </div>
+
+                                <div class="payment-option" data-method="iban">
+                                    <div class="payment-option-icon">
+                                        <i class="fas fa-euro-sign"></i>
+                                    </div>
+                                    <div class="payment-option-text">
+                                        <h5>IBAN Transfer</h5>
+                                        <p>Pay using your IBAN account</p>
+                                    </div>
+                                    <div class="payment-option-radio">
+                                        <input type="radio" name="payment-method" value="iban" id="iban-payment">
+                                        <label for="iban-payment"></label>
+                                    </div>
+                                </div>
+
+                                <div class="payment-option" data-method="stripe">
+                                    <div class="payment-option-icon">
+                                        <i class="fab fa-stripe"></i>
+                                    </div>
+                                    <div class="payment-option-text">
+                                        <h5>Stripe Payment</h5>
+                                        <p>Secure payment via Stripe</p>
+                                    </div>
+                                    <div class="payment-option-radio">
+                                        <input type="radio" name="payment-method" value="stripe" id="stripe-payment">
+                                        <label for="stripe-payment"></label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1397,6 +1425,61 @@ class PayrollManager {
                                 </div>
                             </div>
 
+                            <!-- IBAN Payment Form -->
+                            <div id="iban-payment-form" class="payment-form" style="display: none;">
+                                <div class="iban-details">
+                                    <h5>IBAN Transfer Details</h5>
+                                    <div class="iban-info">
+                                        <div class="iban-row">
+                                            <span>Your IBAN:</span>
+                                            <span id="user-iban">Loading...</span>
+                                        </div>
+                                        <div class="iban-row">
+                                            <span>Bank Name:</span>
+                                            <span id="user-bank-name">Loading...</span>
+                                        </div>
+                                        <div class="iban-row">
+                                            <span>Account Holder:</span>
+                                            <span id="user-account-holder">Loading...</span>
+                                        </div>
+                                        <div class="iban-row">
+                                            <span>Reference:</span>
+                                            <span id="iban-reference">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="iban-note">
+                                        <i class="fas fa-info-circle"></i>
+                                        Payment will be processed using your configured IBAN account
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stripe Payment Form -->
+                            <div id="stripe-payment-form" class="payment-form" style="display: none;">
+                                <div class="stripe-details">
+                                    <h5>Stripe Payment</h5>
+                                    <div class="stripe-info">
+                                        <div class="stripe-row">
+                                            <span>Payment Gateway:</span>
+                                            <span>Stripe</span>
+                                        </div>
+                                        <div class="stripe-row">
+                                            <span>Security:</span>
+                                            <span>PCI DSS Compliant</span>
+                                        </div>
+                                        <div class="stripe-row">
+                                            <span>Reference:</span>
+                                            <span id="stripe-reference">Loading...</span>
+                                        </div>
+                                    </div>
+                                    <div class="stripe-note">
+                                        <i class="fas fa-shield-alt"></i>
+                                        Your payment information is securely processed by Stripe
+                                    </div>
+                                    <input type="hidden" id="stripe-token" value="">
+                                </div>
+                            </div>
+
                             <!-- External Payment Forms -->
                             <div id="external-payment-form" class="payment-form" style="display: none;">
                                 <div class="external-payment-info">
@@ -1462,6 +1545,8 @@ class PayrollManager {
         const paymentOptions = document.querySelectorAll('.payment-option');
         const cardPaymentForm = document.getElementById('card-payment-form');
         const bankPaymentForm = document.getElementById('bank-payment-form');
+        const ibanPaymentForm = document.getElementById('iban-payment-form');
+        const stripePaymentForm = document.getElementById('stripe-payment-form');
         const externalPaymentForm = document.getElementById('external-payment-form');
 
         paymentOptions.forEach(option => {
@@ -1482,6 +1567,8 @@ class PayrollManager {
                 // Hide all forms
                 cardPaymentForm.style.display = 'none';
                 bankPaymentForm.style.display = 'none';
+                ibanPaymentForm.style.display = 'none';
+                stripePaymentForm.style.display = 'none';
                 externalPaymentForm.style.display = 'none';
 
                 // Show appropriate form
@@ -1494,6 +1581,40 @@ class PayrollManager {
                     const bankReferenceElement = document.getElementById('bank-reference');
                     if (bankReferenceElement) {
                         bankReferenceElement.textContent = bankReference;
+                    }
+                } else if (method === 'iban') {
+                    ibanPaymentForm.style.display = 'block';
+                    // Populate IBAN details
+                    const userIbanElement = document.getElementById('user-iban');
+                    const userBankNameElement = document.getElementById('user-bank-name');
+                    const userAccountHolderElement = document.getElementById('user-account-holder');
+                    const ibanReferenceElement = document.getElementById('iban-reference');
+
+                    const user = this.getCurrentUser();
+                    if (user) {
+                        userIbanElement.textContent = user.iban || 'Not available';
+                        userBankNameElement.textContent = user.bank_name || 'Not available';
+                        userAccountHolderElement.textContent = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                        const ibanReference = `IBAN${Date.now().toString().slice(-8)}`;
+                        ibanReferenceElement.textContent = ibanReference;
+                    } else {
+                        userIbanElement.textContent = 'N/A';
+                        userBankNameElement.textContent = 'N/A';
+                        userAccountHolderElement.textContent = 'N/A';
+                        ibanReferenceElement.textContent = 'N/A';
+                    }
+                } else if (method === 'stripe') {
+                    stripePaymentForm.style.display = 'block';
+                    const stripeReferenceElement = document.getElementById('stripe-reference');
+                    const stripeTokenInput = document.getElementById('stripe-token');
+
+                    const user = this.getCurrentUser();
+                    if (user) {
+                        stripeReferenceElement.textContent = `Stripe${Date.now().toString().slice(-8)}`;
+                        stripeTokenInput.value = user.stripe_token || ''; // Assuming stripe_token is stored in user profile
+                    } else {
+                        stripeReferenceElement.textContent = 'N/A';
+                        stripeTokenInput.value = '';
                     }
                 } else if (method === 'revolut' || method === 'paypal') {
                     externalPaymentForm.style.display = 'block';
@@ -1610,6 +1731,10 @@ class PayrollManager {
                 this.processRevolutPayment(paymentTotalAmount);
             } else if (selectedMethod === 'paypal') {
                 this.processPaypalPayment(paymentTotalAmount);
+            } else if (selectedMethod === 'iban') {
+                this.processIbanPayment(paymentTotalAmount);
+            } else if (selectedMethod === 'stripe') {
+                this.processStripePayment(paymentTotalAmount);
             }
         } else {
             this.showToast('Payment method not selected or form not found.', 'error');
@@ -1756,6 +1881,84 @@ class PayrollManager {
             const data = await response.json();
             console.log('✅ Payment processed successfully:', data);
             this.showToast('PayPal payment processed successfully!', 'success');
+            this.closePaymentModal();
+            await this.loadPayrolls(); // Refresh payroll list to update status
+        } catch (error) {
+            console.error('❌ Error processing payment:', error);
+            this.showToast(error.message, 'error');
+        }
+    }
+
+    async processIbanPayment(amount) {
+        console.log('💳 Processing IBAN Payment...');
+        const iban = document.getElementById('user-iban').textContent; // Use the populated IBAN from the form
+
+        if (!iban) {
+            this.showToast('IBAN not available for payment.', 'error');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payment_method: 'iban',
+                    iban: iban
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to process payment');
+            }
+
+            const data = await response.json();
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('IBAN payment processed successfully!', 'success');
+            this.closePaymentModal();
+            await this.loadPayrolls(); // Refresh payroll list to update status
+        } catch (error) {
+            console.error('❌ Error processing payment:', error);
+            this.showToast(error.message, 'error');
+        }
+    }
+
+    async processStripePayment(amount) {
+        console.log('💳 Processing Stripe Payment...');
+        const stripeToken = document.getElementById('stripe-token').value; // Assuming a hidden input for Stripe token
+
+        if (!stripeToken) {
+            this.showToast('Stripe token not available.', 'error');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    payment_method: 'stripe',
+                    stripe_token: stripeToken
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to process payment');
+            }
+
+            const data = await response.json();
+            console.log('✅ Payment processed successfully:', data);
+            this.showToast('Stripe payment processed successfully!', 'success');
             this.closePaymentModal();
             await this.loadPayrolls(); // Refresh payroll list to update status
         } catch (error) {

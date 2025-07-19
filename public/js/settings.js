@@ -140,6 +140,90 @@ class SettingsManager {
 
         // Update role badge
         this.updateRoleBadge();
+        
+        // Setup role-based UI
+        this.setupRoleBasedUI();
+    }
+
+    setupRoleBasedUI() {
+        const isSuperAdmin = this.currentUser?.role === 'super_admin';
+        
+        // Update payment section
+        const paymentDescription = document.getElementById('payment-description');
+        const superAdminPayment = document.getElementById('super-admin-payment');
+        const userPayment = document.getElementById('user-payment');
+        
+        if (isSuperAdmin) {
+            if (paymentDescription) paymentDescription.textContent = 'Configure payment gateway and organization bank account details';
+            if (superAdminPayment) superAdminPayment.style.display = 'block';
+            if (userPayment) userPayment.style.display = 'none';
+        } else {
+            if (paymentDescription) paymentDescription.textContent = 'Configure your personal payment settings and IBAN';
+            if (superAdminPayment) superAdminPayment.style.display = 'none';
+            if (userPayment) userPayment.style.display = 'block';
+        }
+        
+        // Update system section
+        const systemDescription = document.getElementById('system-description');
+        const superAdminSystem = document.getElementById('super-admin-system');
+        const userSystem = document.getElementById('user-system');
+        
+        if (isSuperAdmin) {
+            if (systemDescription) systemDescription.textContent = 'Configure platform-wide settings and preferences';
+            if (superAdminSystem) superAdminSystem.style.display = 'block';
+            if (userSystem) userSystem.style.display = 'none';
+        } else {
+            if (systemDescription) systemDescription.textContent = 'View your account information and preferences';
+            if (superAdminSystem) superAdminSystem.style.display = 'none';
+            if (userSystem) userSystem.style.display = 'block';
+            
+            // Populate user system info
+            this.populateUserSystemInfo();
+        }
+        
+        // Update advanced section
+        const advancedDescription = document.getElementById('advanced-description');
+        const superAdminAdvanced = document.getElementById('super-admin-advanced');
+        const userAdvanced = document.getElementById('user-advanced');
+        
+        if (isSuperAdmin) {
+            if (advancedDescription) advancedDescription.textContent = 'Advanced configuration options and developer settings';
+            if (superAdminAdvanced) superAdminAdvanced.style.display = 'block';
+            if (userAdvanced) userAdvanced.style.display = 'none';
+        } else {
+            if (advancedDescription) advancedDescription.textContent = 'Account management and personal preferences';
+            if (superAdminAdvanced) superAdminAdvanced.style.display = 'none';
+            if (userAdvanced) userAdvanced.style.display = 'block';
+            
+            // Load user advanced settings
+            this.loadUserAdvancedSettings();
+        }
+    }
+
+    populateUserSystemInfo() {
+        if (!this.currentUser) return;
+        
+        const roleDisplay = document.getElementById('user-role-display');
+        const statusDisplay = document.getElementById('user-status-display');
+        const createdDisplay = document.getElementById('user-created-display');
+        
+        if (roleDisplay) {
+            roleDisplay.textContent = this.formatRole(this.currentUser.role);
+        }
+        
+        if (statusDisplay) {
+            statusDisplay.textContent = this.currentUser.is_active ? 'Active' : 'Inactive';
+            statusDisplay.className = `info-value ${this.currentUser.is_active ? 'status-active' : 'status-inactive'}`;
+        }
+        
+        if (createdDisplay && this.currentUser.created_at) {
+            const createdDate = new Date(this.currentUser.created_at);
+            createdDisplay.textContent = createdDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
     }
 
     updateRoleBadge() {
@@ -180,7 +264,8 @@ class SettingsManager {
                 this.loadNotificationSettings(),
                 this.loadSystemSettings(),
                 this.loadSecuritySettings(),
-                this.loadSessionData()
+                this.loadSessionData(),
+                this.loadPaymentSettings()
             ]);
         } catch (error) {
             console.error('❌ Failed to load some settings data:', error);
@@ -287,6 +372,194 @@ class SettingsManager {
 
         } catch (error) {
             console.error('❌ Failed to load session data:', error);
+        }
+    }
+
+    async loadPaymentSettings() {
+        try {
+            console.log('💰 Loading payment settings...');
+            
+            const isSuperAdmin = this.currentUser?.role === 'super_admin';
+            
+            if (isSuperAdmin) {
+                // Load organization payment settings for super admin
+                const ibanInput = document.getElementById('iban');
+                const bankNameInput = document.getElementById('bankName');
+                const accountNumberInput = document.getElementById('accountNumber');
+                const routingNumberInput = document.getElementById('routingNumber');
+                
+                if (this.currentUser) {
+                    if (ibanInput) ibanInput.value = this.currentUser.iban || '';
+                    if (bankNameInput) bankNameInput.value = this.currentUser.bank_name || '';
+                    if (accountNumberInput) accountNumberInput.value = this.currentUser.account_number || '';
+                    if (routingNumberInput) routingNumberInput.value = this.currentUser.routing_number || '';
+                }
+                
+                // Load Stripe settings from localStorage (in production, this would come from database)
+                const stripeEnabled = document.getElementById('stripeEnabled');
+                const stripeApiKey = document.getElementById('stripeApiKey');
+                
+                if (stripeEnabled) {
+                    stripeEnabled.checked = localStorage.getItem('stripeEnabled') === 'true';
+                }
+                
+                if (stripeApiKey) {
+                    stripeApiKey.value = localStorage.getItem('stripeApiKey') || '';
+                }
+            } else {
+                // Load personal payment settings for regular users
+                const userIbanInput = document.getElementById('userIban');
+                const userBankNameInput = document.getElementById('userBankName');
+                const userAccountHolderInput = document.getElementById('userAccountHolder');
+                const userPhoneInput = document.getElementById('userPhone');
+                const preferredPaymentMethod = document.getElementById('preferredPaymentMethod');
+                const paymentNotifications = document.getElementById('paymentNotifications');
+                
+                if (this.currentUser) {
+                    if (userIbanInput) userIbanInput.value = this.currentUser.iban || '';
+                    if (userBankNameInput) userBankNameInput.value = this.currentUser.bank_name || '';
+                    if (userAccountHolderInput) userAccountHolderInput.value = this.currentUser.account_holder_name || '';
+                    if (userPhoneInput) userPhoneInput.value = this.currentUser.phone || '';
+                }
+                
+                // Load user preferences from localStorage
+                if (preferredPaymentMethod) {
+                    preferredPaymentMethod.value = localStorage.getItem('preferredPaymentMethod') || 'iban';
+                }
+                
+                if (paymentNotifications) {
+                    paymentNotifications.checked = localStorage.getItem('paymentNotifications') !== 'false';
+                }
+                
+                // Initialize IBAN validation for user IBAN
+                this.initializeIBANValidation('userIban');
+            }
+            
+            console.log('✅ Payment settings loaded');
+        } catch (error) {
+            console.error('❌ Failed to load payment settings:', error);
+        }
+    }
+
+    initializeIBANValidation(inputId = 'iban') {
+        const ibanInput = document.getElementById(inputId);
+        if (!ibanInput) return;
+        
+        ibanInput.addEventListener('input', (e) => {
+            const iban = e.target.value.toUpperCase().replace(/\s/g, '');
+            e.target.value = iban;
+            
+            // Validate IBAN format
+            const isValid = this.validateIBAN(iban);
+            
+            if (iban && !isValid) {
+                ibanInput.classList.add('error');
+                this.showNotification('Invalid IBAN format', 'error');
+            } else {
+                ibanInput.classList.remove('error');
+            }
+        });
+        
+        ibanInput.addEventListener('blur', (e) => {
+            const iban = e.target.value;
+            if (iban && !this.validateIBAN(iban)) {
+                this.showNotification('Please enter a valid IBAN', 'error');
+            }
+        });
+    }
+
+    validateIBAN(iban) {
+        if (!iban) return true; // Empty is valid
+        
+        // Basic IBAN validation
+        const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/;
+        return ibanRegex.test(iban);
+    }
+
+    async savePaymentSettings() {
+        try {
+            console.log('💰 Saving payment settings...');
+            
+            const isSuperAdmin = this.currentUser?.role === 'super_admin';
+            
+            if (isSuperAdmin) {
+                // Save organization payment settings for super admin
+                const paymentData = {
+                    iban: document.getElementById('iban')?.value || '',
+                    bank_name: document.getElementById('bankName')?.value || '',
+                    account_number: document.getElementById('accountNumber')?.value || '',
+                    routing_number: document.getElementById('routingNumber')?.value || '',
+                    stripe_enabled: document.getElementById('stripeEnabled')?.checked || false,
+                    stripe_api_key: document.getElementById('stripeApiKey')?.value || ''
+                };
+                
+                // Validate IBAN if provided
+                if (paymentData.iban && !this.validateIBAN(paymentData.iban)) {
+                    throw new Error('Invalid IBAN format');
+                }
+                
+                // Save to database via API
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/auth/update-payment-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to save payment settings');
+                }
+                
+                // Save Stripe settings to localStorage (in production, this would be in database)
+                localStorage.setItem('stripeEnabled', paymentData.stripe_enabled);
+                localStorage.setItem('stripeApiKey', paymentData.stripe_api_key);
+                
+            } else {
+                // Save personal payment settings for regular users
+                const paymentData = {
+                    iban: document.getElementById('userIban')?.value || '',
+                    bank_name: document.getElementById('userBankName')?.value || '',
+                    account_holder_name: document.getElementById('userAccountHolder')?.value || '',
+                    phone: document.getElementById('userPhone')?.value || ''
+                };
+                
+                // Validate IBAN if provided
+                if (paymentData.iban && !this.validateIBAN(paymentData.iban)) {
+                    throw new Error('Invalid IBAN format');
+                }
+                
+                // Save to database via API
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/auth/update-payment-settings', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to save payment settings');
+                }
+                
+                // Save user preferences to localStorage
+                const preferredPaymentMethod = document.getElementById('preferredPaymentMethod')?.value || 'iban';
+                const paymentNotifications = document.getElementById('paymentNotifications')?.checked || false;
+                
+                localStorage.setItem('preferredPaymentMethod', preferredPaymentMethod);
+                localStorage.setItem('paymentNotifications', paymentNotifications);
+            }
+            
+            this.showNotification('Payment settings saved successfully', 'success');
+            console.log('✅ Payment settings saved');
+            
+        } catch (error) {
+            console.error('❌ Failed to save payment settings:', error);
+            this.showNotification(error.message, 'error');
         }
     }
 
@@ -598,6 +871,11 @@ class SettingsManager {
                 this.saveSecuritySettings(formData.security);
             }
 
+            // Save payment settings
+            if (formData.payment) {
+                await this.savePaymentSettings();
+            }
+
             this.showNotification('Settings saved successfully!', 'success');
             this.hasChanges = false;
             this.updateSaveButton();
@@ -666,8 +944,12 @@ class SettingsManager {
             notifications: {},
             system: {},
             security: {},
-            appearance: {}
+            appearance: {},
+            payment: {},
+            advanced: {}
         };
+        
+        const isSuperAdmin = this.currentUser?.role === 'super_admin';
         
         // Profile data
         const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
@@ -690,9 +972,17 @@ class SettingsManager {
         });
         
         // System settings (super admin only)
-        if (this.currentUser?.role === 'super_admin') {
+        if (isSuperAdmin) {
             const systemInputs = document.querySelectorAll('#system input, #system select');
             systemInputs.forEach(input => {
+                if (input.id) {
+                    data.system[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+        } else {
+            // User preferences for regular users
+            const userPreferences = document.querySelectorAll('#user-system input, #user-system select');
+            userPreferences.forEach(input => {
                 if (input.id) {
                     data.system[input.id] = input.type === 'checkbox' ? input.checked : input.value;
                 }
@@ -706,6 +996,44 @@ class SettingsManager {
                 data.security[input.id] = input.checked;
             }
         });
+        
+        // Payment settings
+        if (isSuperAdmin) {
+            // Super admin payment settings
+            const paymentInputs = document.querySelectorAll('#super-admin-payment input, #super-admin-payment select');
+            paymentInputs.forEach(input => {
+                if (input.id) {
+                    data.payment[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+        } else {
+            // Regular user payment settings
+            const paymentInputs = document.querySelectorAll('#user-payment input, #user-payment select');
+            paymentInputs.forEach(input => {
+                if (input.id) {
+                    data.payment[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+        }
+        
+        // Advanced settings
+        if (isSuperAdmin) {
+            // Super admin advanced settings
+            const advancedInputs = document.querySelectorAll('#super-admin-advanced input, #super-admin-advanced select');
+            advancedInputs.forEach(input => {
+                if (input.id) {
+                    data.advanced[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+        } else {
+            // Regular user advanced settings
+            const advancedInputs = document.querySelectorAll('#user-advanced input, #user-advanced select');
+            advancedInputs.forEach(input => {
+                if (input.id) {
+                    data.advanced[input.id] = input.type === 'checkbox' ? input.checked : input.value;
+                }
+            });
+        }
         
         return data;
     }
@@ -907,6 +1235,33 @@ class SettingsManager {
 
     showError(message) {
         this.showNotification(message, 'error');
+    }
+
+    loadUserAdvancedSettings() {
+        if (!this.currentUser) return;
+        
+        try {
+            // Load user preferences from localStorage
+            const userLanguage = document.getElementById('userLanguage');
+            const userTimezone = document.getElementById('userTimezone');
+            const accessibilityMode = document.getElementById('accessibilityMode');
+            
+            if (userLanguage) {
+                userLanguage.value = localStorage.getItem('userLanguage') || 'en';
+            }
+            
+            if (userTimezone) {
+                userTimezone.value = localStorage.getItem('userTimezone') || 'UTC';
+            }
+            
+            if (accessibilityMode) {
+                accessibilityMode.checked = localStorage.getItem('accessibilityMode') === 'true';
+            }
+            
+            console.log('✅ User advanced settings loaded');
+        } catch (error) {
+            console.error('❌ Failed to load user advanced settings:', error);
+        }
     }
 }
 

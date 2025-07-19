@@ -876,3 +876,352 @@ input:checked + .slider:before {
     flex-direction: column;
   }
 } 
+
+/* System Information Styles */
+.system-info {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.info-value {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+}
+
+.status-active {
+    color: #059669 !important;
+    font-weight: 600;
+}
+
+.status-inactive {
+    color: #dc2626 !important;
+    font-weight: 600;
+}
+
+/* User Preferences Styles */
+.user-preferences {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.preference-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.preference-option .option-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.preference-option .option-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Payment Preferences Styles */
+.payment-preferences {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-select {
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: white;
+    font-size: 0.875rem;
+    color: #374151;
+    min-width: 200px;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Role-based visibility */
+.admin-only {
+    display: none;
+}
+
+.user-only {
+    display: none;
+}
+
+/* Form help text */
+.form-help {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Enhanced card styles */
+.settings-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.settings-card:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.settings-card .card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.settings-card .card-header h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.settings-card .card-header p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .preference-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .form-select {
+        min-width: 100%;
+    }
+} 
+
+/* Account Options Styles */
+.account-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.account-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.account-option .option-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.account-option .option-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Personal Preferences Styles */
+.personal-preferences {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Account Actions Styles */
+.account-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.account-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #fef2f2;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+}
+
+.account-action .action-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+.account-action .action-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #dc2626;
+}
+
+/* Enhanced API Key Styles */
+.api-key {
+    background: #1f2937;
+    color: #10b981;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.75rem;
+    display: inline-block;
+    margin-top: 8px;
+    border: 1px solid #374151;
+}
+
+.api-key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-bottom: 16px;
+}
+
+.api-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.api-info p {
+    margin: 0 0 8px 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.api-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Developer Options Styles */
+.developer-options {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.developer-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.developer-option .option-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.developer-option .option-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+/* Danger Actions Styles */
+.danger-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.danger-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #fef2f2;
+    border-radius: 8px;
+    border: 1px solid #fecaca;
+}
+
+.danger-action .action-info h4 {
+    margin: 0 0 4px 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #991b1b;
+}
+
+.danger-action .action-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #dc2626;
+}
+
+/* Responsive adjustments for new elements */
+@media (max-width: 768px) {
+    .account-option,
+    .account-action,
+    .danger-action,
+    .api-key-item,
+    .developer-option {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .api-actions {
+        align-self: flex-end;
+    }
+} 

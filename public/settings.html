@@ -253,6 +253,10 @@
                         <i class="fas fa-plug"></i>
                         <span>Integrations</span>
                     </button>
+                    <button class="settings-tab" data-tab="payment">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Payment & Banking</span>
+                    </button>
                     <button class="settings-tab" data-tab="advanced">
                         <i class="fas fa-cogs"></i>
                         <span>Advanced</span>
@@ -428,105 +432,167 @@
                     <div class="settings-panel" id="system">
                         <div class="panel-header">
                             <h2>System Settings</h2>
-                            <p>Configure platform-wide settings and preferences</p>
+                            <p id="system-description">Configure platform-wide settings and preferences</p>
                         </div>
 
-                        <div class="settings-card">
-                            <div class="card-header">
-                                <h3>Platform Configuration</h3>
-                                <p>General platform settings and configurations</p>
-                            </div>
-                            
-                            <div class="form-section">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="platformName">Platform Name</label>
-                                        <input type="text" id="platformName" value="Chronos HR" class="form-input">
+                        <!-- Super Admin System Settings -->
+                        <div id="super-admin-system" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Platform Configuration</h3>
+                                    <p>General platform settings and configurations</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="platformName">Platform Name</label>
+                                            <input type="text" id="platformName" value="Chronos HR" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="supportEmail">Support Email</label>
+                                            <input type="email" id="supportEmail" value="support@chronoshr.com" class="form-input">
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="supportEmail">Support Email</label>
-                                        <input type="email" id="supportEmail" value="support@chronoshr.com" class="form-input">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="maxUsers">Maximum Users</label>
+                                            <input type="number" id="maxUsers" value="1000" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="sessionTimeout">Session Timeout (minutes)</label>
+                                            <input type="number" id="sessionTimeout" value="60" class="form-input">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="maxUsers">Maximum Users</label>
-                                        <input type="number" id="maxUsers" value="1000" class="form-input">
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>User Registration</h3>
+                                    <p>Control how new users can join the platform</p>
+                                </div>
+                                
+                                <div class="system-options">
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Allow Self Registration</h4>
+                                            <p>Users can create their own accounts</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="allowSelfRegistration">
+                                            <span class="slider"></span>
+                                        </label>
                                     </div>
-                                    <div class="form-group">
-                                        <label for="sessionTimeout">Session Timeout (minutes)</label>
-                                        <input type="number" id="sessionTimeout" value="60" class="form-input">
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Email Verification Required</h4>
+                                            <p>New users must verify their email address</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="requireEmailVerification" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Admin Approval Required</h4>
+                                            <p>New registrations require admin approval</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="requireAdminApproval" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Data Management</h3>
+                                    <p>Manage platform data and backups</p>
+                                </div>
+                                
+                                <div class="data-actions">
+                                    <div class="action-item">
+                                        <div class="action-info">
+                                            <h4>Export All Data</h4>
+                                            <p>Download a complete backup of all platform data</p>
+                                        </div>
+                                        <button class="btn btn-outline">
+                                            <i class="fas fa-download"></i>
+                                            Export
+                                        </button>
+                                    </div>
+                                    <div class="action-item">
+                                        <div class="action-info">
+                                            <h4>System Analytics</h4>
+                                            <p>View detailed system usage and performance metrics</p>
+                                        </div>
+                                        <button class="btn btn-outline">
+                                            <i class="fas fa-chart-line"></i>
+                                            View Analytics
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-card">
-                            <div class="card-header">
-                                <h3>User Registration</h3>
-                                <p>Control how new users can join the platform</p>
-                            </div>
-                            
-                            <div class="system-options">
-                                <div class="system-option">
-                                    <div class="option-info">
-                                        <h4>Allow Self Registration</h4>
-                                        <p>Users can create their own accounts</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="allowSelfRegistration">
-                                        <span class="slider"></span>
-                                    </label>
+                        <!-- Regular User System Message -->
+                        <div id="user-system" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>System Information</h3>
+                                    <p>Platform information and your account details</p>
                                 </div>
-                                <div class="system-option">
-                                    <div class="option-info">
-                                        <h4>Email Verification Required</h4>
-                                        <p>New users must verify their email address</p>
+                                
+                                <div class="system-info">
+                                    <div class="info-item">
+                                        <div class="info-label">Platform Name</div>
+                                        <div class="info-value">Chronos HR</div>
                                     </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="requireEmailVerification" checked>
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                                <div class="system-option">
-                                    <div class="option-info">
-                                        <h4>Admin Approval Required</h4>
-                                        <p>New registrations require admin approval</p>
+                                    <div class="info-item">
+                                        <div class="info-label">Your Role</div>
+                                        <div class="info-value" id="user-role-display">Loading...</div>
                                     </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="requireAdminApproval" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                                    <div class="info-item">
+                                        <div class="info-label">Account Status</div>
+                                        <div class="info-value" id="user-status-display">Loading...</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Member Since</div>
+                                        <div class="info-value" id="user-created-display">Loading...</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="settings-card">
-                            <div class="card-header">
-                                <h3>Data Management</h3>
-                                <p>Manage platform data and backups</p>
-                            </div>
-                            
-                            <div class="data-actions">
-                                <div class="action-item">
-                                    <div class="action-info">
-                                        <h4>Export All Data</h4>
-                                        <p>Download a complete backup of all platform data</p>
-                                    </div>
-                                    <button class="btn btn-outline">
-                                        <i class="fas fa-download"></i>
-                                        Export
-                                    </button>
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Account Preferences</h3>
+                                    <p>Personalize your experience</p>
                                 </div>
-                                <div class="action-item">
-                                    <div class="action-info">
-                                        <h4>System Analytics</h4>
-                                        <p>View detailed system usage and performance metrics</p>
+                                
+                                <div class="user-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Email Notifications</h4>
+                                            <p>Receive important updates via email</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="userEmailNotifications" checked>
+                                            <span class="slider"></span>
+                                        </label>
                                     </div>
-                                    <button class="btn btn-outline">
-                                        <i class="fas fa-chart-line"></i>
-                                        View Analytics
-                                    </button>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Dashboard Widgets</h4>
+                                            <p>Show additional widgets on your dashboard</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="userDashboardWidgets" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -754,76 +820,353 @@
                         </div>
                     </div>
 
+                    <!-- Payment & Banking Settings -->
+                    <div class="settings-panel" id="payment">
+                        <div class="panel-header">
+                            <h2>Payment & Banking</h2>
+                            <p id="payment-description">Configure payment settings and bank account details</p>
+                        </div>
+
+                        <!-- Super Admin Payment Settings -->
+                        <div id="super-admin-payment" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Organization Bank Account</h3>
+                                    <p>Enter your organization's bank account details</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="bankName">Bank Name</label>
+                                            <input type="text" id="bankName" value="Chronos Bank" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="accountNumber">Account Number</label>
+                                            <input type="text" id="accountNumber" value="1234567890" class="form-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="routingNumber">Routing Number</label>
+                                            <input type="text" id="routingNumber" value="111000025" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="iban">IBAN</label>
+                                            <input type="text" id="iban" value="DE89370400440532013000" class="form-input">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Payment Gateway Configuration</h3>
+                                    <p>Configure your payment processing settings</p>
+                                </div>
+                                
+                                <div class="payment-options">
+                                    <div class="payment-option">
+                                        <div class="option-info">
+                                            <h4>Stripe</h4>
+                                            <p>Process payments using Stripe</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="stripeEnabled">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="payment-option">
+                                        <div class="option-info">
+                                            <h4>Stripe API Key</h4>
+                                            <p>Enter your Stripe API key</p>
+                                            <input type="text" id="stripeApiKey" class="form-input" placeholder="sk_live_42424242424242424242424242424242">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regular User Payment Settings -->
+                        <div id="user-payment" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Personal Bank Account</h3>
+                                    <p>Add your personal IBAN for receiving payments</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="userBankName">Bank Name</label>
+                                            <input type="text" id="userBankName" class="form-input" placeholder="Your Bank Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="userIban">IBAN</label>
+                                            <input type="text" id="userIban" class="form-input" placeholder="DE89370400440532013000">
+                                            <small class="form-help">Your International Bank Account Number for receiving payments</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="userAccountHolder">Account Holder Name</label>
+                                            <input type="text" id="userAccountHolder" class="form-input" placeholder="Your Full Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="userPhone">Phone Number</label>
+                                            <input type="tel" id="userPhone" class="form-input" placeholder="+1 (555) 123-4567">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Payment Preferences</h3>
+                                    <p>Configure how you prefer to receive payments</p>
+                                </div>
+                                
+                                <div class="payment-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Preferred Payment Method</h4>
+                                            <p>Choose your preferred way to receive payments</p>
+                                        </div>
+                                        <select id="preferredPaymentMethod" class="form-select">
+                                            <option value="iban">IBAN Transfer</option>
+                                            <option value="bank">Bank Transfer</option>
+                                            <option value="paypal">PayPal</option>
+                                            <option value="revolut">Revolut</option>
+                                        </select>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Payment Notifications</h4>
+                                            <p>Receive notifications when payments are processed</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="paymentNotifications" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Advanced Settings -->
                     <div class="settings-panel" id="advanced">
                         <div class="panel-header">
                             <h2>Advanced Settings</h2>
-                            <p>Advanced configuration options and developer settings</p>
+                            <p id="advanced-description">Advanced configuration options and developer settings</p>
                         </div>
 
-                        <div class="settings-card">
-                            <div class="card-header">
-                                <h3>API Configuration</h3>
-                                <p>Manage API keys and access tokens</p>
-                            </div>
-                            
-                            <div class="api-section">
-                                <div class="api-key-item">
-                                    <div class="api-info">
-                                        <h4>Master API Key</h4>
-                                        <p>Full access to all API endpoints</p>
-                                        <code class="api-key">pk_live_51H2...</code>
+                        <!-- Super Admin Advanced Settings -->
+                        <div id="super-admin-advanced" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>API Configuration</h3>
+                                    <p>Manage API keys and access tokens</p>
+                                </div>
+                                
+                                <div class="api-section">
+                                    <div class="api-key-item">
+                                        <div class="api-info">
+                                            <h4>Master API Key</h4>
+                                            <p>Full access to all API endpoints</p>
+                                            <code class="api-key">pk_live_51H2...</code>
+                                        </div>
+                                        <div class="api-actions">
+                                            <button class="btn btn-outline btn-sm">Regenerate</button>
+                                        </div>
                                     </div>
-                                    <div class="api-actions">
-                                        <button class="btn btn-outline btn-sm">Regenerate</button>
+                                    <div class="api-key-item">
+                                        <div class="api-info">
+                                            <h4>Webhook Secret</h4>
+                                            <p>Secret key for webhook verification</p>
+                                            <code class="api-key">whsec_1234567890abcdef...</code>
+                                        </div>
+                                        <div class="api-actions">
+                                            <button class="btn btn-outline btn-sm">Regenerate</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Developer Options</h3>
+                                    <p>Options for development and debugging</p>
+                                </div>
+                                
+                                <div class="developer-options">
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Debug Mode</h4>
+                                            <p>Enable detailed logging and error reporting</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="debugMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Maintenance Mode</h4>
+                                            <p>Put the platform into maintenance mode</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="maintenanceMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Performance Monitoring</h4>
+                                            <p>Enable real-time performance monitoring</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="performanceMonitoring" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card danger">
+                                <div class="card-header">
+                                    <h3>Danger Zone</h3>
+                                    <p>Irreversible actions that affect the entire platform</p>
+                                </div>
+                                
+                                <div class="danger-actions">
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Reset All Data</h4>
+                                            <p>This will permanently delete all data on the platform</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('reset')">Reset Platform</button>
+                                    </div>
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Purge User Sessions</h4>
+                                            <p>Force all users to log out immediately</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('purge-sessions')">Purge Sessions</button>
+                                    </div>
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Delete Organization</h4>
+                                            <p>Permanently delete the entire organization and all data</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('delete-org')">Delete Organization</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="settings-card">
-                            <div class="card-header">
-                                <h3>Developer Options</h3>
-                                <p>Options for development and debugging</p>
-                            </div>
-                            
-                            <div class="developer-options">
-                                <div class="developer-option">
-                                    <div class="option-info">
-                                        <h4>Debug Mode</h4>
-                                        <p>Enable detailed logging and error reporting</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="debugMode">
-                                        <span class="slider"></span>
-                                    </label>
+                        <!-- Regular User Advanced Settings -->
+                        <div id="user-advanced" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Account Management</h3>
+                                    <p>Manage your account settings and preferences</p>
                                 </div>
-                                <div class="developer-option">
-                                    <div class="option-info">
-                                        <h4>Maintenance Mode</h4>
-                                        <p>Put the platform into maintenance mode</p>
+                                
+                                <div class="account-options">
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Export My Data</h4>
+                                            <p>Download a copy of all your personal data</p>
+                                        </div>
+                                        <button class="btn btn-outline">Export Data</button>
                                     </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="maintenanceMode">
-                                        <span class="slider"></span>
-                                    </label>
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Account Activity</h4>
+                                            <p>View your recent account activity and login history</p>
+                                        </div>
+                                        <button class="btn btn-outline">View Activity</button>
+                                    </div>
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Privacy Settings</h4>
+                                            <p>Control your privacy and data sharing preferences</p>
+                                        </div>
+                                        <button class="btn btn-outline">Manage Privacy</button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="settings-card danger">
-                            <div class="card-header">
-                                <h3>Danger Zone</h3>
-                                <p>Irreversible actions that affect the entire platform</p>
-                            </div>
-                            
-                            <div class="danger-actions">
-                                <div class="danger-action">
-                                    <div class="action-info">
-                                        <h4>Reset All Data</h4>
-                                        <p>This will permanently delete all data on the platform</p>
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Personal Preferences</h3>
+                                    <p>Customize your experience</p>
+                                </div>
+                                
+                                <div class="personal-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Language</h4>
+                                            <p>Choose your preferred language</p>
+                                        </div>
+                                        <select id="userLanguage" class="form-select">
+                                            <option value="en">English</option>
+                                            <option value="es">Español</option>
+                                            <option value="fr">Français</option>
+                                            <option value="de">Deutsch</option>
+                                        </select>
                                     </div>
-                                    <button class="btn btn-danger">Reset Platform</button>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Time Zone</h4>
+                                            <p>Set your local time zone</p>
+                                        </div>
+                                        <select id="userTimezone" class="form-select">
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/New_York">Eastern Time</option>
+                                            <option value="America/Chicago">Central Time</option>
+                                            <option value="America/Denver">Mountain Time</option>
+                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                            <option value="Europe/London">London</option>
+                                            <option value="Europe/Paris">Paris</option>
+                                            <option value="Asia/Tokyo">Tokyo</option>
+                                        </select>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Accessibility</h4>
+                                            <p>Enable accessibility features</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="accessibilityMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card danger">
+                                <div class="card-header">
+                                    <h3>Account Actions</h3>
+                                    <p>Actions that affect your personal account</p>
+                                </div>
+                                
+                                <div class="account-actions">
+                                    <div class="account-action">
+                                        <div class="action-info">
+                                            <h4>Deactivate Account</h4>
+                                            <p>Temporarily disable your account (can be reactivated)</p>
+                                        </div>
+                                        <button class="btn btn-outline">Deactivate</button>
+                                    </div>
+                                    <div class="account-action">
+                                        <div class="action-info">
+                                            <h4>Delete Account</h4>
+                                            <p>Permanently delete your account and all associated data</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('delete-account')">Delete Account</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

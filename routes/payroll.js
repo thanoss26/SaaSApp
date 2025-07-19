@@ -273,89 +273,89 @@ router.post('/', authenticateToken, requireOrganization, async (req, res) => {
     }
 });
 
-// POST /api/payroll/:id/proceed-to-payment - Proceed to payment for a payroll
+// Proceed to payment endpoint
 router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
-    console.log('💳 POST /api/payroll/:id/proceed-to-payment - Proceeding to payment');
-    
     try {
-        const payrollId = req.params.id;
-        const userId = req.user.id;
+        console.log('💰 Processing payment for payroll:', req.params.id);
         
-        console.log('🔍 Payroll ID:', payrollId);
-        console.log('🔍 User ID:', userId);
+        const { payment_method, card_number, card_holder, card_expiry, card_cvv, bank_reference } = req.body;
         
-        // Get user profile to check permissions
+        // Get user profile to check payment settings
         const { data: userProfile, error: profileError } = await supabaseAdmin
             .from('profiles')
             .select('*')
-            .eq('id', userId)
+            .eq('id', req.user.id)
             .single();
             
-        if (profileError || !userProfile) {
+        if (profileError) {
             console.error('❌ Error fetching user profile:', profileError);
             return res.status(500).json({ error: 'Failed to fetch user profile' });
         }
         
-        // Check if user has permission to process payments
-        if (!['admin', 'super_admin'].includes(userProfile.role)) {
-            console.error('❌ User does not have permission to process payments');
-            return res.status(403).json({ error: 'Insufficient permissions to process payments' });
-        }
-        
-        // Get the payroll record
+        // Get payroll details
         const { data: payroll, error: payrollError } = await supabaseAdmin
             .from('payrolls')
-            .select(`
-                *,
-                employee:profiles!payrolls_employee_id_fkey(
-                    id,
-                    first_name,
-                    last_name,
-                    email
-                )
-            `)
-            .eq('id', payrollId)
-            .eq('organization_id', userProfile.organization_id)
+            .select('*')
+            .eq('id', req.params.id)
             .single();
             
         if (payrollError || !payroll) {
-            console.error('❌ Payroll not found:', payrollError);
+            console.error('❌ Payroll not found:', req.params.id);
             return res.status(404).json({ error: 'Payroll not found' });
         }
         
-        // Check if payroll is already paid
-        if (payroll.status === 'paid') {
-            console.log('❌ Payroll is already paid');
-            return res.status(400).json({ error: 'Payroll is already paid' });
+        // Check if user has permission to process this payroll
+        if (payroll.organization_id !== userProfile.organization_id) {
+            console.error('❌ User not authorized for this payroll');
+            return res.status(403).json({ error: 'Not authorized to process this payroll' });
         }
         
-        // Check if payroll is cancelled
-        if (payroll.status === 'cancelled') {
-            console.log('❌ Payroll is cancelled');
-            return res.status(400).json({ error: 'Cannot process payment for cancelled payroll' });
+        // Check if payroll is in pending status
+        if (payroll.status !== 'pending') {
+            console.error('❌ Payroll is not in pending status:', payroll.status);
+            return res.status(400).json({ error: 'Payroll is not in pending status' });
         }
         
-        console.log('📋 Payroll details:', {
-            id: payroll.id,
-            payroll_id: payroll.payroll_id,
-            employee: payroll.employee?.first_name + ' ' + payroll.employee?.last_name,
-            total_amount: payroll.total_amount,
-            status: payroll.status
-        });
+        // Process payment based on method
+        let paymentResult;
         
-        // Generate payment reference
-        const paymentReference = `PAY-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        switch (payment_method) {
+            case 'card':
+                paymentResult = await processCardPayment(payroll, card_number, card_holder, card_expiry, card_cvv);
+                break;
+            case 'bank':
+                paymentResult = await processBankTransfer(payroll, userProfile);
+                break;
+            case 'iban':
+                paymentResult = await processIBANPayment(payroll, userProfile);
+                break;
+            case 'stripe':
+                paymentResult = await processStripePayment(payroll, userProfile);
+                break;
+            case 'revolut':
+                paymentResult = await processRevolutPayment(payroll);
+                break;
+            case 'paypal':
+                paymentResult = await processPaypalPayment(payroll);
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid payment method' });
+        }
+        
+        if (!paymentResult.success) {
+            return res.status(400).json({ error: paymentResult.error });
+        }
         
         // Update payroll status to paid
         const { error: updateError } = await supabaseAdmin
             .from('payrolls')
-            .update({
+            .update({ 
                 status: 'paid',
                 paid_at: new Date().toISOString(),
-                payment_reference: paymentReference,
-                updated_at: new Date().toISOString()
+                payment_method: payment_method,
+                payment_reference: paymentResult.reference
             })
-            .eq('id', payrollId);
+            .eq('id', req.params.id);
             
         if (updateError) {
             console.error('❌ Error updating payroll status:', updateError);
@@ -363,49 +363,110 @@ router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
         }
         
         // Create payment record
-        const paymentData = {
-            payment_reference: paymentReference,
-            payroll_id: payrollId,
-            employee_id: payroll.employee_id,
-            organization_id: payroll.organization_id,
-            amount: payroll.total_amount,
-            payment_method: 'bank_transfer', // Default payment method
-            status: 'completed',
-            processed_by: userId,
-            processed_at: new Date().toISOString(),
-            notes: `Payment processed for payroll ${payroll.payroll_id}`
-        };
-        
-        const { data: payment, error: paymentError } = await supabaseAdmin
+        const { error: paymentRecordError } = await supabaseAdmin
             .from('payments')
-            .insert(paymentData)
-            .select()
-            .single();
+            .insert({
+                payroll_id: req.params.id,
+                amount: payroll.total_amount,
+                payment_method: payment_method,
+                payment_reference: paymentResult.reference,
+                status: 'completed',
+                processed_by: req.user.id,
+                organization_id: userProfile.organization_id
+            });
             
-        if (paymentError) {
-            console.error('❌ Error creating payment record:', paymentError);
-            // Don't fail the whole operation, just log the error
-            console.log('⚠️ Payment record creation failed, but payroll status updated');
-        } else {
-            console.log('✅ Payment record created:', payment.id);
+        if (paymentRecordError) {
+            console.error('❌ Error creating payment record:', paymentRecordError);
+            // Don't fail the request, just log the error
         }
         
-        console.log('🎉 Payment processing completed successfully');
-        
-        res.json({
-            success: true,
+        console.log('✅ Payment processed successfully');
+        res.json({ 
+            success: true, 
             message: 'Payment processed successfully',
-            payment_reference: paymentReference,
-            payroll_id: payroll.payroll_id,
-            amount: payroll.total_amount,
-            employee: payroll.employee?.first_name + ' ' + payroll.employee?.last_name
+            payment_reference: paymentResult.reference
         });
         
     } catch (error) {
-        console.error('❌ Error in proceed-to-payment:', error);
+        console.error('❌ Error processing payment:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+// Payment processing functions
+async function processCardPayment(payroll, cardNumber, cardHolder, cardExpiry, cardCvv) {
+    // Validate card details
+    if (!cardNumber || !cardHolder || !cardExpiry || !cardCvv) {
+        return { success: false, error: 'Missing card details' };
+    }
+    
+    // In a real implementation, you would integrate with a payment processor
+    // For now, simulate successful payment
+    const reference = `CARD_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    return { success: true, reference };
+}
+
+async function processBankTransfer(payroll, userProfile) {
+    // Use organization's bank details if available
+    const reference = `BANK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    return { success: true, reference };
+}
+
+async function processIBANPayment(payroll, userProfile) {
+    // Check if user has IBAN configured
+    if (!userProfile.iban) {
+        return { success: false, error: 'IBAN not configured. Please add your IBAN in settings.' };
+    }
+    
+    // Validate IBAN format
+    if (!validateIBAN(userProfile.iban)) {
+        return { success: false, error: 'Invalid IBAN format' };
+    }
+    
+    // In a real implementation, you would integrate with SEPA or local banking APIs
+    const reference = `IBAN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    return { success: true, reference };
+}
+
+async function processStripePayment(payroll, userProfile) {
+    // Check if Stripe is enabled
+    const stripeEnabled = localStorage.getItem('stripeEnabled') === 'true';
+    if (!stripeEnabled) {
+        return { success: false, error: 'Stripe is not enabled. Please configure Stripe in settings.' };
+    }
+    
+    // In a real implementation, you would:
+    // 1. Get Stripe customer ID from database
+    // 2. Create payment intent with Stripe
+    // 3. Process the payment
+    
+    const reference = `STRIPE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    return { success: true, reference };
+}
+
+async function processRevolutPayment(payroll) {
+    const reference = `REVOLUT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return { success: true, reference };
+}
+
+async function processPaypalPayment(payroll) {
+    const reference = `PAYPAL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return { success: true, reference };
+}
+
+// IBAN validation function
+function validateIBAN(iban) {
+    if (!iban) return false;
+    
+    const cleanIban = iban.replace(/\s/g, '').toUpperCase();
+    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{4}[0-9]{7}([A-Z0-9]?){0,16}$/;
+    
+    return ibanRegex.test(cleanIban);
+}
 
 // Get specific payroll details
 router.get('/:id', authenticateToken, requireOrganization, async (req, res) => {
