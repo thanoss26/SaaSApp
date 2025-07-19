@@ -1,10 +1,21 @@
--- Add IBAN and payment-related fields to profiles table
+-- Add IBAN, phone, and bio fields to profiles table
+-- These fields will be used for payment information and user details
+
 ALTER TABLE profiles 
-ADD COLUMN iban VARCHAR(34),
-ADD COLUMN bank_name VARCHAR(255),
-ADD COLUMN account_holder_name VARCHAR(255),
-ADD COLUMN phone VARCHAR(20),
-ADD COLUMN bio TEXT;
+ADD COLUMN IF NOT EXISTS phone VARCHAR(20),
+ADD COLUMN IF NOT EXISTS bio TEXT,
+ADD COLUMN IF NOT EXISTS iban VARCHAR(34);
+
+-- Add comments for documentation
+COMMENT ON COLUMN profiles.phone IS 'User phone number for contact purposes';
+COMMENT ON COLUMN profiles.bio IS 'User biography or description';
+COMMENT ON COLUMN profiles.iban IS 'International Bank Account Number for payments';
+
+-- Create index on phone for faster lookups
+CREATE INDEX IF NOT EXISTS idx_profiles_phone ON profiles(phone);
+
+-- Create index on iban for faster lookups
+CREATE INDEX IF NOT EXISTS idx_profiles_iban ON profiles(iban);
 
 -- Create payment_methods table for Stripe integration
 CREATE TABLE payment_methods (

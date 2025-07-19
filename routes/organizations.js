@@ -3,6 +3,130 @@ const router = express.Router();
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireOrganization, requireInvitePermission, requireInviteUsersAccess, requireOrganizationOverviewAccess } = require('../middleware/auth');
 
+// POST /api/organizations - Create organization (redirects to auth route)
+router.post('/', authenticateToken, async (req, res) => {
+    try {
+        console.log('🏢 POST /api/organizations - Creating organization');
+        
+        // Get user profile to check role
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can create organizations
+        if (profile.role !== 'admin' && profile.role !== 'super_admin') {
+            console.log('❌ User role not admin:', profile.role);
+            return res.status(403).json({ error: 'Only admins can create organizations' });
+        }
+
+        // Check if user already has an organization
+        if (profile.organization_id) {
+            console.log('❌ User already has organization:', profile.organization_id);
+            return res.status(400).json({ error: 'User already belongs to an organization' });
+        }
+
+        const { name, description, industry, size, website, address, total_employees } = req.body;
+        
+        // Generate join code
+        const generateJoinCode = () => {
+            return Math.floor(100000 + Math.random() * 900000).toString();
+        };
+        
+        const joinCode = generateJoinCode();
+        
+        console.log('🔍 Creating organization with:', { name, description, joinCode });
+
+        // Create organization with organization_creator field
+        const { data: organization, error: orgError } = await supabase
+            .from('organizations')
+            .insert({
+                name,
+                description: description || null,
+                join_code: joinCode,
+                organization_creator: req.user.id,
+                industry: industry || null,
+                size: size || null,
+                website: website || null,
+                address: address || null,
+                total_employees: total_employees ? parseInt(total_employees) : null
+            })
+            .select()
+            .single();
+
+        console.log('🔍 Organization creation result:', { organization, error: orgError });
+
+        if (orgError) {
+            console.log('❌ Organization creation error:', orgError);
+            
+            // If the error is about organization_creator field not existing, try without it
+            if (orgError.message && orgError.message.includes('organization_creator')) {
+                console.log('🔄 Trying without organization_creator field...');
+                
+                const { data: organization2, error: orgError2 } = await supabase
+                    .from('organizations')
+                    .insert({
+                        name,
+                        description: description || null,
+                        join_code: joinCode,
+                        industry: industry || null,
+                        size: size || null,
+                        website: website || null,
+                        address: address || null,
+                        total_employees: total_employees ? parseInt(total_employees) : null
+                    })
+                    .select()
+                    .single();
+                    
+                console.log('🔍 Organization creation result (without creator):', { organization2, error: orgError2 });
+                
+                if (orgError2) {
+                    console.log('❌ Organization creation still failed:', orgError2);
+                    return res.status(500).json({ error: 'Failed to create organization: ' + orgError2.message });
+                }
+                
+                // Use the second result
+                organization = organization2;
+            } else {
+                return res.status(500).json({ error: 'Failed to create organization: ' + orgError.message });
+            }
+        }
+
+        // Update user profile with organization_id
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ organization_id: organization.id })
+            .eq('id', req.user.id);
+
+        console.log('🔍 Profile update result:', { error: updateError });
+
+        if (updateError) {
+            console.log('❌ Profile update error:', updateError);
+            return res.status(500).json({ error: 'Failed to update user profile' });
+        }
+
+        console.log('✅ Organization created successfully');
+        res.status(201).json({
+            message: 'Organization created successfully',
+            organization: {
+                id: organization.id,
+                name: organization.name,
+                join_code: organization.join_code
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Create organization error:', error);
+        res.status(500).json({ error: 'Failed to create organization' });
+    }
+});
+
 // Get all organizations with search, filters, and pagination
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -567,90 +691,6 @@ router.put('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
 
     } catch (error) {
         console.error('❌ Error in PUT /api/organizations/:id:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Create new organization
-router.post('/', authenticateToken, async (req, res) => {
-    try {
-        const { 
-            name, 
-            description, 
-            industry,
-            size,
-            website,
-            address,
-            total_employees
-        } = req.body;
-
-        if (!name) {
-            return res.status(400).json({ error: 'Organization name is required' });
-        }
-
-        // Get user profile to check role
-        const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('role, organization_id')
-            .eq('id', req.user.id)
-            .single();
-
-        if (profileError) {
-            console.error('Error fetching user profile:', profileError);
-            return res.status(500).json({ error: 'Failed to fetch user profile' });
-        }
-
-        // Check if user already has an organization
-        if (profile.organization_id) {
-            return res.status(400).json({ error: 'User already belongs to an organization' });
-        }
-
-        // Generate a unique join code
-        const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-
-        // Prepare organization data
-        const organizationData = {
-            name,
-            description,
-            industry,
-            size,
-            website,
-            address,
-            total_employees: total_employees || 0,
-            join_code: joinCode,
-            created_by: req.user.id,
-            is_active: true
-        };
-
-        const { data: organization, error } = await supabaseAdmin
-            .from('organizations')
-            .insert(organizationData)
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Error creating organization:', error);
-            return res.status(500).json({ error: 'Failed to create organization' });
-        }
-
-        // Automatically assign the user to the created organization
-        const { error: updateError } = await supabaseAdmin
-            .from('profiles')
-            .update({ organization_id: organization.id })
-            .eq('id', req.user.id);
-
-        if (updateError) {
-            console.error('Error assigning user to organization:', updateError);
-            // Don't fail the request, just log the error
-        }
-
-        res.status(201).json({
-            ...organization,
-            message: 'Organization created successfully and you have been assigned as a member'
-        });
-
-    } catch (error) {
-        console.error('Error in create organization route:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

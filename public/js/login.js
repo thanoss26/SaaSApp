@@ -72,9 +72,13 @@ function initFormHandling() {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Store token if provided
+                    // Store token if provided - check both possible token fields
                     if (data.token) {
                         localStorage.setItem('authToken', data.token);
+                        localStorage.setItem('token', data.token); // Store in both locations for compatibility
+                    } else if (data.access_token) {
+                        localStorage.setItem('authToken', data.access_token);
+                        localStorage.setItem('token', data.access_token);
                     }
                     
                     // Store remember me preference
@@ -89,7 +93,7 @@ function initFormHandling() {
                     // Redirect to dashboard after a short delay
                     setTimeout(() => {
                         window.location.href = '/dashboard';
-                    }, 1500);
+                    }, 1000);
                     
                 } else {
                     // Handle specific error messages
@@ -266,35 +270,11 @@ const notificationStyles = `
         border-left-color: #f59e0b;
     }
     
-    .notification.info {
-        border-left-color: #3b82f6;
-    }
-    
     .notification-content {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 8px;
         flex: 1;
-    }
-    
-    .notification-content i {
-        font-size: 1.2rem;
-    }
-    
-    .notification.success .notification-content i {
-        color: #10b981;
-    }
-    
-    .notification.error .notification-content i {
-        color: #ef4444;
-    }
-    
-    .notification.warning .notification-content i {
-        color: #f59e0b;
-    }
-    
-    .notification.info .notification-content i {
-        color: #3b82f6;
     }
     
     .notification-close {
@@ -302,71 +282,74 @@ const notificationStyles = `
         border: none;
         color: #9ca3af;
         cursor: pointer;
-        font-size: 1rem;
-        transition: color 0.3s ease;
         padding: 4px;
+        border-radius: 4px;
+        transition: color 0.3s ease;
     }
     
     .notification-close:hover {
-        color: #6b7280;
+        color: #374151;
     }
 `;
 
 // Inject notification styles
-const styleSheet = document.createElement('style');
-styleSheet.textContent = notificationStyles;
-document.head.appendChild(styleSheet);
+if (!document.getElementById('notification-styles')) {
+    const styleSheet = document.createElement('style');
+    styleSheet.id = 'notification-styles';
+    styleSheet.textContent = notificationStyles;
+    document.head.appendChild(styleSheet);
+}
 
-// Form validation enhancement
+// Enhanced form validation
 function enhanceFormValidation() {
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     
-    // Real-time email validation
     if (emailInput) {
         emailInput.addEventListener('blur', function() {
             if (this.value && !isValidEmail(this.value)) {
-                this.style.borderColor = '#ef4444';
                 showFieldError(this, 'Please enter a valid email address');
             } else {
-                this.style.borderColor = '#3b82f6';
                 removeFieldError(this);
             }
         });
         
         emailInput.addEventListener('input', function() {
-            if (this.style.borderColor === 'rgb(239, 68, 68)') {
-                this.style.borderColor = '#e5e7eb';
+            if (this.value && isValidEmail(this.value)) {
                 removeFieldError(this);
             }
         });
     }
     
-    // Password strength indicator
     if (passwordInput) {
+        passwordInput.addEventListener('blur', function() {
+            if (this.value && this.value.length < 6) {
+                showFieldError(this, 'Password must be at least 6 characters');
+            } else {
+                removeFieldError(this);
+            }
+        });
+        
         passwordInput.addEventListener('input', function() {
-            const strength = getPasswordStrength(this.value);
-            updatePasswordStrengthIndicator(strength);
+            if (this.value && this.value.length >= 6) {
+                removeFieldError(this);
+            }
         });
     }
 }
 
 function showFieldError(input, message) {
-    // Remove existing error
     removeFieldError(input);
     
-    // Create error element
-    const error = document.createElement('div');
-    error.className = 'field-error';
-    error.textContent = message;
-    error.style.cssText = `
-        color: #ef4444;
-        font-size: 0.75rem;
-        margin-top: 4px;
-        animation: slideIn 0.3s ease;
-    `;
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error';
+    errorDiv.textContent = message;
+    errorDiv.style.color = '#ef4444';
+    errorDiv.style.fontSize = '0.75rem';
+    errorDiv.style.marginTop = '4px';
     
-    input.parentNode.appendChild(error);
+    input.parentNode.appendChild(errorDiv);
+    input.style.borderColor = '#ef4444';
 }
 
 function removeFieldError(input) {
@@ -374,47 +357,38 @@ function removeFieldError(input) {
     if (existingError) {
         existingError.remove();
     }
+    input.style.borderColor = '#e5e7eb';
 }
 
+// Password strength indicator
 function getPasswordStrength(password) {
     let strength = 0;
-    
     if (password.length >= 8) strength++;
     if (/[a-z]/.test(password)) strength++;
     if (/[A-Z]/.test(password)) strength++;
     if (/[0-9]/.test(password)) strength++;
     if (/[^A-Za-z0-9]/.test(password)) strength++;
-    
     return strength;
 }
 
 function updatePasswordStrengthIndicator(strength) {
-    // This could be enhanced with a visual strength bar
-    // For now, we'll just log it
-    console.log('Password strength:', strength);
+    const strengthFill = document.getElementById('strengthFill');
+    const strengthText = document.getElementById('strengthText');
+    
+    if (!strengthFill || !strengthText) return;
+    
+    const strengthClasses = ['weak', 'fair', 'good', 'strong'];
+    const strengthLabels = ['Weak', 'Fair', 'Good', 'Strong'];
+    
+    strengthFill.className = `strength-fill ${strengthClasses[Math.min(strength - 1, 3)]}`;
+    strengthText.className = `strength-text ${strengthClasses[Math.min(strength - 1, 3)]}`;
+    strengthText.textContent = strengthLabels[Math.min(strength - 1, 3)];
 }
 
-// Add slide-in animation
-const slideInStyles = `
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateY(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-`;
-
-// Inject slide-in styles
-const slideInStyleSheet = document.createElement('style');
-slideInStyleSheet.textContent = slideInStyles;
-document.head.appendChild(slideInStyleSheet);
-
 // Initialize enhanced validation
-enhanceFormValidation();
+document.addEventListener('DOMContentLoaded', function() {
+    enhanceFormValidation();
+});
 
 // Auto-focus email input
 document.addEventListener('DOMContentLoaded', function() {

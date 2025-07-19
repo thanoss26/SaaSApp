@@ -253,6 +253,97 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/public/landing.html');
 });
 
+// Dashboard route - main app with sidebar
+app.get('/dashboard', (req, res) => {
+  console.log('🔍 Dashboard route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/dashboard.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ dashboard.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ dashboard.html file not found');
+    res.status(404).send('Dashboard page not found');
+  }
+});
+
+// Login route
+app.get('/login', (req, res) => {
+  console.log('🔍 Login route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/login.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ login.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ login.html file not found');
+    res.status(404).send('Login page not found');
+  }
+});
+
+// Signup route
+app.get('/signup', (req, res) => {
+  console.log('🔍 Signup route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/signup.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ signup.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ signup.html file not found');
+    res.status(404).send('Signup page not found');
+  }
+});
+
+// Users route
+app.get('/users', (req, res) => {
+  console.log('👥 Users route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/users.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ users.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ users.html file not found');
+    res.status(404).send('Users page not found');
+  }
+});
+
+// Organizations route
+app.get('/organizations', (req, res) => {
+  console.log('🏢 Organizations route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/organizations.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ organizations.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ organizations.html file not found');
+    res.status(404).send('Organizations page not found');
+  }
+});
+
+// Payroll route
 app.get('/payroll', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -261,6 +352,7 @@ app.get('/payroll', (req, res) => {
   res.sendFile(__dirname + '/public/payroll.html');
 });
 
+// Analytics route
 app.get('/analytics', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -269,6 +361,7 @@ app.get('/analytics', (req, res) => {
   res.sendFile(__dirname + '/public/analytics.html');
 });
 
+// Settings route
 app.get('/settings', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
@@ -277,28 +370,91 @@ app.get('/settings', (req, res) => {
   res.sendFile(__dirname + '/public/settings.html');
 });
 
-app.get('/test-dashboard', (req, res) => {
+// Profile route
+app.get('/profile', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('ETag', `"${Date.now()}"`);
-  res.sendFile(__dirname + '/public/test-dashboard.html');
+  res.sendFile(__dirname + '/public/profile.html');
 });
 
-app.get('/dashboard-debug', (req, res) => {
-  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('ETag', `"${Date.now()}"`);
-  res.sendFile(__dirname + '/public/dashboard-debug.html');
+// Create organization route
+app.get('/create-organization', (req, res) => {
+  console.log('🔍 Create organization route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/create-organization.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ create-organization.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ create-organization.html file not found');
+    res.status(404).send('Create organization page not found');
+  }
 });
 
+// Invite route
 app.get('/invite/:inviteCode', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
   res.setHeader('ETag', `"${Date.now()}"`);
   res.sendFile(__dirname + '/public/invite.html');
+});
+
+// Test routes (for debugging)
+app.get('/test-dashboard', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+  res.sendFile(__dirname + '/public/test-dashboard.html');
+});
+
+app.get('/test-simple', (req, res) => {
+  const fs = require('fs');
+  const filePath = __dirname + '/public/test-simple.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ test-simple.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ test-simple.html file not found');
+    res.status(404).send('Test page not found');
+  }
+});
+
+app.get('/dashboard-debug', (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+  res.sendFile(__dirname + '/public/dashboard-debug.html');
+});
+
+// Simple login page (minimal JavaScript for debugging)
+app.get('/login-simple', (req, res) => {
+  console.log('🔐 Simple login route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/login-simple.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ login-simple.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}-${Math.random()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ login-simple.html file not found');
+    res.status(404).send('Simple login page not found');
+  }
 });
 
 // Redirects from .html URLs to clean URLs (for backward compatibility)
@@ -324,6 +480,10 @@ app.get('/analytics.html', (req, res) => {
 
 app.get('/settings.html', (req, res) => {
   res.redirect('/settings');
+});
+
+app.get('/profile.html', (req, res) => {
+  res.redirect('/profile');
 });
 
 app.get('/test-dashboard.html', (req, res) => {
@@ -950,7 +1110,7 @@ app.get('/dashboard', (req, res) => {
 
 // Serve users page
 app.get('/users', (req, res) => {
-  console.log('�� Users route hit');
+  console.log('👥 Users route hit');
   const fs = require('fs');
   const filePath = __dirname + '/public/users.html';
   if (fs.existsSync(filePath)) {
