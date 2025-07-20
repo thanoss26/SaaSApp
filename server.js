@@ -565,6 +565,116 @@ app.get('/api/dashboard/stats', authenticateToken, requireOrganizationOverviewAc
         contractorCount: contractorCount || 0,
         recentHires: recentHires || 0
       });
+    } else if (profile.role === 'admin') {
+      // Admin-specific statistics relevant to their profile and management
+      if (!profile.organization_id) {
+        return res.json({
+          totalEmployees: 0,
+          activeEmployees: 0,
+          departments: 0,
+          attendanceRate: 0,
+          fullTimeCount: 0,
+          partTimeCount: 0,
+          contractorCount: 0,
+          recentHires: 0,
+          message: 'No organization assigned'
+        });
+      }
+
+      // Get total employees under admin's management
+      const { count: totalEmployees } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('is_deleted', false);
+
+      // Get active employees
+      const { count: activeEmployees } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('is_active', true)
+        .eq('is_deleted', false);
+
+      // Get employees by employment type
+      const { count: fullTimeCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('employment_type', 'full_time')
+        .eq('is_deleted', false);
+
+      const { count: partTimeCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('employment_type', 'part_time')
+        .eq('is_deleted', false);
+
+      const { count: contractorCount } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('employment_type', 'contractor')
+        .eq('is_deleted', false);
+
+      // Get recent hires (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const { count: recentHires } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .gte('created_at', sevenDaysAgo.toISOString())
+        .eq('is_deleted', false);
+
+      // Get pending approvals (employees awaiting admin approval)
+      const { count: pendingApprovals } = await supabase
+        .from('employees')
+        .select('*', { count: 'exact', head: true })
+        .eq('organization_id', profile.organization_id)
+        .eq('status', 'pending_approval')
+        .eq('is_deleted', false);
+
+      // Get team performance metrics (employees with performance ratings)
+      const { data: performanceData } = await supabase
+        .from('employees')
+        .select('performance_rating')
+        .eq('organization_id', profile.organization_id)
+        .not('performance_rating', 'is', null)
+        .eq('is_deleted', false);
+
+      const averagePerformance = performanceData && performanceData.length > 0 
+        ? Math.round(performanceData.reduce((sum, emp) => sum + (emp.performance_rating || 0), 0) / performanceData.length)
+        : 0;
+
+      // Get admin's management efficiency (employees per department)
+      const { data: departmentData } = await supabase
+        .from('employees')
+        .select('department')
+        .eq('organization_id', profile.organization_id)
+        .eq('is_deleted', false);
+
+      const uniqueDepartments = departmentData 
+        ? [...new Set(departmentData.map(emp => emp.department).filter(Boolean))]
+        : [];
+      const departmentCount = uniqueDepartments.length;
+
+      const attendanceRate = totalEmployees > 0 ? Math.round((activeEmployees / totalEmployees) * 100) : 0;
+
+      res.json({
+        totalEmployees: totalEmployees || 0,
+        activeEmployees: activeEmployees || 0,
+        departments: departmentCount,
+        attendanceRate: attendanceRate,
+        fullTimeCount: fullTimeCount || 0,
+        partTimeCount: partTimeCount || 0,
+        contractorCount: contractorCount || 0,
+        recentHires: recentHires || 0,
+        pendingApprovals: pendingApprovals || 0,
+        averagePerformance: averagePerformance,
+        managementEfficiency: departmentCount > 0 ? Math.round(totalEmployees / departmentCount) : 0
+      });
     } else {
       // Regular users - filter by their organization
       if (!profile.organization_id) {
