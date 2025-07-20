@@ -277,10 +277,26 @@ function getNotificationColor(type) {
 }
 
 function animateNumbers(element) {
-    const target = parseInt(element.textContent.replace(/[^\d]/g, ''));
-    const suffix = element.textContent.replace(/[\d]/g, '');
+    const text = element.textContent.trim();
+    
+    // Check if the text contains special characters that shouldn't be animated
+    if (text.includes('/') || text.includes('%') || text.includes('+') || text.includes('K')) {
+        // Don't animate these special values, just return
+        return;
+    }
+    
+    // Extract the numeric part and any suffix
+    const numericMatch = text.match(/^(\d+)(.*)$/);
+    if (!numericMatch) {
+        return; // No numeric content found
+    }
+    
+    const target = parseInt(numericMatch[1]);
+    const suffix = numericMatch[2] || '';
+    
     let current = 0;
     const increment = target / 50;
+    
     const timer = setInterval(() => {
         current += increment;
         if (current >= target) {
@@ -337,137 +353,12 @@ const styleSheet = document.createElement('style');
 styleSheet.textContent = mobileNavStyles;
 document.head.appendChild(styleSheet);
 
-// Demo video modal functionality
-document.addEventListener('click', function(e) {
-    if (e.target.closest('a[href="#demo"]')) {
-        e.preventDefault();
-        showDemoModal();
-    }
-});
-
-function showDemoModal() {
-    const modal = document.createElement('div');
-    modal.className = 'demo-modal';
-    modal.innerHTML = `
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <button class="modal-close">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="video-container">
-                    <div class="video-placeholder">
-                        <i class="fas fa-play-circle"></i>
-                        <h3>Product Demo</h3>
-                        <p>Watch how Chronos HR can transform your business</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // Add modal styles
-    modal.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        z-index: 10000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
-    
-    document.body.appendChild(modal);
-    
-    // Animate in
-    setTimeout(() => {
-        modal.style.opacity = '1';
-    }, 10);
-    
-    // Close functionality
-    const closeBtn = modal.querySelector('.modal-close');
-    const overlay = modal.querySelector('.modal-overlay');
-    
-    function closeModal() {
-        modal.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(modal);
-        }, 300);
-    }
-    
-    closeBtn.addEventListener('click', closeModal);
-    overlay.addEventListener('click', closeModal);
-    
-    // Close on escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-        }
-    });
-}
-
-// Add modal styles
-const modalStyles = `
-    .modal-content {
-        background: white;
-        border-radius: 16px;
-        padding: 20px;
-        max-width: 800px;
-        width: 90%;
-        position: relative;
-        transform: scale(0.8);
-        transition: transform 0.3s ease;
-    }
-    
-    .demo-modal.active .modal-content {
-        transform: scale(1);
-    }
-    
-    .modal-close {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        color: #6b7280;
-        cursor: pointer;
-        z-index: 1;
-    }
-    
-    .video-container {
-        width: 100%;
-        height: 400px;
-        background: #f8fafc;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .video-placeholder {
-        text-align: center;
-        color: #6b7280;
-    }
-    
-    .video-placeholder i {
-        font-size: 4rem;
-        color: #3b82f6;
-        margin-bottom: 16px;
-    }
-    
-    .video-placeholder h3 {
-        font-size: 1.5rem;
-        margin-bottom: 8px;
-        color: #1f2937;
-    }
-`;
-
-// Inject modal styles
-const modalStyleSheet = document.createElement('style');
-modalStyleSheet.textContent = modalStyles;
-document.head.appendChild(modalStyleSheet); 
+// Initialize all functions when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    initNavigation();
+    initSmoothScrolling();
+    initAnimations();
+    initPricingToggle();
+    initContactForm();
+    initScrollEffects();
+}); 

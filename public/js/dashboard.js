@@ -976,33 +976,128 @@ class Dashboard {
   }
 
   updateStats(data) {
-    const { totalEmployees, activeEmployees, departments, attendanceRate, productivityScore, projectsActive } = data;
-
-    // Update enhanced stat cards
-    this.animateNumber('totalEmployees', totalEmployees);
-    this.animateNumber('attendanceRate', attendanceRate);
-    this.animateNumber('productivityScore', productivityScore || 87);
-    this.animateNumber('projectsActive', projectsActive || 12);
-
-    // Update old stat cards for backward compatibility
-    this.animateNumber('activeEmployees', activeEmployees);
-    this.animateNumber('departments', departments);
-
-    // Update attendance value in the attendance card
-    const attendanceValueEl = document.querySelector('.attendance-value');
-    if (attendanceValueEl) {
-      attendanceValueEl.textContent = `${attendanceRate}%`;
+    console.log('📊 Updating dashboard stats with data:', data);
+    
+    // Get user role to determine which stats to show
+    const userRole = window.currentUserProfile?.role || 'employee';
+    
+    if (userRole === 'admin') {
+      // Admin-specific statistics
+      this.updateElement('totalEmployees', data.totalEmployees || 0);
+      this.updateElement('activeEmployees', data.activeEmployees || 0);
+      this.updateElement('departments', data.departments || 0);
+      this.updateElement('attendanceRate', `${data.attendanceRate || 0}%`);
+      
+      // Update stat card labels for admin
+      this.updateStatCardLabel('totalEmployees', 'Total Team Members');
+      this.updateStatCardLabel('activeEmployees', 'Active Employees');
+      this.updateStatCardLabel('departments', 'Departments Managed');
+      this.updateStatCardLabel('attendanceRate', 'Team Attendance Rate');
+      
+      // Add admin-specific stats if available
+      if (data.pendingApprovals !== undefined) {
+        this.updateElement('pendingApprovals', data.pendingApprovals || 0);
+        this.updateStatCardLabel('pendingApprovals', 'Pending Approvals');
+      }
+      
+      if (data.averagePerformance !== undefined) {
+        this.updateElement('averagePerformance', `${data.averagePerformance || 0}/10`);
+        this.updateStatCardLabel('averagePerformance', 'Avg Team Performance');
+      }
+      
+      if (data.managementEfficiency !== undefined) {
+        this.updateElement('managementEfficiency', data.managementEfficiency || 0);
+        this.updateStatCardLabel('managementEfficiency', 'Employees per Dept');
+      }
+      
+      // Update employment type breakdown for admin
+      if (data.fullTimeCount !== undefined) {
+        this.updateElement('fullTimeCount', data.fullTimeCount || 0);
+        this.updateStatCardLabel('fullTimeCount', 'Full-Time Employees');
+      }
+      
+      if (data.partTimeCount !== undefined) {
+        this.updateElement('partTimeCount', data.partTimeCount || 0);
+        this.updateStatCardLabel('partTimeCount', 'Part-Time Employees');
+      }
+      
+      if (data.contractorCount !== undefined) {
+        this.updateElement('contractorCount', data.contractorCount || 0);
+        this.updateStatCardLabel('contractorCount', 'Contractors');
+      }
+      
+      if (data.recentHires !== undefined) {
+        this.updateElement('recentHires', data.recentHires || 0);
+        this.updateStatCardLabel('recentHires', 'Recent Hires (7 days)');
+      }
+      
+    } else if (userRole === 'super_admin') {
+      // Super admin statistics (website-wide)
+      this.updateElement('totalEmployees', data.totalEmployees || 0);
+      this.updateElement('activeEmployees', data.activeEmployees || 0);
+      this.updateElement('departments', data.departments || 0);
+      this.updateElement('attendanceRate', `${data.attendanceRate || 0}%`);
+      
+      // Update stat card labels for super admin
+      this.updateStatCardLabel('totalEmployees', 'Total Platform Users');
+      this.updateStatCardLabel('activeEmployees', 'Active Users');
+      this.updateStatCardLabel('departments', 'Organizations');
+      this.updateStatCardLabel('attendanceRate', 'Platform Uptime');
+      
+      // Update employment type breakdown
+      this.updateElement('fullTimeCount', data.fullTimeCount || 0);
+      this.updateElement('partTimeCount', data.partTimeCount || 0);
+      this.updateElement('contractorCount', data.contractorCount || 0);
+      this.updateElement('recentHires', data.recentHires || 0);
+      
+      this.updateStatCardLabel('fullTimeCount', 'Full-Time Users');
+      this.updateStatCardLabel('partTimeCount', 'Part-Time Users');
+      this.updateStatCardLabel('contractorCount', 'Contractors');
+      this.updateStatCardLabel('recentHires', 'New Users (7 days)');
+      
+    } else {
+      // Regular employee statistics
+      this.updateElement('totalEmployees', data.totalEmployees || 0);
+      this.updateElement('activeEmployees', data.activeEmployees || 0);
+      this.updateElement('departments', data.departments || 0);
+      this.updateElement('attendanceRate', `${data.attendanceRate || 0}%`);
+      
+      // Update employment type breakdown
+      this.updateElement('fullTimeCount', data.fullTimeCount || 0);
+      this.updateElement('partTimeCount', data.partTimeCount || 0);
+      this.updateElement('contractorCount', data.contractorCount || 0);
+      this.updateElement('recentHires', data.recentHires || 0);
+      
+      // Standard labels for employees
+      this.updateStatCardLabel('totalEmployees', 'Total Employees');
+      this.updateStatCardLabel('activeEmployees', 'Active Employees');
+      this.updateStatCardLabel('departments', 'Departments');
+      this.updateStatCardLabel('attendanceRate', 'Attendance Rate');
+      this.updateStatCardLabel('fullTimeCount', 'Full-Time');
+      this.updateStatCardLabel('partTimeCount', 'Part-Time');
+      this.updateStatCardLabel('contractorCount', 'Contractors');
+      this.updateStatCardLabel('recentHires', 'Recent Hires');
     }
 
-    // Update donut chart meta information
-    const totalRolesEl = document.getElementById('totalRoles');
-    const totalEmployeesDonutEl = document.getElementById('totalEmployeesDonut');
-
-    if (totalRolesEl) {
-      totalRolesEl.textContent = totalEmployees;
+    // Animate all stat numbers
+    this.animateNumber('totalEmployees', data.totalEmployees || 0);
+    this.animateNumber('activeEmployees', data.activeEmployees || 0);
+    this.animateNumber('departments', data.departments || 0);
+    this.animateNumber('attendanceRate', data.attendanceRate || 0);
+    this.animateNumber('fullTimeCount', data.fullTimeCount || 0);
+    this.animateNumber('partTimeCount', data.partTimeCount || 0);
+    this.animateNumber('contractorCount', data.contractorCount || 0);
+    this.animateNumber('recentHires', data.recentHires || 0);
+    
+    // Animate admin-specific stats if they exist
+    if (data.pendingApprovals !== undefined) {
+      this.animateNumber('pendingApprovals', data.pendingApprovals || 0);
     }
-    if (totalEmployeesDonutEl) {
-      totalEmployeesDonutEl.textContent = `${totalEmployees} Employees`;
+    if (data.averagePerformance !== undefined) {
+      this.animateNumber('averagePerformance', data.averagePerformance || 0);
+    }
+    if (data.managementEfficiency !== undefined) {
+      this.animateNumber('managementEfficiency', data.managementEfficiency || 0);
     }
   }
 
@@ -2532,6 +2627,27 @@ class Dashboard {
     }
 
     console.log('✅ Navigation visibility updated directly');
+  }
+
+  updateElement(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.textContent = value;
+    }
+  }
+
+  updateStatCardLabel(elementId, label) {
+    // Find the stat card containing the element and update its label
+    const element = document.getElementById(elementId);
+    if (element) {
+      const statCard = element.closest('.stat-card');
+      if (statCard) {
+        const labelElement = statCard.querySelector('.stat-label');
+        if (labelElement) {
+          labelElement.textContent = label;
+        }
+      }
+    }
   }
 }
 

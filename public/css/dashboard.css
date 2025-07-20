@@ -516,3 +516,95 @@ body.dashboard-bg {
     margin-left: 70px !important;
   }
 } 
+
+/* Admin-specific stat card styles */
+.stat-card.admin-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card.admin-card .stat-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-card.admin-card .stat-value {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+}
+
+.stat-card.admin-card .stat-trend {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.stat-card.admin-card .stat-trend.warning {
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+.stat-card.admin-card .stat-trend.up {
+    color: #10b981;
+}
+
+.stat-card.admin-card .stat-trend.down {
+    color: #ef4444;
+}
+
+/* Admin dashboard specific styles */
+.admin-dashboard .dashboard-title {
+    color: #1f2937;
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admin-dashboard .dashboard-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+.admin-dashboard .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Admin analytics specific styles */
+.admin-analytics .analytics-title {
+    color: #1f2937;
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.admin-analytics .analytics-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+}
+
+/* Responsive adjustments for admin cards */
+@media (max-width: 768px) {
+    .admin-dashboard .stat-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-card.admin-card .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card.admin-card .stat-label {
+        font-size: 0.75rem;
+    }
+} 
