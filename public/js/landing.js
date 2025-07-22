@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initPricingToggle();
     initContactForm();
     initScrollEffects();
+    initLanguageSwitcher();
 });
 
 // Navigation functionality
@@ -187,6 +188,73 @@ function initScrollEffects() {
     });
 }
 
+// Language switcher functionality
+function initLanguageSwitcher() {
+    const languageBtn = document.getElementById('languageBtn');
+    const languageDropdown = document.getElementById('languageDropdown');
+    const currentLanguageSpan = document.getElementById('currentLanguage');
+    
+    if (!languageBtn || !languageDropdown) return;
+    
+    // Set initial language
+    const savedLang = localStorage.getItem('i18nextLng') || 'en';
+    updateLanguageButton(savedLang);
+    
+    // Toggle dropdown
+    languageBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        languageDropdown.classList.toggle('show');
+        languageBtn.classList.toggle('active');
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!languageBtn.contains(e.target) && !languageDropdown.contains(e.target)) {
+            languageDropdown.classList.remove('show');
+            languageBtn.classList.remove('active');
+        }
+    });
+    
+                // Handle language selection
+            const languageOptions = document.querySelectorAll('.language-option');
+            languageOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    const lang = this.getAttribute('data-lang');
+                    switchLanguage(lang);
+                    
+                    // Update UI
+                    languageDropdown.classList.remove('show');
+                    languageBtn.classList.remove('active');
+                    
+                    // Update active state
+                    languageOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+    
+    // Set active language option
+    languageOptions.forEach(option => {
+        if (option.getAttribute('data-lang') === savedLang) {
+            option.classList.add('active');
+        }
+    });
+}
+
+function updateLanguageButton(lang) {
+    const currentLanguageSpan = document.getElementById('currentLanguage');
+    if (currentLanguageSpan) {
+        currentLanguageSpan.textContent = lang.toUpperCase();
+    }
+}
+
+function switchLanguage(lang) {
+    if (window.changeLanguage) {
+        window.changeLanguage(lang);
+        updateLanguageButton(lang);
+        localStorage.setItem('i18nextLng', lang);
+    }
+}
+
 // Utility functions
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -361,4 +429,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initPricingToggle();
     initContactForm();
     initScrollEffects();
+    
+    // Wait for i18next to be ready before initializing language switcher
+    if (window.i18next && window.i18next.ready) {
+        window.i18next.ready.then(() => {
+            initLanguageSwitcher();
+        });
+    } else {
+        // Fallback if i18next is not available
+        setTimeout(() => {
+            initLanguageSwitcher();
+        }, 1000);
+    }
 }); 

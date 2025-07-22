@@ -7,8 +7,9 @@
   <title>Chronos HR - Employee Management Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
-      <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
-    <link rel="stylesheet" href="css/mailbox.css">
+  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+  <link rel="stylesheet" href="css/mailbox.css">
+  <link rel="stylesheet" href="css/global-language-switcher.css">
   <style>
     .org-required-section {
       padding: 60px 20px;
@@ -289,11 +290,30 @@
     <main class="dashboard-main">
       <!-- Topbar -->
       <header class="dashboard-topbar">
-        <h1 class="dashboard-title">Dashboard</h1>
+        <h1 class="dashboard-title" data-i18n="dashboard:title">Dashboard</h1>
         <div class="dashboard-search">
-          <input type="text" placeholder="Search employees, departments..." />
+          <input type="text" data-i18n-placeholder="dashboard:searchPlaceholder" placeholder="Search employees, departments..." />
           <i class="fas fa-search"></i>
         </div>
+        
+        <!-- Language Switcher -->
+        <div class="language-switcher" style="margin-right: 20px;">
+          <div class="language-btn">
+            <span class="current-lang">English</span>
+            <span class="chevron">▼</span>
+          </div>
+          <div class="language-dropdown">
+            <div class="language-option" data-lang="en">
+              <img src="https://flagcdn.com/w20/gb.png" alt="English" class="flag">
+              <span class="lang-name">English</span>
+            </div>
+            <div class="language-option" data-lang="el">
+              <img src="https://flagcdn.com/w20/gr.png" alt="Greek" class="flag">
+              <span class="lang-name">Ελληνικά</span>
+            </div>
+          </div>
+        </div>
+        
         <div class="dashboard-user">
           <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User"
             class="user-avatar" />
@@ -315,7 +335,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value" id="totalEmployees">0</div>
-              <div class="stat-label">Total Employees</div>
+              <div class="stat-label" data-i18n="dashboard:stats.totalEmployees">Total Employees</div>
               <div class="stat-change positive">+12% this month</div>
             </div>
           </div>
@@ -325,7 +345,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value" id="activeEmployees">0</div>
-              <div class="stat-label">Active Employees</div>
+              <div class="stat-label" data-i18n="dashboard:stats.activeEmployees">Active Employees</div>
               <div class="stat-change positive">+8% this month</div>
             </div>
           </div>
@@ -335,7 +355,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value" id="departments">0</div>
-              <div class="stat-label">Departments</div>
+              <div class="stat-label" data-i18n="dashboard:stats.departments">Departments</div>
               <div class="stat-change neutral">No change</div>
             </div>
           </div>
@@ -345,7 +365,7 @@
             </div>
             <div class="stat-content">
               <div class="stat-value" id="attendanceRate">0%</div>
-              <div class="stat-label">Attendance Rate</div>
+              <div class="stat-label" data-i18n="dashboard:stats.attendanceRate">Attendance Rate</div>
               <div class="stat-change positive">+2.1% this week</div>
             </div>
           </div>
@@ -356,13 +376,13 @@
           <!-- Employee Growth Chart -->
           <div class="chart-container large">
             <div class="chart-header">
-              <h3>Employee Growth & Trends</h3>
+              <h3 data-i18n="dashboard:charts.employeeGrowth">Employee Growth & Trends</h3>
               <div class="chart-controls">
                 <select id="growthTimeframe" class="chart-select">
-                  <option value="7">Last 7 Days</option>
-                  <option value="30" selected>Last 30 Days</option>
-                  <option value="90">Last 3 Months</option>
-                  <option value="365">Last Year</option>
+                  <option value="7" data-i18n="dashboard:timeframes.last7Days">Last 7 Days</option>
+                  <option value="30" selected data-i18n="dashboard:timeframes.last30Days">Last 30 Days</option>
+                  <option value="90" data-i18n="dashboard:timeframes.last3Months">Last 3 Months</option>
+                  <option value="365" data-i18n="dashboard:timeframes.lastYear">Last Year</option>
                 </select>
               </div>
             </div>
@@ -374,10 +394,10 @@
           <!-- Department Distribution -->
           <div class="chart-container medium">
             <div class="chart-header">
-              <h3>Department Distribution</h3>
+              <h3 data-i18n="dashboard:charts.departmentDistribution">Department Distribution</h3>
               <div class="chart-controls">
-                <button class="chart-btn active" data-view="chart">Chart</button>
-                <button class="chart-btn" data-view="list">List</button>
+                <button class="chart-btn active" data-view="chart" data-i18n="dashboard:views.chart">Chart</button>
+                <button class="chart-btn" data-view="list" data-i18n="dashboard:views.list">List</button>
               </div>
             </div>
             <div class="chart-body">
@@ -483,8 +503,8 @@
           <!-- Recent Activity -->
           <div class="chart-container small">
             <div class="chart-header">
-              <h3>Recent Activity</h3>
-              <a href="#" class="view-all">View all</a>
+              <h3 data-i18n="dashboard:charts.recentActivity">Recent Activity</h3>
+              <a href="#" class="view-all" data-i18n="dashboard:views.viewAll">View all</a>
             </div>
             <div class="activity-feed">
               <div class="activity-item">
@@ -532,28 +552,35 @@
         </div>
       </section>
 
-      <!-- Organization Required Section -->
-      <section class="org-required-section" id="orgRequiredSection" style="display: none;">
-        <div class="org-required-content-large">
-          <div class="org-required-icon">🏢</div>
-          <h2>Organization Required</h2>
-          <p>You need to create or join an organization to access dashboard features.</p>
-          <div class="org-required-actions">
-                                    <button class="btn btn-primary-large" id="create-org-btn">
-                            Create Organization
-                        </button>
-                        <button class="btn btn-secondary-large" id="join-org-btn">
-                            Join Organization
-                        </button>
-          </div>
-        </div>
-      </section>
+                <!-- Organization Required Section -->
+          <section class="org-required-section" id="orgRequiredSection" style="display: none;">
+            <div class="org-required-content-large">
+              <div class="org-required-icon">🏢</div>
+              <h2 data-i18n="dashboard:organization.required">Organization Required</h2>
+              <p data-i18n="dashboard:organization.requiredMessage">You need to create or join an organization to access dashboard features.</p>
+              <div class="org-required-actions">
+                <button class="btn btn-primary-large" id="create-org-btn" data-i18n="dashboard:organization.createOrganization">
+                  Create Organization
+                </button>
+                <button class="btn btn-secondary-large" id="join-org-btn" data-i18n="dashboard:organization.joinOrganization">
+                  Join Organization
+                </button>
+              </div>
+            </div>
+          </section>
     </main>
   </div>
+  <!-- i18next CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/i18next@25.3.2/dist/umd/i18next.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
+  
+  <!-- Global Language Switcher -->
+  <script src="js/global-language-switcher.js"></script>
   <script src="js/shared.js"></script>
-      <script src="js/sidebar.js"></script>
-    <script src="js/mailbox.js"></script>
-    <script src="js/dashboard.js"></script>
+  <script src="js/sidebar.js"></script>
+  <script src="js/mailbox.js"></script>
+  <script src="js/dashboard.js"></script>
 </body>
 
 </html>

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Login - Chronos HR</title>
     <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/global-language-switcher.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -74,20 +75,39 @@
         <!-- Right Side - Login Form -->
         <div class="form-side">
             <div class="form-container">
+                <!-- Language Switcher -->
+                <div class="language-switcher" style="position: absolute; top: 20px; right: 20px;">
+                    <div class="language-btn">
+                        <span class="current-lang">English</span>
+                        <span class="chevron">▼</span>
+                    </div>
+                    <div class="language-dropdown">
+                        <div class="language-option" data-lang="en">
+                            <img src="https://flagcdn.com/w20/gb.png" alt="English" class="flag">
+                            <span class="lang-name">English</span>
+                        </div>
+                        <div class="language-option" data-lang="el">
+                            <img src="https://flagcdn.com/w20/gr.png" alt="Greek" class="flag">
+                            <span class="lang-name">Ελληνικά</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-header">
-                    <h2>Sign In</h2>
-                    <p>Enter your credentials to access your account</p>
+                    <h2 data-i18n="auth:login.title">Sign In</h2>
+                    <p data-i18n="auth:login.subtitle">Enter your credentials to access your account</p>
                 </div>
 
                 <form id="loginForm" class="login-form">
                     <div class="form-group">
-                        <label for="email">Email Address</label>
+                        <label for="email" data-i18n="auth:login.email">Email Address</label>
                         <div class="input-wrapper">
                             <i class="fas fa-envelope"></i>
                             <input 
                                 type="email" 
                                 id="email" 
                                 name="email" 
+                                data-i18n-placeholder="auth:login.emailPlaceholder"
                                 placeholder="Enter your email"
                                 required
                             >
@@ -95,13 +115,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="password">Password</label>
+                        <label for="password" data-i18n="auth:login.password">Password</label>
                         <div class="input-wrapper">
                             <i class="fas fa-lock"></i>
                             <input 
                                 type="password" 
                                 id="password" 
                                 name="password" 
+                                data-i18n-placeholder="auth:login.passwordPlaceholder"
                                 placeholder="Enter your password"
                                 required
                             >
@@ -115,23 +136,23 @@
                         <label class="checkbox-wrapper">
                             <input type="checkbox" id="rememberMe">
                             <span class="checkmark"></span>
-                            Remember me
+                            <span data-i18n="auth:login.rememberMe">Remember me</span>
                         </label>
                         
-                        <a href="#" class="forgot-password">Forgot password?</a>
+                        <a href="#" class="forgot-password" data-i18n="auth:login.forgotPassword">Forgot password?</a>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-full">
-                        <span class="btn-text">Sign In</span>
+                        <span class="btn-text" data-i18n="auth:login.signIn">Sign In</span>
                         <span class="btn-loading">
                             <i class="fas fa-spinner fa-spin"></i>
-                            Signing in...
+                            <span data-i18n="auth:login.signingIn">Signing in...</span>
                         </span>
                     </button>
                 </form>
 
                 <div class="divider">
-                    <span>or continue with</span>
+                    <span data-i18n="auth:login.orContinueWith">or continue with</span>
                 </div>
 
                 <div class="social-login">
@@ -146,13 +167,13 @@
                 </div>
 
                 <div class="signup-link">
-                    <p>Don't have an account? <a href="signup.html">Sign up for free</a></p>
+                    <p><span data-i18n="auth:login.noAccount">Don't have an account?</span> <a href="signup.html" data-i18n="auth:login.signUpFree">Sign up for free</a></p>
                 </div>
 
                 <div class="back-to-home">
                     <a href="landing.html">
                         <i class="fas fa-arrow-left"></i>
-                        Back to home
+                        <span data-i18n="auth:login.backToHome">Back to home</span>
                     </a>
                 </div>
             </div>
@@ -162,6 +183,13 @@
     <!-- Notification Container -->
     <div id="notificationContainer"></div>
 
+    <!-- i18next CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@25.3.2/dist/umd/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
+    
+    <!-- Global Language Switcher -->
+    <script src="js/global-language-switcher.js"></script>
     <script src="js/login.js"></script>
 </body>
 </html> 

@@ -1,0 +1,45 @@
+{
+  "title": "Πίνακας Ελέγχου",
+  "searchPlaceholder": "Αναζήτηση υπαλλήλων, τμημάτων...",
+  "stats": {
+    "totalEmployees": "Σύνολο Υπαλλήλων",
+    "activeEmployees": "Ενεργοί Υπάλληλοι",
+    "departments": "Τμήματα",
+    "attendanceRate": "Ποσοστό Προσέλευσης"
+  },
+  "charts": {
+    "employeeGrowth": "Ανάπτυξη & Τάσεις Υπαλλήλων",
+    "departmentDistribution": "Κατανομή Τμημάτων",
+    "attendanceTrends": "Τάσεις Προσέλευσης",
+    "performanceMetrics": "Μετρήσεις Απόδοσης",
+    "recentActivity": "Πρόσφατη Δραστηριότητα"
+  },
+  "timeframes": {
+    "last7Days": "Τελευταίες 7 Ημέρες",
+    "last30Days": "Τελευταίες 30 Ημέρες",
+    "last3Months": "Τελευταίους 3 Μήνες",
+    "lastYear": "Τελευταίο Έτος"
+  },
+  "views": {
+    "chart": "Γράφημα",
+    "list": "Λίστα",
+    "viewAll": "Προβολή όλων"
+  },
+  "metrics": {
+    "productivity": "Παραγωγικότητα",
+    "efficiency": "Αποδοτικότητα",
+    "quality": "Ποιότητα"
+  },
+  "activity": {
+    "newEmployeeJoined": "Νέος υπάλληλος προσχώρησε",
+    "performanceMilestone": "Ορόσημο απόδοσης",
+    "meetingScheduled": "Συνάντηση προγραμματίστηκε",
+    "attendanceImproved": "Η προσέλευση βελτιώθηκε"
+  },
+  "organization": {
+    "required": "Απαιτείται Οργανισμός",
+    "requiredMessage": "Χρειάζεται να δημιουργήσετε ή να προσχωρήσετε σε έναν οργανισμό για να αποκτήσετε πρόσβαση στις λειτουργίες του πίνακα ελέγχου.",
+    "createOrganization": "Δημιουργία Οργανισμού",
+    "joinOrganization": "Προσχώρηση σε Οργανισμό"
+  }
+} 

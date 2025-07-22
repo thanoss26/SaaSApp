@@ -7,6 +7,14 @@ class OrganizationsManager {
         this.init();
     }
 
+    // Translation helper method
+    t(key, options = {}) {
+        if (window.i18next) {
+            return window.i18next.t(key, options);
+        }
+        return key;
+    }
+
     async init() {
         console.log('🏢 Initializing Organizations Manager...');
         
@@ -17,6 +25,11 @@ class OrganizationsManager {
                 this.currentUser = window.sharedManager.currentUser;
             }
 
+            // Wait for i18next to be ready
+            if (window.i18next) {
+                await window.i18next.ready;
+            }
+
             // Load organization information
             await this.loadOrganizationInfo();
             
@@ -25,7 +38,7 @@ class OrganizationsManager {
             
         } catch (error) {
             console.error('❌ Error initializing Organizations Manager:', error);
-            this.showError('Failed to initialize organizations page');
+            this.showError(this.t('common:error'));
         }
     }
 
@@ -84,16 +97,16 @@ class OrganizationsManager {
                 console.error('❌ Organization API error:', errorData);
                 
                 if (orgResponse.status === 401) {
-                    throw new Error('Please log in to view organization information');
+                    throw new Error(this.t('auth:session_expired'));
                 } else if (orgResponse.status === 403) {
-                    throw new Error('You do not have permission to view this organization');
+                    throw new Error(this.t('auth:unauthorized'));
                 } else if (orgResponse.status === 404) {
                     // Handle case where organization doesn't exist but user has organization_id
                     console.error('❌ Organization not found but user has organization_id. This might be a data inconsistency.');
-                    this.showError('Organization not found. This might be due to a data inconsistency. Please contact your administrator or try logging out and back in.');
+                    this.showError(this.t('organizations:organization_not_found'));
                     return;
                 } else {
-                    throw new Error(`Failed to fetch organization details: ${errorData.error || orgResponse.statusText}`);
+                    throw new Error(`${this.t('common:error')}: ${errorData.error || orgResponse.statusText}`);
                 }
             }
 
@@ -346,13 +359,29 @@ class OrganizationsManager {
             });
         }
 
-        // Invite type selector
-        const inviteTypeRadios = document.querySelectorAll('input[name="invite-type"]');
-        inviteTypeRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                this.switchInviteType(e.target.value);
+        // Step-by-step invite functionality
+        const methodOptions = document.querySelectorAll('.method-option');
+        methodOptions.forEach(option => {
+            option.addEventListener('click', (e) => {
+                const method = e.currentTarget.dataset.method;
+                this.selectInviteMethod(method);
             });
         });
+
+        // Step navigation buttons
+        const nextStepBtn = document.getElementById('next-step-btn');
+        if (nextStepBtn) {
+            nextStepBtn.addEventListener('click', () => {
+                this.goToStep(2);
+            });
+        }
+
+        const prevStepBtn = document.getElementById('prev-step-btn');
+        if (prevStepBtn) {
+            prevStepBtn.addEventListener('click', () => {
+                this.goToStep(1);
+            });
+        }
 
         // Email invite form
         const emailInviteForm = document.getElementById('email-invite-form-element');
@@ -387,6 +416,8 @@ class OrganizationsManager {
             });
         }
 
+
+
         const cancelLinkBtn = document.getElementById('cancel-link-btn');
         if (cancelLinkBtn) {
             cancelLinkBtn.addEventListener('click', () => {
@@ -405,6 +436,7 @@ class OrganizationsManager {
         if (generateNewInviteBtn) {
             generateNewInviteBtn.addEventListener('click', () => {
                 this.resetInviteForm();
+                this.goToStep(1);
             });
         }
 
@@ -426,6 +458,7 @@ class OrganizationsManager {
         if (sendAnotherInviteBtn) {
             sendAnotherInviteBtn.addEventListener('click', () => {
                 this.resetInviteForm();
+                this.goToStep(1);
             });
         }
 
@@ -773,6 +806,7 @@ class OrganizationsManager {
         console.log('📧 Showing invite modal');
         document.getElementById('invite-members-modal').style.display = 'flex';
         this.resetInviteForm();
+        this.goToStep(1);
     }
 
     closeInviteModal() {
@@ -780,23 +814,96 @@ class OrganizationsManager {
         document.getElementById('invite-members-modal').style.display = 'none';
     }
 
-    switchInviteType(type) {
-        console.log('🔄 Switching invite type to:', type);
+    goToStep(stepNumber) {
+        console.log(`📋 Going to step ${stepNumber}`);
         
+        // Hide all step contents
+        document.querySelectorAll('.step-content').forEach(content => {
+            content.classList.remove('active');
+        });
+
+        // Remove active/completed classes from all steps
+        document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+
+        // Show current step content
+        document.getElementById(`step-${stepNumber}`).classList.add('active');
+
+        // Update step indicators
+        for (let i = 1; i <= 3; i++) {
+            const stepElement = document.querySelector(`[data-step="${i}"]`);
+            if (i < stepNumber) {
+                stepElement.classList.add('completed');
+            } else if (i === stepNumber) {
+                stepElement.classList.add('active');
+            }
+        }
+
+        // Update button visibility
+        this.updateStepButtons(stepNumber);
+    }
+
+    updateStepButtons(stepNumber) {
+        const nextBtn = document.getElementById('next-step-btn');
+        const prevBtn = document.getElementById('prev-step-btn');
+        const sendBtn = document.getElementById('send-invite-btn');
+        const generateBtn = document.getElementById('generate-invite-btn');
+
+        // Hide all action buttons
+        nextBtn.style.display = 'none';
+        prevBtn.style.display = 'none';
+        sendBtn.style.display = 'none';
+        generateBtn.style.display = 'none';
+
+        if (stepNumber === 1) {
+            nextBtn.style.display = 'inline-flex';
+        } else if (stepNumber === 2) {
+            prevBtn.style.display = 'inline-flex';
+            if (this.selectedMethod === 'email') {
+                sendBtn.style.display = 'inline-flex';
+            } else {
+                generateBtn.style.display = 'inline-flex';
+            }
+        }
+    }
+
+    selectInviteMethod(method) {
+        console.log(`📧 Selecting invite method: ${method}`);
+        this.selectedMethod = method;
+        
+        // Remove selected class from all options
+        document.querySelectorAll('.method-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        // Add selected class to chosen option
+        document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+
+        // Enable next button
+        document.getElementById('next-step-btn').disabled = false;
+
+        // Update step 2 content based on method
+        this.updateStep2Content(method);
+    }
+
+    updateStep2Content(method) {
         const emailForm = document.getElementById('email-invite-form');
         const linkForm = document.getElementById('link-invite-form');
-        
-        if (type === 'email') {
+        const step2Title = document.getElementById('step-2-title');
+        const step2Description = document.getElementById('step-2-description');
+
+        if (method === 'email') {
             emailForm.style.display = 'block';
             linkForm.style.display = 'none';
+            step2Title.textContent = 'Configure Email Invitation';
+            step2Description.textContent = 'Enter the details for the person you want to invite';
         } else {
             emailForm.style.display = 'none';
             linkForm.style.display = 'block';
+            step2Title.textContent = 'Configure Invite Link';
+            step2Description.textContent = 'Set up the parameters for your invite link';
         }
-        
-        // Hide any result sections
-        document.getElementById('invite-result').style.display = 'none';
-        document.getElementById('link-result').style.display = 'none';
     }
 
     resetInviteForm() {
@@ -816,11 +923,23 @@ class OrganizationsManager {
         }
         
         // Hide result sections
-        document.getElementById('invite-result').style.display = 'none';
-        document.getElementById('link-result').style.display = 'none';
-        
-        // Show email form by default
-        this.switchInviteType('email');
+        document.getElementById('email-success').style.display = 'none';
+        document.getElementById('link-success').style.display = 'none';
+
+        // Reset method selection
+        this.selectedMethod = null;
+        document.querySelectorAll('.method-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+
+        // Reset step indicators
+        document.querySelectorAll('.step').forEach(step => {
+            step.classList.remove('active', 'completed');
+        });
+        document.querySelector('.step[data-step="1"]').classList.add('active');
+
+        // Disable next button
+        document.getElementById('next-step-btn').disabled = true;
         
         // Reset button states
         const sendBtn = document.getElementById('send-invite-btn');
@@ -882,12 +1001,13 @@ class OrganizationsManager {
             document.getElementById('result-role').textContent = this.formatRole(inviteData.role);
             document.getElementById('result-expires').textContent = this.formatDate(result.invite.expires_at);
             
-            document.getElementById('invite-result').style.display = 'block';
-            document.getElementById('email-invite-form').style.display = 'none';
-            document.getElementById('link-invite-form').style.display = 'none';
+            // Show step 3 with email success
+            document.getElementById('email-success').style.display = 'block';
+            document.getElementById('link-success').style.display = 'none';
+            this.goToStep(3);
 
             // Show success message
-            this.showSuccessMessage('Email invitation sent successfully!');
+            this.showSuccessMessage(this.t('organizations:invitation_sent'));
 
         } catch (error) {
             console.error('❌ Error sending email invitation:', error);
@@ -939,12 +1059,13 @@ class OrganizationsManager {
             document.getElementById('link-result-role').textContent = this.formatRole(inviteData.role);
             document.getElementById('link-result-expires').textContent = this.formatDate(result.expires_at);
             
-            document.getElementById('link-result').style.display = 'block';
-            document.getElementById('email-invite-form').style.display = 'none';
-            document.getElementById('link-invite-form').style.display = 'none';
+            // Show step 3 with link success
+            document.getElementById('link-success').style.display = 'block';
+            document.getElementById('email-success').style.display = 'none';
+            this.goToStep(3);
 
             // Show success message
-            this.showSuccessMessage('Invite link generated successfully!');
+            this.showSuccessMessage(this.t('organizations:invite_link_generated'));
 
         } catch (error) {
             console.error('❌ Error generating invite link:', error);
@@ -967,7 +1088,7 @@ class OrganizationsManager {
             copyBtn.textContent = 'Copied!';
             copyBtn.classList.add('copied');
             
-            this.showSuccessMessage('Invite link copied to clipboard!');
+            this.showSuccessMessage(this.t('organizations:link_copied'));
             
             // Reset button after 2 seconds
             setTimeout(() => {

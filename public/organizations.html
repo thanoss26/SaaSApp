@@ -4,11 +4,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronos HR - Organization Management</title>
+  <title data-i18n="organizations:organization_details">Chronos HR - Organization Management</title>
   <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
   <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
   <link rel="stylesheet" href="css/organizations.css?v=1.0.1">
+  <link rel="stylesheet" href="css/language-switcher.css?v=1.0.1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -35,27 +36,27 @@
       <nav class="enhanced-sidebar-nav">
         <a href="/dashboard" class="nav-item" data-page="dashboard">
           <i class="fas fa-tachometer-alt"></i>
-          <span>Dashboard</span>
+          <span data-i18n="common:dashboard">Dashboard</span>
         </a>
         <a href="/analytics" class="nav-item" data-page="analytics">
           <i class="fas fa-chart-bar"></i>
-          <span>Analytics</span>
+          <span data-i18n="common:analytics">Analytics</span>
         </a>
         <a href="/users" class="nav-item" data-page="users">
           <i class="fas fa-users"></i>
-          <span>User Management</span>
+          <span data-i18n="common:users">User Management</span>
         </a>
         <a href="/payroll" class="nav-item" data-page="payroll">
           <i class="fas fa-dollar-sign"></i>
-          <span>Payroll</span>
+          <span data-i18n="common:payroll">Payroll</span>
         </a>
         <a href="/organizations" class="nav-item active" data-page="organizations">
           <i class="fas fa-building"></i>
-          <span>Organizations</span>
+          <span data-i18n="common:organizations">Organizations</span>
         </a>
         <a href="/settings" class="nav-item" data-page="settings">
           <i class="fas fa-cog"></i>
-          <span>Settings</span>
+          <span data-i18n="common:settings">Settings</span>
         </a>
         <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
           <i class="fas fa-envelope"></i>
@@ -74,7 +75,7 @@
         </div>
         <button class="enhanced-logout-btn" id="logout-btn">
           <i class="fas fa-sign-out-alt"></i>
-          <span>Log out</span>
+          <span data-i18n="common:logout">Log out</span>
         </button>
       </div>
     </aside>
@@ -83,9 +84,9 @@
     <main class="dashboard-main">
       <!-- Topbar -->
       <header class="dashboard-topbar">
-        <h1 class="dashboard-title">Organization Management</h1>
+        <h1 class="dashboard-title" data-i18n="organizations:organization_details">Organization Management</h1>
         <div class="dashboard-search">
-          <input type="text" placeholder="Search members..." id="member-search" />
+          <input type="text" data-i18n-placeholder="organizations:member_search" placeholder="Search members..." id="member-search" />
           <i class="fas fa-search"></i>
         </div>
         <div class="dashboard-user">
@@ -104,7 +105,7 @@
         <!-- Loading State -->
         <div id="loading-state" class="loading-container">
           <div class="loading-spinner"></div>
-          <p>Loading organization information...</p>
+          <p data-i18n="common:loading">Loading organization information...</p>
         </div>
 
         <!-- Error State -->
@@ -112,9 +113,9 @@
           <div class="error-icon">
             <i class="fas fa-exclamation-triangle"></i>
           </div>
-          <h3>Unable to Load Organization</h3>
-          <p id="error-message">An error occurred while loading organization information.</p>
-          <button class="btn-primary" id="retry-btn">Try Again</button>
+          <h3 data-i18n="common:error">Unable to Load Organization</h3>
+          <p id="error-message" data-i18n="common:error">An error occurred while loading organization information.</p>
+          <button class="btn-primary" id="retry-btn" data-i18n="common:retry">Try Again</button>
         </div>
 
         <!-- Organization Information -->
@@ -135,7 +136,7 @@
                   </span>
                   <span class="org-meta-item">
                     <i class="fas fa-users"></i>
-                    <span id="org-member-count">0</span> Members
+                    <span id="org-member-count">0</span> <span data-i18n="organizations:members">Members</span>
                   </span>
                 </div>
               </div>
@@ -143,18 +144,18 @@
             <div class="org-actions">
               <button class="btn-primary" id="invite-members-btn" style="display: none;">
                 <i class="fas fa-user-plus"></i>
-                Invite Members
+                <span data-i18n="organizations:invite_members">Invite Members</span>
               </button>
               <button class="btn-secondary" id="edit-org-btn" style="display: none;">
                 <i class="fas fa-edit"></i>
-                Edit Organization
+                <span data-i18n="organizations:edit_organization">Edit Organization</span>
               </button>
             </div>
           </div>
 
           <!-- Organization Creator -->
           <div class="org-creator-section">
-            <h3>Organization Creator</h3>
+            <h3 data-i18n="organizations:organization_creator">Organization Creator</h3>
             <div class="creator-card" id="creator-card">
               <div class="creator-avatar">
                 <i class="fas fa-user"></i>
@@ -162,7 +163,7 @@
               <div class="creator-info">
                 <h4 id="creator-name">Loading...</h4>
                 <p id="creator-email">Loading...</p>
-                <span class="creator-role">Creator</span>
+                <span class="creator-role" data-i18n="organizations:organization_creator">Creator</span>
               </div>
             </div>
           </div>
@@ -170,19 +171,19 @@
           <!-- Organization Members -->
           <div class="org-members-section">
             <div class="section-header">
-              <h3>Organization Members</h3>
+              <h3 data-i18n="organizations:member_list">Organization Members</h3>
               <div class="member-filters">
                 <select id="role-filter" class="filter-select">
-                  <option value="">All Roles</option>
-                  <option value="admin">Admin</option>
-                  <option value="manager">Manager</option>
-                  <option value="organization_member">Organization Member</option>
-                  <option value="employee">Employee</option>
+                  <option value="" data-i18n="common:all_roles">All Roles</option>
+                  <option value="admin" data-i18n="common:admin">Admin</option>
+                  <option value="manager" data-i18n="common:manager">Manager</option>
+                  <option value="organization_member" data-i18n="common:organization_member">Organization Member</option>
+                  <option value="employee" data-i18n="common:employee">Employee</option>
                 </select>
                 <select id="status-filter" class="filter-select">
-                  <option value="">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="" data-i18n="common:all_status">All Status</option>
+                  <option value="active" data-i18n="common:active">Active</option>
+                  <option value="inactive" data-i18n="common:inactive">Inactive</option>
                 </select>
               </div>
             </div>
@@ -196,7 +197,7 @@
               <div class="no-members-icon">
                 <i class="fas fa-users-slash"></i>
               </div>
-              <h4>No Members Found</h4>
+              <h4 data-i18n="organizations:no_members">No Members Found</h4>
               <p>This organization doesn't have any members yet.</p>
             </div>
           </div>
@@ -272,121 +273,174 @@
   </div>
 
   <!-- Invite Members Modal -->
-  <div id="invite-members-modal" class="modal">
+  <div id="invite-members-modal" class="modal" style="display: none;">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Invite Members</h2>
+        <h2 data-i18n="organizations:invite_members">Invite Members</h2>
         <button id="close-invite-modal" class="close-btn">&times;</button>
       </div>
 
       <div class="modal-body">
-        <!-- Invite Type Selection -->
-        <div class="invite-type-selector">
-          <label class="invite-type-option">
-            <input type="radio" name="invite-type" value="email" checked>
-            <span class="radio-custom"></span>
-            <div class="option-content">
-              <h4>Invite by Email</h4>
-              <p>Send invitation to specific people by email</p>
-            </div>
-          </label>
-          <label class="invite-type-option">
-            <input type="radio" name="invite-type" value="link">
-            <span class="radio-custom"></span>
-            <div class="option-content">
-              <h4>Generate Invite Link</h4>
-              <p>Create a shareable link for anyone to join</p>
-            </div>
-          </label>
-        </div>
-
-        <!-- Email Invitation Form -->
-        <div id="email-invite-form" class="invite-form-section">
-          <h3>Send Email Invitation</h3>
-          <form id="email-invite-form-element">
-            <div class="form-group">
-              <label for="invite-email">Email Address *</label>
-              <input type="email" id="invite-email" name="email" required placeholder="Enter email address">
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="invite-first-name">First Name *</label>
-                <input type="text" id="invite-first-name" name="first_name" required placeholder="Enter first name">
-              </div>
-              <div class="form-group">
-                <label for="invite-last-name">Last Name *</label>
-                <input type="text" id="invite-last-name" name="last_name" required placeholder="Enter last name">
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="invite-role-email">Role</label>
-              <select id="invite-role-email" name="role">
-                <option value="organization_member">Organization Member</option>
-                <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="invite-message">Message (Optional)</label>
-              <textarea id="invite-message" name="message" rows="3" placeholder="Add a personal message to the invitation..."></textarea>
-            </div>
-            <div class="form-actions">
-              <button type="button" id="cancel-invite-btn" class="btn-secondary">Cancel</button>
-              <button type="submit" id="send-invite-btn" class="btn-primary">
-                <span class="btn-text">Send Invitation</span>
-                <span class="btn-loading" style="display: none;">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  Sending...
-                </span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Generic Link Form -->
-        <div id="link-invite-form" class="invite-form-section" style="display: none;">
-          <h3>Generate Invite Link</h3>
-          <form id="link-invite-form-element">
-            <div class="form-group">
-              <label for="invite-role">Role</label>
-              <select id="invite-role" name="role">
-                <option value="organization_member">Organization Member</option>
-                <option value="employee">Employee</option>
-                <option value="manager">Manager</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label for="invite-expiry">Expiry (Days)</label>
-              <select id="invite-expiry" name="expiry_days">
-                <option value="1">1 Day</option>
-                <option value="3">3 Days</option>
-                <option value="7" selected>7 Days</option>
-                <option value="14">14 Days</option>
-                <option value="30">30 Days</option>
-              </select>
-            </div>
-            <div class="form-actions">
-              <button type="button" id="cancel-link-btn" class="btn-secondary">Cancel</button>
-              <button type="submit" id="generate-invite-btn" class="btn-primary">
-                <span class="btn-text">Generate Link</span>
-                <span class="btn-loading" style="display: none;">
-                  <i class="fas fa-spinner fa-spin"></i>
-                  Generating...
-                </span>
-              </button>
-            </div>
-          </form>
-        </div>
-
-        <!-- Invite Result Section -->
-        <div id="invite-result" class="invite-result-section" style="display: none;">
-          <div class="result-header">
-            <i class="fas fa-check-circle success-icon"></i>
-            <h3>Invitation Sent Successfully!</h3>
+        <!-- Step Progress Indicator -->
+        <div class="step-progress">
+          <div class="step active" data-step="1">
+            <div class="step-number">1</div>
+            <div class="step-label" data-i18n="organizations:step_1_title">Choose Method</div>
           </div>
-          <div class="result-content">
-            <p>The invitation has been sent to the recipient's email address. They will receive a notification in their mailbox to accept or decline the invitation.</p>
-            <div class="invite-details">
+          <div class="step" data-step="2">
+            <div class="step-number">2</div>
+            <div class="step-label" data-i18n="organizations:step_2_title">Configure</div>
+          </div>
+          <div class="step" data-step="3">
+            <div class="step-number">3</div>
+            <div class="step-label" data-i18n="organizations:step_3_title">Complete</div>
+          </div>
+        </div>
+
+        <!-- Step 1: Choose Invite Method -->
+        <div id="step-1" class="step-content active">
+          <div class="step-header">
+            <h3 data-i18n="organizations:step_1_title">Choose Invitation Method</h3>
+            <p data-i18n="organizations:step_1_description">Select how you'd like to invite new members to your organization</p>
+          </div>
+          
+          <div class="invite-method-options">
+            <div class="method-option" data-method="email">
+              <div class="method-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div class="method-content">
+                <h4 data-i18n="organizations:email_invitation">Email Invitation</h4>
+                <p data-i18n="organizations:email_invitation_description">Send personalized invitations to specific people via email</p>
+                <ul class="method-features">
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:email_features_list">Personalized message</span></li>
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:email_features_list">Direct email delivery</span></li>
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:email_features_list">Track invitation status</span></li>
+                </ul>
+              </div>
+            </div>
+            
+            <div class="method-option" data-method="link">
+              <div class="method-icon">
+                <i class="fas fa-link"></i>
+              </div>
+              <div class="method-content">
+                <h4 data-i18n="organizations:invite_link">Invite Link</h4>
+                <p data-i18n="organizations:invite_link_description">Generate a shareable link for anyone to join</p>
+                <ul class="method-features">
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:link_features_list">Share anywhere</span></li>
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:link_features_list">No email required</span></li>
+                  <li><i class="fas fa-check"></i> <span data-i18n="organizations:link_features_list">Set expiration date</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          
+          <div class="step-actions">
+            <button type="button" id="cancel-invite-btn" class="btn-secondary" data-i18n="common:cancel">Cancel</button>
+            <button type="button" id="next-step-btn" class="btn-primary" disabled data-i18n="common:next">Next Step</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Configure Invitation -->
+        <div id="step-2" class="step-content">
+          <div class="step-header">
+            <h3 id="step-2-title">Configure Invitation</h3>
+            <p id="step-2-description">Set up the details for your invitation</p>
+          </div>
+          
+          <!-- Email Invitation Form -->
+          <div id="email-invite-form" class="invite-form-section" style="display: none;">
+            <form id="email-invite-form-element">
+              <div class="form-group">
+                <label for="invite-email" data-i18n="organizations:recipient_email">Email Address *</label>
+                <input type="email" id="invite-email" name="email" required data-i18n-placeholder="organizations:recipient_email_placeholder" placeholder="Enter email address">
+              </div>
+                              <div class="form-row">
+                  <div class="form-group">
+                    <label for="invite-first-name" data-i18n="common:first_name">First Name *</label>
+                    <input type="text" id="invite-first-name" name="first_name" required placeholder="Enter first name">
+                  </div>
+                  <div class="form-group">
+                    <label for="invite-last-name" data-i18n="common:last_name">Last Name *</label>
+                    <input type="text" id="invite-last-name" name="last_name" required placeholder="Enter last name">
+                  </div>
+                </div>
+              <div class="form-group">
+                <label for="invite-role-email" data-i18n="common:role">Role</label>
+                <select id="invite-role-email" name="role">
+                  <option value="organization_member" data-i18n="common:organization_member">Organization Member</option>
+                  <option value="employee" data-i18n="common:employee">Employee</option>
+                  <option value="manager" data-i18n="common:manager">Manager</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="invite-message" data-i18n="organizations:custom_message">Personal Message (Optional)</label>
+                <textarea id="invite-message" name="message" rows="3" data-i18n-placeholder="organizations:custom_message_placeholder" placeholder="Add a personal message to make the invitation more welcoming..."></textarea>
+              </div>
+            </form>
+          </div>
+
+          <!-- Link Invitation Form -->
+          <div id="link-invite-form" class="invite-form-section" style="display: none;">
+            <form id="link-invite-form-element">
+              <div class="form-group">
+                <label for="invite-role">Default Role for New Members</label>
+                <select id="invite-role" name="role">
+                  <option value="organization_member">Organization Member</option>
+                  <option value="employee">Employee</option>
+                  <option value="manager">Manager</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="invite-expiry">Link Expiration</label>
+                <select id="invite-expiry" name="expiry_days">
+                  <option value="1">1 Day</option>
+                  <option value="3">3 Days</option>
+                  <option value="7" selected>7 Days</option>
+                  <option value="14">14 Days</option>
+                  <option value="30">30 Days</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="invite-max-uses">Maximum Uses (Optional)</label>
+                <input type="number" id="invite-max-uses" name="max_uses" min="1" placeholder="Leave empty for unlimited">
+              </div>
+            </form>
+          </div>
+          
+          <div class="step-actions">
+            <button type="button" id="prev-step-btn" class="btn-secondary" data-i18n="common:previous">Previous</button>
+            <button type="button" id="send-invite-btn" class="btn-primary">
+              <span class="btn-text" data-i18n="organizations:send_invitation">Send Invitation</span>
+              <span class="btn-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span data-i18n="common:processing">Sending...</span>
+              </span>
+            </button>
+            <button type="button" id="generate-invite-btn" class="btn-primary" style="display: none;">
+              <span class="btn-text" data-i18n="organizations:generate_invite_link">Generate Link</span>
+              <span class="btn-loading" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span data-i18n="common:processing">Generating...</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Step 3: Success -->
+        <div id="step-3" class="step-content">
+          <div class="step-header">
+            <h3 id="step-3-title">Invitation Sent!</h3>
+            <p id="step-3-description">Your invitation has been successfully sent</p>
+          </div>
+          
+          <!-- Email Success -->
+          <div id="email-success" class="success-content" style="display: none;">
+            <div class="success-icon">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="success-details">
               <div class="detail-item">
                 <span class="detail-label">Recipient:</span>
                 <span id="result-recipient" class="detail-value"></span>
@@ -400,29 +454,25 @@
                 <span id="result-expires" class="detail-value"></span>
               </div>
             </div>
+            <p class="success-message">The invitation has been sent to the recipient's email address. They will receive a notification to accept or decline the invitation.</p>
           </div>
-          <div class="result-actions">
-            <button id="send-another-invite" class="btn-secondary">Send Another Invitation</button>
-            <button id="close-invite-result" class="btn-primary">Close</button>
-          </div>
-        </div>
 
-        <!-- Link Result Section -->
-        <div id="link-result" class="invite-result-section" style="display: none;">
-          <div class="result-header">
-            <i class="fas fa-link success-icon"></i>
-            <h3>Invite Link Generated!</h3>
-          </div>
-          <div class="result-content">
-            <p>Share this link with anyone you want to invite to your organization:</p>
-            <div class="invite-link-container">
-              <input type="text" id="invite-link" readonly>
-              <button id="copy-invite-link" class="btn-secondary">
-                <i class="fas fa-copy"></i>
-                Copy
-              </button>
+          <!-- Link Success -->
+          <div id="link-success" class="success-content" style="display: none;">
+            <div class="success-icon">
+              <i class="fas fa-link"></i>
             </div>
-            <div class="invite-details">
+            <div class="invite-link-container">
+              <label>Share this link:</label>
+              <div class="link-input-group">
+                <input type="text" id="invite-link" readonly>
+                <button id="copy-invite-link" class="btn-secondary">
+                  <i class="fas fa-copy"></i>
+                  Copy
+                </button>
+              </div>
+            </div>
+            <div class="success-details">
               <div class="detail-item">
                 <span class="detail-label">Role:</span>
                 <span id="link-result-role" class="detail-value"></span>
@@ -432,10 +482,12 @@
                 <span id="link-result-expires" class="detail-value"></span>
               </div>
             </div>
+            <p class="success-message">Share this link with anyone you want to invite to your organization.</p>
           </div>
-          <div class="result-actions">
-            <button id="generate-new-invite" class="btn-secondary">Generate New Link</button>
-            <button id="close-link-result" class="btn-primary">Close</button>
+          
+          <div class="step-actions">
+            <button id="send-another-invite" class="btn-secondary" data-i18n="organizations:send_another_invite">Send Another Invitation</button>
+            <button id="close-invite-result" class="btn-primary" data-i18n="organizations:close_invite_result">Close</button>
           </div>
         </div>
       </div>
@@ -443,6 +495,8 @@
   </div>
 
   <!-- Scripts -->
+  <script type="module" src="js/i18n.js"></script>
+  <script src="js/language-switcher.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/organizations.js"></script>
 </body>
