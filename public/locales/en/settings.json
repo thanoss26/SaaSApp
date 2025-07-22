@@ -1,0 +1,61 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your account preferences",
+  "language": {
+    "title": "Language",
+    "description": "Choose your preferred language"
+  },
+  "timezone": {
+    "title": "Time Zone",
+    "description": "Set your local time zone"
+  },
+  "accessibility": {
+    "title": "Accessibility",
+    "description": "Enable accessibility features"
+  },
+  "account": {
+    "title": "Account Settings",
+    "subtitle": "Manage your personal account information",
+    "profile": {
+      "title": "Profile Information",
+      "description": "Update your personal details and contact information"
+    },
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your password and security preferences"
+    },
+    "activity": {
+      "title": "Account Activity",
+      "description": "View your recent account activity and login history"
+    },
+    "privacy": {
+      "title": "Privacy Settings",
+      "description": "Control your privacy and data sharing preferences"
+    }
+  },
+  "preferences": {
+    "title": "Personal Preferences",
+    "subtitle": "Customize your experience"
+  },
+  "actions": {
+    "title": "Account Actions",
+    "subtitle": "Actions that affect your personal account",
+    "deactivate": {
+      "title": "Deactivate Account",
+      "description": "Temporarily disable your account (can be reactivated)"
+    },
+    "delete": {
+      "title": "Delete Account",
+      "description": "Permanently delete your account and all associated data"
+    }
+  },
+  "buttons": {
+    "save": "Save Changes",
+    "cancel": "Cancel",
+    "update": "Update",
+    "deactivate": "Deactivate",
+    "delete": "Delete Account",
+    "viewActivity": "View Activity",
+    "managePrivacy": "Manage Privacy"
+  }
+} 

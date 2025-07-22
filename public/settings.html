@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="css/enhanced-sidebar.css">
     <link rel="stylesheet" href="css/mailbox.css">
     <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/global-language-switcher.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -1107,15 +1108,25 @@
                                 <div class="personal-preferences">
                                     <div class="preference-option">
                                         <div class="option-info">
-                                            <h4>Language</h4>
-                                            <p>Choose your preferred language</p>
+                                                                                <h4 data-i18n="settings:language.title">Language</h4>
+                                    <p data-i18n="settings:language.description">Choose your preferred language</p>
                                         </div>
-                                        <select id="userLanguage" class="form-select">
-                                            <option value="en">English</option>
-                                            <option value="es">Español</option>
-                                            <option value="fr">Français</option>
-                                            <option value="de">Deutsch</option>
-                                        </select>
+                                        <div class="language-switcher">
+                                            <div class="language-btn">
+                                                <span class="current-lang">English</span>
+                                                <span class="chevron">▼</span>
+                                            </div>
+                                            <div class="language-dropdown">
+                                                <div class="language-option" data-lang="en">
+                                                    <img src="https://flagcdn.com/w20/gb.png" alt="English" class="flag">
+                                                    <span class="lang-name">English</span>
+                                                </div>
+                                                <div class="language-option" data-lang="el">
+                                                    <img src="https://flagcdn.com/w20/gr.png" alt="Greek" class="flag">
+                                                    <span class="lang-name">Ελληνικά</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="preference-option">
                                         <div class="option-info">
@@ -1176,6 +1187,13 @@
         </main>
     </div>
 
+    <!-- i18next CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@25.3.2/dist/umd/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
+    
+    <!-- Global Language Switcher -->
+    <script src="js/global-language-switcher.js"></script>
     <script src="js/shared.js"></script>
     <script src="js/sidebar.js"></script>
     <script src="js/mailbox.js"></script>
