@@ -1,0 +1,45 @@
+{
+  "title": "Dashboard",
+  "searchPlaceholder": "Search employees, departments...",
+  "stats": {
+    "totalEmployees": "Total Employees",
+    "activeEmployees": "Active Employees",
+    "departments": "Departments",
+    "attendanceRate": "Attendance Rate"
+  },
+  "charts": {
+    "employeeGrowth": "Employee Growth & Trends",
+    "departmentDistribution": "Department Distribution",
+    "attendanceTrends": "Attendance Trends",
+    "performanceMetrics": "Performance Metrics",
+    "recentActivity": "Recent Activity"
+  },
+  "timeframes": {
+    "last7Days": "Last 7 Days",
+    "last30Days": "Last 30 Days",
+    "last3Months": "Last 3 Months",
+    "lastYear": "Last Year"
+  },
+  "views": {
+    "chart": "Chart",
+    "list": "List",
+    "viewAll": "View all"
+  },
+  "metrics": {
+    "productivity": "Productivity",
+    "efficiency": "Efficiency",
+    "quality": "Quality"
+  },
+  "activity": {
+    "newEmployeeJoined": "New employee joined",
+    "performanceMilestone": "Performance milestone",
+    "meetingScheduled": "Meeting scheduled",
+    "attendanceImproved": "Attendance improved"
+  },
+  "organization": {
+    "required": "Organization Required",
+    "requiredMessage": "You need to create or join an organization to access dashboard features.",
+    "createOrganization": "Create Organization",
+    "joinOrganization": "Join Organization"
+  }
+} 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chronos HR - Modern HR Management Platform</title>
+    <title data-i18n="landing:page_title">Chronos HR - Modern HR Management Platform</title>
     <link rel="stylesheet" href="css/landing.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -18,15 +18,34 @@
             </div>
             
             <div class="nav-menu">
-                <a href="#features" class="nav-link">Features</a>
-                <a href="#pricing" class="nav-link">Pricing</a>
-                <a href="#about" class="nav-link">About</a>
-                <a href="#contact" class="nav-link">Contact</a>
+                <a href="#features" class="nav-link" data-i18n="landing:nav_features">Features</a>
+                <a href="#pricing" class="nav-link" data-i18n="landing:nav_pricing">Pricing</a>
+                <a href="#about" class="nav-link" data-i18n="landing:nav_about">About</a>
+                <a href="#contact" class="nav-link" data-i18n="landing:nav_contact">Contact</a>
             </div>
             
             <div class="nav-actions">
-                <a href="login.html" class="btn btn-outline">Login</a>
-                <a href="signup.html" class="btn btn-primary">Get Started</a>
+                <!-- Language Switcher -->
+                <div class="language-switcher">
+                    <button class="language-btn" id="languageBtn">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLanguage">EN</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="language-dropdown" id="languageDropdown">
+                        <div class="language-option" data-lang="en">
+                            <span class="flag">🇺🇸</span>
+                            <span>English</span>
+                        </div>
+                        <div class="language-option" data-lang="el">
+                            <span class="flag">🇬🇷</span>
+                            <span>Ελληνικά</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <a href="login.html" class="btn btn-outline" data-i18n="landing:nav_login">Login</a>
+                <a href="signup.html" class="btn btn-primary" data-i18n="landing:nav_get_started">Get Started</a>
             </div>
             
             <div class="nav-toggle">
@@ -42,34 +61,34 @@
         <div class="hero-container">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    Transform Your <span class="gradient-text">HR Management</span>
+                    <span data-i18n="landing:hero_title">Transform Your</span> <span class="gradient-text" data-i18n="landing:hero_title_highlight">HR Management</span>
                 </h1>
-                <p class="hero-subtitle">
+                <p class="hero-subtitle" data-i18n="landing:hero_subtitle">
                     Streamline your human resources with our modern, AI-powered platform. 
                     Manage employees, payroll, and performance all in one place.
                 </p>
                 <div class="hero-actions">
                     <a href="signup.html" class="btn btn-primary btn-large">
                         <i class="fas fa-rocket"></i>
-                        Start Free Trial
+                        <span data-i18n="landing:hero_start_trial">Start Free Trial</span>
                     </a>
                     <a href="#features" class="btn btn-outline btn-large">
                         <i class="fas fa-star"></i>
-                        View Features
+                        <span data-i18n="landing:hero_view_features">View Features</span>
                     </a>
                 </div>
                 <div class="hero-stats">
                     <div class="stat">
                         <span class="stat-number">10K+</span>
-                        <span class="stat-label">Companies</span>
+                        <span class="stat-label" data-i18n="landing:stats_companies">Companies</span>
                     </div>
                     <div class="stat">
                         <span class="stat-number">500K+</span>
-                        <span class="stat-label">Employees</span>
+                        <span class="stat-label" data-i18n="landing:stats_employees">Employees</span>
                     </div>
                     <div class="stat">
                         <span class="stat-number">99.9%</span>
-                        <span class="stat-label">Uptime</span>
+                        <span class="stat-label" data-i18n="landing:stats_uptime">Uptime</span>
                     </div>
                 </div>
             </div>
@@ -122,8 +141,8 @@
     <section id="features" class="features">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Powerful Features</h2>
-                <p class="section-subtitle">
+                <h2 class="section-title" data-i18n="landing:features_title">Powerful Features</h2>
+                <p class="section-subtitle" data-i18n="landing:features_subtitle">
                     Everything you need to manage your workforce effectively
                 </p>
             </div>
@@ -133,12 +152,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
-                    <h3>Employee Management</h3>
-                    <p>Comprehensive employee profiles, onboarding, and lifecycle management.</p>
+                    <h3 data-i18n="landing:feature_employee_management_title">Employee Management</h3>
+                    <p data-i18n="landing:feature_employee_management_desc">Comprehensive employee profiles, onboarding, and lifecycle management.</p>
                     <ul class="feature-list">
-                        <li>Digital onboarding</li>
-                        <li>Performance tracking</li>
-                        <li>Document management</li>
+                        <li data-i18n="landing:feature_employee_management_list_1">Digital onboarding</li>
+                        <li data-i18n="landing:feature_employee_management_list_2">Performance tracking</li>
+                        <li data-i18n="landing:feature_employee_management_list_3">Document management</li>
                     </ul>
                 </div>
                 
@@ -146,12 +165,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-calculator"></i>
                     </div>
-                    <h3>Payroll & Benefits</h3>
-                    <p>Automated payroll processing with tax calculations and benefit management.</p>
+                    <h3 data-i18n="landing:feature_payroll_title">Payroll & Benefits</h3>
+                    <p data-i18n="landing:feature_payroll_desc">Automated payroll processing with tax calculations and benefit management.</p>
                     <ul class="feature-list">
-                        <li>Automated calculations</li>
-                        <li>Tax compliance</li>
-                        <li>Benefits administration</li>
+                        <li data-i18n="landing:feature_payroll_list_1">Automated calculations</li>
+                        <li data-i18n="landing:feature_payroll_list_2">Tax compliance</li>
+                        <li data-i18n="landing:feature_payroll_list_3">Benefits administration</li>
                     </ul>
                 </div>
                 
@@ -159,12 +178,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-chart-bar"></i>
                     </div>
-                    <h3>Analytics & Reporting</h3>
-                    <p>Data-driven insights with customizable reports and real-time dashboards.</p>
+                    <h3 data-i18n="landing:feature_analytics_title">Analytics & Reporting</h3>
+                    <p data-i18n="landing:feature_analytics_desc">Data-driven insights with customizable reports and real-time dashboards.</p>
                     <ul class="feature-list">
-                        <li>Real-time analytics</li>
-                        <li>Custom reports</li>
-                        <li>Performance metrics</li>
+                        <li data-i18n="landing:feature_analytics_list_1">Real-time analytics</li>
+                        <li data-i18n="landing:feature_analytics_list_2">Custom reports</li>
+                        <li data-i18n="landing:feature_analytics_list_3">Performance metrics</li>
                     </ul>
                 </div>
                 
@@ -172,12 +191,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <h3>Time & Attendance</h3>
-                    <p>Track work hours, manage schedules, and monitor attendance patterns.</p>
+                    <h3 data-i18n="landing:feature_time_tracking_title">Time & Attendance</h3>
+                    <p data-i18n="landing:feature_time_tracking_desc">Track work hours, manage schedules, and monitor attendance patterns.</p>
                     <ul class="feature-list">
-                        <li>Time tracking</li>
-                        <li>Schedule management</li>
-                        <li>Overtime monitoring</li>
+                        <li data-i18n="landing:feature_time_tracking_list_1">Time tracking</li>
+                        <li data-i18n="landing:feature_time_tracking_list_2">Schedule management</li>
+                        <li data-i18n="landing:feature_time_tracking_list_3">Overtime monitoring</li>
                     </ul>
                 </div>
                 
@@ -185,12 +204,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
-                    <h3>Learning & Development</h3>
-                    <p>Employee training programs and skill development tracking.</p>
+                    <h3 data-i18n="landing:feature_performance_title">Performance Management</h3>
+                    <p data-i18n="landing:feature_performance_desc">Goal setting, reviews, and performance tracking.</p>
                     <ul class="feature-list">
-                        <li>Training modules</li>
-                        <li>Skill assessments</li>
-                        <li>Certification tracking</li>
+                        <li data-i18n="landing:feature_performance_list_1">Goal setting</li>
+                        <li data-i18n="landing:feature_performance_list_2">Performance reviews</li>
+                        <li data-i18n="landing:feature_performance_list_3">Progress tracking</li>
                     </ul>
                 </div>
                 
@@ -198,12 +217,12 @@
                     <div class="feature-icon">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h3>Security & Compliance</h3>
-                    <p>Enterprise-grade security with compliance monitoring and audit trails.</p>
+                    <h3 data-i18n="landing:feature_benefits_title">Benefits Management</h3>
+                    <p data-i18n="landing:feature_benefits_desc">Health insurance, retirement plans, and other benefits administration.</p>
                     <ul class="feature-list">
-                        <li>Data encryption</li>
-                        <li>Compliance monitoring</li>
-                        <li>Audit trails</li>
+                        <li data-i18n="landing:feature_benefits_list_1">Health insurance</li>
+                        <li data-i18n="landing:feature_benefits_list_2">Retirement plans</li>
+                        <li data-i18n="landing:feature_benefits_list_3">Benefits administration</li>
                     </ul>
                 </div>
             </div>
@@ -214,82 +233,82 @@
     <section id="pricing" class="pricing">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Simple, Transparent Pricing</h2>
-                <p class="section-subtitle">
+                <h2 class="section-title" data-i18n="landing:pricing_title">Simple, Transparent Pricing</h2>
+                <p class="section-subtitle" data-i18n="landing:pricing_subtitle">
                     Choose the plan that fits your organization's needs
                 </p>
             </div>
             
             <div class="pricing-toggle">
-                <span>Monthly</span>
+                <span data-i18n="landing:pricing_monthly">Monthly</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="billingToggle">
                     <span class="slider"></span>
                 </label>
-                <span>Annual <span class="discount">Save 20%</span></span>
+                <span data-i18n="landing:pricing_annual">Annual <span class="discount" data-i18n="landing:pricing_save">Save 20%</span></span>
             </div>
             
             <div class="pricing-grid">
                 <div class="pricing-card">
                     <div class="pricing-header">
-                        <h3>Starter</h3>
+                        <h3 data-i18n="landing:pricing_starter">Starter</h3>
                         <div class="price">
                             <span class="currency">$</span>
                             <span class="amount">29</span>
-                            <span class="period">/month</span>
+                            <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p>Perfect for small teams</p>
+                        <p data-i18n="landing:pricing_starter_desc">Perfect for small teams</p>
                     </div>
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Up to 50 employees</li>
-                        <li><i class="fas fa-check"></i> Basic HR features</li>
-                        <li><i class="fas fa-check"></i> Email support</li>
-                        <li><i class="fas fa-check"></i> Standard reports</li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_1">Up to 50 employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_2">Basic HR features</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_3">Email support</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_4">Standard reports</span></li>
                     </ul>
-                    <a href="signup.html" class="btn btn-outline btn-full">Get Started</a>
+                    <a href="signup.html" class="btn btn-outline btn-full" data-i18n="landing:pricing_get_started">Get Started</a>
                 </div>
                 
                 <div class="pricing-card featured">
-                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-badge" data-i18n="landing:pricing_most_popular">Most Popular</div>
                     <div class="pricing-header">
-                        <h3>Professional</h3>
+                        <h3 data-i18n="landing:pricing_professional">Professional</h3>
                         <div class="price">
                             <span class="currency">$</span>
                             <span class="amount">79</span>
-                            <span class="period">/month</span>
+                            <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p>Ideal for growing companies</p>
+                        <p data-i18n="landing:pricing_professional_desc">Ideal for growing companies</p>
                     </div>
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Up to 200 employees</li>
-                        <li><i class="fas fa-check"></i> Advanced HR features</li>
-                        <li><i class="fas fa-check"></i> Priority support</li>
-                        <li><i class="fas fa-check"></i> Custom reports</li>
-                        <li><i class="fas fa-check"></i> API access</li>
-                        <li><i class="fas fa-check"></i> Integrations</li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_1">Up to 200 employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_2">Advanced HR features</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_3">Priority support</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_4">Custom reports</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_5">API access</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_6">Integrations</span></li>
                     </ul>
-                    <a href="signup.html" class="btn btn-primary btn-full">Get Started</a>
+                    <a href="signup.html" class="btn btn-primary btn-full" data-i18n="landing:pricing_get_started">Get Started</a>
                 </div>
                 
                 <div class="pricing-card">
                     <div class="pricing-header">
-                        <h3>Enterprise</h3>
+                        <h3 data-i18n="landing:pricing_enterprise">Enterprise</h3>
                         <div class="price">
                             <span class="currency">$</span>
                             <span class="amount">199</span>
-                            <span class="period">/month</span>
+                            <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p>For large organizations</p>
+                        <p data-i18n="landing:pricing_enterprise_desc">For large organizations</p>
                     </div>
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> Unlimited employees</li>
-                        <li><i class="fas fa-check"></i> All features included</li>
-                        <li><i class="fas fa-check"></i> 24/7 support</li>
-                        <li><i class="fas fa-check"></i> Custom integrations</li>
-                        <li><i class="fas fa-check"></i> Dedicated account manager</li>
-                        <li><i class="fas fa-check"></i> Advanced security</li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_1">Unlimited employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_2">All features included</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_3">24/7 support</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_4">Custom integrations</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_5">Dedicated account manager</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_6">Advanced security</span></li>
                     </ul>
-                    <a href="signup.html" class="btn btn-outline btn-full">Contact Sales</a>
+                    <a href="signup.html" class="btn btn-outline btn-full" data-i18n="landing:pricing_contact_sales">Contact Sales</a>
                 </div>
             </div>
         </div>
@@ -300,14 +319,14 @@
         <div class="container">
             <div class="about-content">
                 <div class="about-text">
-                    <h2>About Chronos HR</h2>
-                    <p>
+                    <h2 data-i18n="landing:about_title">About Chronos HR</h2>
+                    <p data-i18n="landing:about_description">
                         Founded in 2025, Chronos HR was born from the need to modernize 
                         human resources management. We believe that every organization 
                         deserves access to powerful, intuitive HR tools that help them 
                         focus on what matters most - their people.
                     </p>
-                    <p>
+                    <p data-i18n="landing:about_description_2">
                         Our platform combines cutting-edge technology with deep HR expertise 
                         to deliver solutions that scale with your business. From startups 
                         to enterprise organizations, we're here to transform how you manage 
@@ -316,15 +335,15 @@
                     <div class="about-stats">
                         <div class="about-stat">
                             <span class="stat-number">50+</span>
-                            <span class="stat-label">Countries</span>
+                            <span class="stat-label" data-i18n="landing:about_stat_countries">Countries</span>
                         </div>
                         <div class="about-stat">
                             <span class="stat-number">24/7</span>
-                            <span class="stat-label">Support</span>
+                            <span class="stat-label" data-i18n="landing:about_stat_support">Support</span>
                         </div>
                         <div class="about-stat">
                             <span class="stat-number">99.9%</span>
-                            <span class="stat-label">Uptime</span>
+                            <span class="stat-label" data-i18n="landing:about_stat_uptime">Uptime</span>
                         </div>
                     </div>
                 </div>
@@ -332,7 +351,7 @@
                     <div class="team-photo">
                         <div class="photo-placeholder">
                             <i class="fas fa-users"></i>
-                            <span>Our Team</span>
+                            <span data-i18n="landing:about_team">Our Team</span>
                         </div>
                     </div>
                 </div>
@@ -344,8 +363,8 @@
     <section id="contact" class="contact">
         <div class="container">
             <div class="section-header">
-                <h2 class="section-title">Get in Touch</h2>
-                <p class="section-subtitle">
+                <h2 class="section-title" data-i18n="landing:contact_title">Get in Touch</h2>
+                <p class="section-subtitle" data-i18n="landing:contact_subtitle">
                     Ready to transform your HR management? Let's talk.
                 </p>
             </div>
@@ -357,7 +376,7 @@
                             <i class="fas fa-envelope"></i>
                         </div>
                         <div class="contact-details">
-                            <h4>Email</h4>
+                            <h4 data-i18n="landing:contact_email">Email</h4>
                             <p>hello@chronoshr.com</p>
                         </div>
                     </div>
@@ -367,7 +386,7 @@
                             <i class="fas fa-phone"></i>
                         </div>
                         <div class="contact-details">
-                            <h4>Phone</h4>
+                            <h4 data-i18n="landing:contact_phone">Phone</h4>
                             <p>+1 (555) 123-4567</p>
                         </div>
                     </div>
@@ -377,8 +396,8 @@
                             <i class="fas fa-map-marker-alt"></i>
                         </div>
                         <div class="contact-details">
-                            <h4>Office</h4>
-                            <p>123 Innovation Drive<br>San Francisco, CA 94105</p>
+                            <h4 data-i18n="landing:contact_office">Office</h4>
+                            <p data-i18n="landing:contact_address">123 Innovation Drive<br>San Francisco, CA 94105</p>
                         </div>
                     </div>
                 </div>
@@ -387,21 +406,21 @@
                     <form id="contactForm">
                         <div class="form-row">
                             <div class="form-group">
-                                <input type="text" id="name" placeholder="Your Name" required>
+                                <input type="text" id="name" data-i18n-placeholder="landing:contact_form_name" placeholder="Your Name" required>
                             </div>
                             <div class="form-group">
-                                <input type="email" id="email" placeholder="Your Email" required>
+                                <input type="email" id="email" data-i18n-placeholder="landing:contact_form_email" placeholder="Your Email" required>
                             </div>
                         </div>
                         <div class="form-group">
-                            <input type="text" id="company" placeholder="Company Name">
+                            <input type="text" id="company" data-i18n-placeholder="landing:contact_form_company" placeholder="Company Name">
                         </div>
                         <div class="form-group">
-                            <textarea id="message" placeholder="How can we help you?" rows="5" required></textarea>
+                            <textarea id="message" data-i18n-placeholder="landing:contact_form_message" placeholder="How can we help you?" rows="5" required></textarea>
                         </div>
                         <button type="submit" class="btn btn-primary btn-full">
                             <i class="fas fa-paper-plane"></i>
-                            Send Message
+                            <span data-i18n="landing:contact_form_send">Send Message</span>
                         </button>
                     </form>
                 </div>
@@ -418,7 +437,7 @@
                         <i class="fas fa-clock"></i>
                         <span>Chronos HR</span>
                     </div>
-                    <p>Modern HR management for modern businesses.</p>
+                    <p data-i18n="landing:footer_tagline">Modern HR management for modern businesses.</p>
                     <div class="social-links">
                         <a href="#"><i class="fab fa-twitter"></i></a>
                         <a href="#"><i class="fab fa-linkedin"></i></a>
@@ -428,52 +447,59 @@
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Product</h4>
+                    <h4 data-i18n="landing:footer_product">Product</h4>
                     <ul>
-                        <li><a href="#features">Features</a></li>
-                        <li><a href="#pricing">Pricing</a></li>
-                        <li><a href="#">Integrations</a></li>
-                        <li><a href="#">API</a></li>
+                        <li><a href="#features" data-i18n="landing:nav_features">Features</a></li>
+                        <li><a href="#pricing" data-i18n="landing:nav_pricing">Pricing</a></li>
+                        <li><a href="#" data-i18n="landing:footer_integrations">Integrations</a></li>
+                        <li><a href="#" data-i18n="landing:footer_api">API</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Company</h4>
+                    <h4 data-i18n="landing:footer_company">Company</h4>
                     <ul>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#">Careers</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Press</a></li>
+                        <li><a href="#about" data-i18n="landing:nav_about">About</a></li>
+                        <li><a href="#" data-i18n="landing:footer_careers">Careers</a></li>
+                        <li><a href="#" data-i18n="landing:footer_blog">Blog</a></li>
+                        <li><a href="#" data-i18n="landing:footer_press">Press</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Support</h4>
+                    <h4 data-i18n="landing:footer_support">Support</h4>
                     <ul>
-                        <li><a href="#contact">Contact</a></li>
-                        <li><a href="#">Help Center</a></li>
-                        <li><a href="#">Documentation</a></li>
-                        <li><a href="#">Status</a></li>
+                        <li><a href="#contact" data-i18n="landing:nav_contact">Contact</a></li>
+                        <li><a href="#" data-i18n="landing:footer_help_center">Help Center</a></li>
+                        <li><a href="#" data-i18n="landing:footer_documentation">Documentation</a></li>
+                        <li><a href="#" data-i18n="landing:footer_status">Status</a></li>
                     </ul>
                 </div>
                 
                 <div class="footer-section">
-                    <h4>Legal</h4>
+                    <h4 data-i18n="landing:footer_legal">Legal</h4>
                     <ul>
-                        <li><a href="#">Privacy Policy</a></li>
-                        <li><a href="#">Terms of Service</a></li>
-                        <li><a href="#">Cookie Policy</a></li>
-                        <li><a href="#">GDPR</a></li>
+                        <li><a href="#" data-i18n="landing:footer_privacy">Privacy Policy</a></li>
+                        <li><a href="#" data-i18n="landing:footer_terms">Terms of Service</a></li>
+                        <li><a href="#" data-i18n="landing:footer_cookies">Cookie Policy</a></li>
+                        <li><a href="#" data-i18n="landing:footer_gdpr">GDPR</a></li>
                     </ul>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2025 Chronos HR. All rights reserved.</p>
+                <p data-i18n="landing:footer_copyright">&copy; 2025 Chronos HR. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
+    <!-- i18next CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@25.3.2/dist/umd/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
+    
+    <!-- i18n Script -->
+    <script src="js/i18n-cdn.js"></script>
     <script src="js/landing.js"></script>
 </body>
 </html> 

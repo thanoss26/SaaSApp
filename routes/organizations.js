@@ -424,8 +424,8 @@ router.get('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
         console.log('🔍 User ID:', userId);
         console.log('🔍 User profile:', req.profile);
 
-        // First, check if the organization exists
-        const { data: orgExists, error: existsError } = await supabase
+        // First, check if the organization exists (using admin client to bypass RLS)
+        const { data: orgExists, error: existsError } = await supabaseAdmin
             .from('organizations')
             .select('id')
             .eq('id', organizationId)
@@ -450,8 +450,8 @@ router.get('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
             });
         }
 
-        // Get organization details with creator information
-        const { data: organization, error: orgError } = await supabase
+        // Get organization details with creator information (using admin client to bypass RLS)
+        const { data: organization, error: orgError } = await supabaseAdmin
             .from('organizations')
             .select(`
                 id,
@@ -1258,5 +1258,7 @@ function generateInviteCode() {
     }
     return result;
 }
+
+
 
 module.exports = router; 
