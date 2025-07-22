@@ -27,7 +27,7 @@
             <div class="nav-actions">
                 <!-- Language Switcher -->
                 <div class="language-switcher">
-                    <button class="language-btn" id="languageBtn">
+                    <button type="button" class="language-btn" id="languageBtn" onclick="console.log('Inline click test!')">
                         <i class="fas fa-globe"></i>
                         <span id="currentLanguage">EN</span>
                         <i class="fas fa-chevron-down"></i>
@@ -498,8 +498,8 @@
     <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
     
-    <!-- i18n Script -->
-    <script src="js/i18n-cdn.js"></script>
+    <!-- Global Language Switcher -->
+    <script src="js/global-language-switcher.js"></script>
     <script src="js/landing.js"></script>
 </body>
 </html> 

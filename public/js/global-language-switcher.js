@@ -37,8 +37,19 @@
             })
             .then(() => {
                 console.log('Global i18next initialized successfully');
+                
+                // Apply saved language immediately
+                const savedLang = localStorage.getItem('i18nextLng');
+                if (savedLang && savedLang !== i18next.language) {
+                    i18next.changeLanguage(savedLang).then(() => {
+                        console.log(`Applied saved language: ${savedLang}`);
+                        updatePageContent();
+                    });
+                } else {
+                    updatePageContent();
+                }
+                
                 initLanguageSwitcher();
-                updatePageContent();
             })
             .catch((error) => {
                 console.error('Error initializing i18next:', error);
@@ -102,7 +113,14 @@
     function initLanguageSwitcher() {
         const languageSwitcher = document.querySelector('.language-switcher');
         if (!languageSwitcher) {
-            console.log('No language switcher found on this page');
+            console.log('No language switcher found on this page - running in global mode only');
+            return;
+        }
+
+        // Check if this is the landing page (has #currentLanguage element)
+        const isLandingPage = document.getElementById('currentLanguage');
+        if (isLandingPage) {
+            console.log('Landing page detected - skipping global language switcher UI initialization');
             return;
         }
 
