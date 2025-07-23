@@ -1849,6 +1849,296 @@ body {
   gap: 12px;
 }
 
+/* Add Member Button Styling */
+#add-member-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+#add-member-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+#add-member-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+#add-member-btn i {
+  font-size: 16px;
+}
+
+/* Multi-step Form Styling */
+.form-step-progress {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 0 20px;
+}
+
+.form-step-progress .step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.form-step-progress .step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.form-step-progress .step.active:not(:last-child)::after {
+  background: #667eea;
+}
+
+.form-step-progress .step-number {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.form-step-progress .step.active .step-number {
+  background: #667eea;
+  color: white;
+}
+
+.form-step-progress .step.completed .step-number {
+  background: #10b981;
+  color: white;
+}
+
+.form-step-progress .step-label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.form-step-progress .step.active .step-label {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.form-step-progress .step.completed .step-label {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.form-step {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.form-step.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.step-header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.step-header h4 {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.step-header p {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.form-navigation button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.form-navigation .btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.form-navigation .btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+.form-navigation .btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.form-navigation .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.form-navigation .btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Enhanced form styling */
+#add-member-modal .modal-content {
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#add-member-modal .form-group {
+  margin-bottom: 16px;
+}
+
+#add-member-modal .form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+#add-member-modal .form-group input,
+#add-member-modal .form-group select,
+#add-member-modal .form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+#add-member-modal .form-group input:focus,
+#add-member-modal .form-group select:focus,
+#add-member-modal .form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+#add-member-modal .form-group input::placeholder {
+  color: #9ca3af;
+}
+
+#add-member-modal .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Required field indicator */
+#add-member-modal .form-group label[for*="required"]::after,
+#add-member-modal .form-group label:has(+ input[required])::after {
+  content: ' *';
+  color: #ef4444;
+}
+
+/* Error states */
+#add-member-modal .form-group input.error,
+#add-member-modal .form-group select.error,
+#add-member-modal .form-group textarea.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+#add-member-modal .error-message {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-step-progress {
+    padding: 0 10px;
+  }
+  
+  .form-step-progress .step-label {
+    font-size: 11px;
+  }
+  
+  .form-navigation {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .form-navigation button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 /* Organization Creator Section */
 .org-creator-section {
   background: white;
@@ -3251,5 +3541,631 @@ body {
 @media (max-width: 768px) {
   .form-row {
     grid-template-columns: 1fr;
+    }
+}
+
+/* File Upload Styles */
+.file-upload-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.file-upload-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  background: #f9fafb;
+  transition: all 0.3s ease;
+  min-height: 120px;
+  cursor: pointer;
+}
+
+.file-upload-display:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.file-upload-display i {
+  font-size: 24px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.file-upload-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.file-upload-info {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.file-preview i {
+  font-size: 16px;
+  color: #3b82f6;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+}
+
+.file-remove {
+  background: none;
+  border: none;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.file-remove:hover {
+  background: #fee2e2;
+}
+
+.file-remove i {
+  font-size: 14px;
+}
+
+/* File upload states */
+.file-upload-wrapper.has-file .file-upload-display {
+  display: none;
+}
+
+.file-upload-wrapper.has-file .file-preview {
+  display: flex;
+}
+
+/* Drag and drop states */
+.file-upload-wrapper.dragover .file-upload-display {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  transform: scale(1.02);
+}
+
+/* Error state */
+.file-upload-wrapper.error .file-upload-display {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.file-upload-wrapper.error .file-upload-text {
+  color: #ef4444;
+}
+
+/* Success state */
+.file-upload-wrapper.success .file-upload-display {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.file-upload-wrapper.success .file-upload-text {
+  color: #10b981;
+}
+
+/* Member Detail Modal Styles */
+.member-detail-modal {
+  max-width: 800px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.member-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.member-detail-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 600;
+  color: white;
+  background: #4e8cff;
+}
+
+.member-detail-avatar.admin {
+  background: #dc2626;
+}
+
+.member-detail-avatar.manager {
+  background: #ea580c;
+}
+
+.member-detail-avatar.organization_member {
+  background: #059669;
+}
+
+.member-detail-avatar.employee {
+  background: #4e8cff;
+}
+
+.member-detail-info h4 {
+  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.member-detail-info p {
+  margin: 0 0 8px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.member-detail-role {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #e5e7eb;
+  color: #374151;
+  margin-right: 8px;
+}
+
+.member-detail-status {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.member-detail-status.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.member-detail-status.inactive {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.member-detail-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+}
+
+.member-tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-tab:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.member-tab.active {
+  color: #4e8cff;
+  border-bottom-color: #4e8cff;
+}
+
+.member-tab i {
+  font-size: 16px;
+}
+
+.member-tab-content {
+  display: none;
+}
+
+.member-tab-content.active {
+  display: block;
+}
+
+.detail-section {
+  margin-bottom: 24px;
+}
+
+.detail-section h5 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.detail-item label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-item span {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.member-detail-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 20px;
+}
+
+/* Member Card Action Buttons */
+.member-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.member-card:hover .member-actions {
+  opacity: 1;
+}
+
+.member-action-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.member-action-btn.view-btn {
+  background: #4e8cff;
+  color: white;
+}
+
+.member-action-btn.view-btn:hover {
+  background: #3b7de9;
+}
+
+.member-action-btn.edit-btn {
+  background: #f59e0b;
+  color: white;
+}
+
+.member-action-btn.edit-btn:hover {
+  background: #d97706;
+}
+
+.member-action-btn.remove-btn {
+  background: #dc2626;
+  color: white;
+}
+
+.member-action-btn.remove-btn:hover {
+  background: #b91c1c;
+}
+
+/* Remove Member Confirmation Modal */
+.confirmation-content {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.confirmation-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fee2e2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.confirmation-icon i {
+  font-size: 24px;
+  color: #dc2626;
+}
+
+.confirmation-content h4 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.confirmation-content p {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.confirmation-details {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.confirmation-details p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+}
+
+.confirmation-details p:last-child {
+  margin-bottom: 0;
+}
+
+.confirmation-details strong {
+  color: #1f2937;
+}
+
+.confirmation-warning {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.confirmation-warning p {
+  margin: 0;
+  font-size: 14px;
+  color: #92400e;
+}
+
+.confirmation-warning i {
+  margin-right: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .member-detail-modal {
+    width: 95%;
+    max-height: 95vh;
   }
+
+  .member-detail-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .member-detail-tabs {
+    flex-wrap: wrap;
+  }
+
+  .member-tab {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .member-detail-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .member-actions {
+    opacity: 1;
+    justify-content: center;
+  }
+}
+
+/* Edit Member Modal Styles */
+.edit-member-modal {
+  max-width: 900px;
+  width: 95%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.edit-member-tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.edit-tab {
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.edit-tab:hover {
+  color: #374151;
+  background: #f9fafb;
+}
+
+.edit-tab.active {
+  color: #4e8cff;
+  border-bottom-color: #4e8cff;
+}
+
+.edit-tab i {
+  font-size: 16px;
+}
+
+.edit-tab-content {
+  display: none;
+}
+
+.edit-tab-content.active {
+  display: block;
+}
+
+.form-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.form-section h4 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 8px;
+}
+
+.form-section .form-row {
+  margin-bottom: 16px;
+}
+
+.form-section .form-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive Design for Edit Modal */
+@media (max-width: 768px) {
+  .edit-member-modal {
+    width: 98%;
+    max-height: 95vh;
+  }
+
+  .edit-member-tabs {
+    flex-direction: column;
+  }
+
+  .edit-tab {
+    justify-content: center;
+    border-bottom: none;
+    border-right: 2px solid transparent;
+  }
+
+  .edit-tab.active {
+    border-bottom-color: transparent;
+    border-right-color: #4e8cff;
+  }
+
+  .form-section {
+    padding: 12px;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-group {
+    margin-bottom: 16px;
+  }
+}
+
+/* Disabled member action buttons */
+.member-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+.member-action-btn:disabled:hover {
+  background: #f3f4f6;
+  color: #9ca3af;
+}
+
+/* Member cards with no access */
+.member-card.no-access {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.member-card.no-access:hover {
+  transform: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

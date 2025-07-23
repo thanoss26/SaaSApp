@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Pricing Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .price-display {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .toggle-container {
+            margin: 20px 0;
+        }
+        .toggle-label {
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Dynamic Pricing Test</h1>
+    
+    <div class="test-section">
+        <h2>📡 API Test</h2>
+        <button onclick="testAPI()">Test API Connection</button>
+        <div id="apiResult" class="price-display">
+            Click "Test API Connection" to check if the API is working...
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>💰 Pricing Display Test</h2>
+        <div class="toggle-container">
+            <span class="toggle-label">Billing Period:</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="billingToggle" onchange="updatePricingDisplay()">
+                <span class="slider"></span>
+            </label>
+            <span id="billingLabel">Monthly</span>
+        </div>
+        
+        <div id="pricingCards">
+            <div class="price-display">
+                <h3>Starter</h3>
+                <div id="starter-price">Loading...</div>
+            </div>
+            <div class="price-display">
+                <h3>Professional</h3>
+                <div id="professional-price">Loading...</div>
+            </div>
+            <div class="price-display">
+                <h3>Enterprise</h3>
+                <div id="enterprise-price">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🔄 Real-time Test</h2>
+        <p>To test real-time price updates:</p>
+        <ol>
+            <li>Change a price in your Stripe Dashboard</li>
+            <li>Click "Refresh Prices" below</li>
+            <li>The prices should update immediately</li>
+        </ol>
+        <button onclick="loadSubscriptionPlans()">Refresh Prices</button>
+    </div>
+
+    <script>
+        let subscriptionPlans = null;
+        let isAnnual = false;
+
+        // Test API connection
+        async function testAPI() {
+            const resultDiv = document.getElementById('apiResult');
+            resultDiv.className = 'price-display';
+            resultDiv.innerHTML = 'Testing API connection...';
+            
+            try {
+                const response = await fetch('/api/subscriptions/plans');
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.className = 'price-display success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ API Working!</strong><br>
+                        Found ${data.plans.length} plans<br>
+                        Latest prices from Stripe:<br>
+                        ${data.plans.map(plan => 
+                            `${plan.name}: €${Math.round(plan.monthly.amount)}/month, €${Math.round(plan.annual.amount)}/year`
+                        ).join('<br>')}
+                    `;
+                } else {
+                    throw new Error('API returned error');
+                }
+            } catch (error) {
+                resultDiv.className = 'price-display error';
+                resultDiv.innerHTML = `
+                    <strong>❌ API Error</strong><br>
+                    ${error.message}<br>
+                    Make sure the server is running on localhost:3000
+                `;
+            }
+        }
+
+        // Load subscription plans from API
+        async function loadSubscriptionPlans() {
+            try {
+                console.log('🔄 Loading subscription plans from API...');
+                const response = await fetch('/api/subscriptions/plans');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.plans && data.plans.length > 0) {
+                    subscriptionPlans = data.plans;
+                    console.log('✅ Subscription plans loaded from API:', subscriptionPlans);
+                    updatePricingDisplay(data.plans);
+                } else {
+                    throw new Error('API returned no plans');
+                }
+            } catch (error) {
+                console.log('⚠️ API not available:', error.message);
+                document.getElementById('pricingCards').innerHTML = `
+                    <div class="price-display error">
+                        <strong>❌ Failed to load prices</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Update pricing display based on billing period
+        function updatePricingDisplay(plans) {
+            if (plans) {
+                // Update the pricing cards display
+                const pricingDiv = document.getElementById('currentPricing');
+                if (plans && plans.length > 0) {
+                    pricingDiv.innerHTML = plans.map(plan => `
+                        <div class="result">
+                            <strong>${plan.name}</strong><br>
+                            Monthly: ${plan.monthly.displayPrice}<br>
+                            Annual: ${plan.annual.displayPrice} (${plan.annual.savings}% savings)
+                        </div>
+                    `).join('');
+                } else {
+                    pricingDiv.innerHTML = '<div class="result error">No pricing data available</div>';
+                }
+            } else {
+                // Update toggle display
+                if (!subscriptionPlans) {
+                    console.log('❌ No subscription plans available');
+                    return;
+                }
+                
+                isAnnual = document.getElementById('billingToggle').checked;
+                document.getElementById('billingLabel').textContent = isAnnual ? 'Annual' : 'Monthly';
+                
+                console.log('🔄 Updating pricing display:', isAnnual ? 'Annual' : 'Monthly');
+                
+                subscriptionPlans.forEach(plan => {
+                    const priceElement = document.getElementById(`${plan.id}-price`);
+                    const pricing = isAnnual ? plan.annual : plan.monthly;
+                    
+                    priceElement.innerHTML = `
+                        <strong>€${Math.round(pricing.amount)}</strong> / ${isAnnual ? 'year' : 'month'}
+                        ${isAnnual && plan.annual.savings ? 
+                            `<br><small style="color: #28a745;">Save ${plan.annual.savings}%</small>` : 
+                            ''
+                        }
+                    `;
+                });
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            loadSubscriptionPlans();
+        };
+    </script>
+</body>
+</html> 

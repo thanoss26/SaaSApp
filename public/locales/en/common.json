@@ -58,5 +58,6 @@
   "all_roles": "All Roles",
   "all_status": "All Status",
   "retry": "Try Again",
-  "processing": "Processing..."
+  "processing": "Processing...",
+  "field_required": "This field is required"
 } 

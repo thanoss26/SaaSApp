@@ -11,7 +11,10 @@ const organizationRoutes = require('./routes/organizations');
 const payrollRoutes = require('./routes/payroll');
 const userRoutes = require('./routes/users');
 const paymentRoutes = require('./routes/payment');
-// const mailboxRoutes = require('./routes/mailbox'); // Temporarily commented out due to route error
+const mailboxRoutes = require('./routes/mailbox');
+const stripeRoutes = require('./routes/stripe');
+const stripeDashboardRoutes = require('./routes/stripeDashboard');
+const subscriptionRoutes = require('./routes/subscriptions');
 const { 
   authenticateToken,
   requireGlobalStatsAccess,
@@ -237,9 +240,12 @@ app.use('/api/organizations', apiLimiter, organizationRoutes);
 app.use('/api/users', apiLimiter, authenticateToken, userRoutes);
 app.use('/api/employees', apiLimiter, authenticateToken, employeeRoutes);
 app.use('/api/dashboards', apiLimiter, authenticateToken, dashboardRoutes);
-// app.use('/api/mailbox', apiLimiter, mailboxRoutes); // Temporarily commented out due to route error
+app.use('/api/mailbox', apiLimiter, mailboxRoutes);
 app.use('/api/payroll', apiLimiter, authenticateToken, payrollRoutes);
 app.use('/api/payment', apiLimiter, authenticateToken, paymentRoutes);
+app.use('/api/stripe', stripeRoutes);
+app.use('/api/stripe-dashboard', stripeDashboardRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
 
 // Clean URL routes (no .html extensions) with cache busting
 // Note: Authentication will be handled by the frontend JavaScript

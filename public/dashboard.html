@@ -7,8 +7,8 @@
   <title>Chronos HR - Employee Management Dashboard</title>
   <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
-  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
-  <link rel="stylesheet" href="css/mailbox.css">
+      <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+    <link rel="stylesheet" href="css/mailbox.css">
   <style>
     .org-required-section {
       padding: 60px 20px;
@@ -204,6 +204,10 @@
         <a href="/settings" class="nav-item" data-page="settings">
           <i class="fas fa-cog"></i>
           <span>Settings</span>
+        </a>
+        <a href="/subscription-settings" class="nav-item" data-page="subscription-settings">
+          <i class="fas fa-credit-card"></i>
+          <span>Subscription</span>
         </a>
         <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
           <i class="fas fa-envelope"></i>
@@ -535,22 +539,22 @@
         </div>
       </section>
 
-                <!-- Organization Required Section -->
-          <section class="org-required-section" id="orgRequiredSection" style="display: none;">
-            <div class="org-required-content-large">
-              <div class="org-required-icon">🏢</div>
+      <!-- Organization Required Section -->
+      <section class="org-required-section" id="orgRequiredSection" style="display: none;">
+        <div class="org-required-content-large">
+          <div class="org-required-icon">🏢</div>
               <h2 data-i18n="dashboard:organization.required">Organization Required</h2>
               <p data-i18n="dashboard:organization.requiredMessage">You need to create or join an organization to access dashboard features.</p>
-              <div class="org-required-actions">
+          <div class="org-required-actions">
                 <button class="btn btn-primary-large" id="create-org-btn" data-i18n="dashboard:organization.createOrganization">
-                  Create Organization
-                </button>
+                            Create Organization
+                        </button>
                 <button class="btn btn-secondary-large" id="join-org-btn" data-i18n="dashboard:organization.joinOrganization">
-                  Join Organization
-                </button>
-              </div>
-            </div>
-          </section>
+                            Join Organization
+                        </button>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
   <!-- i18next CDN -->
@@ -561,9 +565,9 @@
   <!-- Global Language Switcher -->
   <script src="js/global-language-switcher.js"></script>
   <script src="js/shared.js"></script>
-  <script src="js/sidebar.js"></script>
-  <script src="js/mailbox.js"></script>
-  <script src="js/dashboard.js"></script>
+      <script src="js/sidebar.js"></script>
+    <script src="js/mailbox.js"></script>
+    <script src="js/dashboard.js"></script>
 </body>
 
 </html>

@@ -315,6 +315,10 @@ body {
     color: #ef4444;
 }
 
+.kpi-trend.neutral {
+    color: #6b7280;
+}
+
 .trend-label {
     color: #64748b;
     font-weight: 400;
@@ -1651,8 +1655,25 @@ body {
 .card-stripe {
     width: 100%;
     height: 40px;
-    background: #1a1a1a;
-    margin-bottom: 20px;
+}
+
+.stripe-card-container {
+    margin: 20px 0;
+}
+
+.stripe-card-element {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    margin-top: 8px;
+}
+
+.stripe-card-errors {
+    color: #dc3545;
+    font-size: 14px;
+    margin-top: 8px;
+    min-height: 20px;
 }
 
 .card-cvv {
@@ -1845,4 +1866,338 @@ body {
 .no-data-content small {
     font-size: 0.875rem;
     opacity: 0.7;
+}
+
+/* Action Dropdown Menu */
+.action-dropdown {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    min-width: 160px;
+}
+
+.action-dropdown-content {
+    padding: 0.5rem 0;
+}
+
+.action-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.action-item:hover {
+    background-color: #f8fafc;
+}
+
+.action-item i {
+    font-size: 0.875rem;
+    width: 16px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.action-item.delete {
+    color: #dc2626;
+}
+
+.action-item.delete:hover {
+    background-color: #fef2f2;
+}
+
+.action-item.delete i {
+    color: #dc2626;
+}
+
+/* Role-based UI adjustments */
+.employee-view .new-payroll-btn {
+    display: none !important;
+}
+
+.employee-view .action-icon[onclick*="showActionMenu"] {
+    display: none !important;
+}
+
+.employee-view .payroll-table th:nth-child(3) {
+    display: none;
+}
+
+.employee-view .payroll-table td:nth-child(3) {
+    display: none;
+}
+
+/* Stripe Dashboard Styles */
+.stripe-integration {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
+}
+
+.stripe-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.stripe-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.metric-card {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.metric-card h4 {
+    margin: 0 0 0.5rem 0;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.metric-card p {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+/* Payment Table Styles */
+.payments-table-container {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.payments-table th,
+.payments-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.payments-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+}
+
+.payments-table td {
+    font-size: 0.875rem;
+}
+
+.customer-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.customer-name {
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.customer-email {
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.amount {
+    font-weight: 600;
+    color: #059669;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+}
+
+.status-succeeded {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-failed {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-canceled {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.status-processing {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    color: #6b7280;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
+.no-data {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Error Notification */
+.error-notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.error-notification button {
+    background: none;
+    border: none;
+    color: #991b1b;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    background: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.loading-spinner i {
+    font-size: 2rem;
+    color: #3b82f6;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner p {
+    margin: 0;
+    color: #6b7280;
+}
+
+/* Empty state overlay for charts */
+.empty-state-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 12px;
+}
+
+.empty-state-content {
+    text-align: center;
+    padding: 2rem;
+}
+
+.empty-state-content i {
+    font-size: 3rem;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+}
+
+.empty-state-content h4 {
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.empty-state-content p {
+    color: #6b7280;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+}
+
+.empty-state-content .btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+}
+
+/* Make chart cards relative for overlay positioning */
+.chart-card {
+    position: relative;
 } 

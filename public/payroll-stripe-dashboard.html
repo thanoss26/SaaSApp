@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stripe Payroll Dashboard - ChronosHR</title>
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/payroll.css">
+    <link rel="stylesheet" href="css/dashboard-sidebar.css">
+    <link rel="stylesheet" href="css/analytics.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-clock"></i>
+                <span>ChronosHR</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="dashboard.html" class="nav-link"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="users.html" class="nav-link"><i class="fas fa-users"></i> Users</a></li>
+                <li><a href="organizations.html" class="nav-link"><i class="fas fa-building"></i> Organizations</a></li>
+                <li><a href="payroll-stripe-dashboard.html" class="nav-link active"><i class="fas fa-credit-card"></i> Stripe Payroll</a></li>
+                <li><a href="analytics.html" class="nav-link"><i class="fas fa-chart-line"></i> Analytics</a></li>
+                <li><a href="settings.html" class="nav-link"><i class="fas fa-cog"></i> Settings</a></li>
+            </ul>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name" id="userName">Loading...</div>
+                    <div class="user-role" id="userRole">Loading...</div>
+                </div>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>Stripe Payroll Dashboard</h1>
+                <p>Manage payroll payments through Stripe</p>
+            </div>
+            <div class="header-right">
+                <div class="notification-bell" id="notificationBell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-count" id="notificationCount">0</span>
+                </div>
+                <div class="user-menu" id="userMenu">
+                    <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" class="user-avatar">
+                    <span class="user-name">User</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content">
+            <!-- Quick Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalRevenue">€0</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-credit-card"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalPayments">0</h3>
+                        <p>Total Payments</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="totalCustomers">0</h3>
+                        <p>Total Customers</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="successRate">0%</h3>
+                        <p>Success Rate</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Payment Analytics</h3>
+                        <div class="chart-controls">
+                            <select id="dateRange" class="chart-select">
+                                <option value="7d">Last 7 Days</option>
+                                <option value="30d" selected>Last 30 Days</option>
+                                <option value="90d">Last 90 Days</option>
+                                <option value="1y">Last Year</option>
+                            </select>
+                        </div>
+                    </div>
+                    <canvas id="paymentChart"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Payment Methods</h3>
+                    </div>
+                    <canvas id="paymentMethodsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="recent-payments">
+                <div class="section-header">
+                    <h3>Recent Payments</h3>
+                    <button class="btn btn-primary" id="viewAllPayments">
+                        <i class="fas fa-eye"></i> View All
+                    </button>
+                </div>
+                <div class="payments-table-container">
+                    <table class="payments-table" id="recentPaymentsTable">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentPaymentsBody">
+                            <tr>
+                                <td colspan="5" class="loading">Loading payments...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stripe Dashboard Integration -->
+            <div class="stripe-integration">
+                <div class="section-header">
+                    <h3>Stripe Dashboard</h3>
+                    <div class="stripe-actions">
+                        <button class="btn btn-secondary" id="openStripeDashboard">
+                            <i class="fab fa-stripe"></i> Open Stripe Dashboard
+                        </button>
+                        <button class="btn btn-primary" id="refreshData">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="stripe-metrics">
+                    <div class="metric-card">
+                        <h4>Pending Payments</h4>
+                        <p id="pendingPayments">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Failed Payments</h4>
+                        <p id="failedPayments">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Refunds</h4>
+                        <p id="totalRefunds">0</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Webhook Events</h4>
+                        <p id="webhookEvents">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Loading Stripe data...</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/shared.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/payroll-stripe-dashboard.js"></script>
+</body>
+</html> 

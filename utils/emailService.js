@@ -3,27 +3,37 @@ require('dotenv').config();
 
 // Create transporter for email sending
 const createTransporter = () => {
-    // For development, use Gmail or a test service
-    // In production, you'd use a proper email service like SendGrid, AWS SES, etc.
-    
-    if (process.env.NODE_ENV === 'production') {
-        // Production email configuration
+    // For development, use a mock transporter that simulates email sending
+    if (process.env.NODE_ENV === 'development') {
+        console.log('📧 Using mock email service for development');
+        return {
+            sendMail: async (mailOptions) => {
+                // Simulate email sending delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Generate a mock message ID
+                const messageId = `<mock-${Date.now()}@localhost>`;
+                
+                console.log('📧 Mock email sent to:', mailOptions.to);
+                console.log('📧 Subject:', mailOptions.subject);
+                
+                return {
+                    messageId,
+                    response: 'Mock email sent successfully',
+                    accepted: [mailOptions.to],
+                    rejected: [],
+                    pending: []
+                };
+            }
+        };
+    } else {
+        // Production: Use Gmail SMTP
+        console.log('📧 Using Gmail SMTP configuration');
         return nodemailer.createTransport({
-            service: 'gmail', // or your email service
+            service: 'gmail',
             auth: {
                 user: process.env.EMAIL_USER,
                 pass: process.env.EMAIL_PASS
-            }
-        });
-    } else {
-        // Development: Use Ethereal Email for testing
-        return nodemailer.createTransport({
-            host: 'smtp.ethereal.email',
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.ETHEREAL_USER || 'test@ethereal.email',
-                pass: process.env.ETHEREAL_PASS || 'test123'
             }
         });
     }
@@ -100,14 +110,19 @@ const sendInviteEmail = async (employeeData, inviteCode) => {
         console.log('📧 Invitation email sent successfully');
         console.log('📧 Message ID:', info.messageId);
         
-        if (process.env.NODE_ENV !== 'production') {
-            console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+        // For development, create a mock preview URL
+        let previewUrl = null;
+        if (process.env.NODE_ENV === 'development') {
+            previewUrl = `http://localhost:3000/invite/${inviteCode}`;
+            console.log('📧 Mock preview URL:', previewUrl);
+        } else if (process.env.NODE_ENV !== 'production') {
+            previewUrl = nodemailer.getTestMessageUrl(info);
         }
         
         return {
             success: true,
             messageId: info.messageId,
-            previewUrl: process.env.NODE_ENV !== 'production' ? nodemailer.getTestMessageUrl(info) : null
+            previewUrl: previewUrl
         };
         
     } catch (error) {
