@@ -1159,14 +1159,8 @@ app.use((req, res, next) => {
   next();
 });
 
-// Redirect root to login page
-app.get('/', (req, res) => {
-  console.log('🔍 Root path (/) route hit - redirecting to login');
-  console.log('🔍 Request method:', req.method);
-  console.log('🔍 Request path:', req.path);
-  console.log('🔍 Request URL:', req.url);
-  res.redirect('/login');
-});
+// Root route is handled above - serving landing.html
+// This conflicting route has been removed
 
 // Serve test page (no JavaScript for debugging)
 app.get('/test-simple', (req, res) => {
