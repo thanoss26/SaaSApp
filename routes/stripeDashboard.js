@@ -1,10 +1,22 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const StripeDashboardService = require('../utils/stripeDashboardService');
 const { supabase } = require('../config/supabase');
 
-const stripeDashboardService = new StripeDashboardService();
+// Lazy load StripeDashboardService to avoid initialization errors
+let stripeDashboardService = null;
+function getStripeDashboardService() {
+    if (!stripeDashboardService) {
+        try {
+            const StripeDashboardService = require('../utils/stripeDashboardService');
+            stripeDashboardService = new StripeDashboardService();
+        } catch (error) {
+            console.error('❌ Failed to load Stripe dashboard service:', error.message);
+            throw new Error('Stripe dashboard service not available');
+        }
+    }
+    return stripeDashboardService;
+}
 
 /**
  * Check if user is admin
@@ -41,7 +53,7 @@ router.get('/metrics/:organizationId', authenticateToken, requireAdmin, async (r
         const { organizationId } = req.params;
         const { dateRange = '30d' } = req.query;
 
-        const metrics = await stripeDashboardService.getDashboardMetrics(organizationId, dateRange);
+        const metrics = await getStripeDashboardService().getDashboardMetrics(organizationId, dateRange);
         
         console.log('✅ Dashboard metrics fetched successfully');
         res.json(metrics);
@@ -60,7 +72,7 @@ router.get('/analytics/:organizationId', authenticateToken, requireAdmin, async 
         const { organizationId } = req.params;
         const { startDate, endDate, groupBy = 'day' } = req.query;
 
-        const analytics = await stripeDashboardService.getPaymentAnalytics(organizationId, {
+        const analytics = await getStripeDashboardService().getPaymentAnalytics(organizationId, {
             startDate,
             endDate,
             groupBy
@@ -83,7 +95,7 @@ router.get('/customers/:organizationId', authenticateToken, requireAdmin, async 
         const { organizationId } = req.params;
         const { limit = 100, startingAfter } = req.query;
 
-        const customers = await stripeDashboardService.getCustomers(organizationId, {
+        const customers = await getStripeDashboardService().getCustomers(organizationId, {
             limit: parseInt(limit),
             startingAfter
         });
@@ -105,7 +117,7 @@ router.get('/payments/:organizationId', authenticateToken, requireAdmin, async (
         const { organizationId } = req.params;
         const { limit = 50, startingAfter, status } = req.query;
 
-        const payments = await stripeDashboardService.getPaymentHistory(organizationId, {
+        const payments = await getStripeDashboardService().getPaymentHistory(organizationId, {
             limit: parseInt(limit),
             startingAfter,
             status
@@ -128,7 +140,7 @@ router.get('/refunds/:organizationId', authenticateToken, requireAdmin, async (r
         const { organizationId } = req.params;
         const { limit = 50, startingAfter } = req.query;
 
-        const refunds = await stripeDashboardService.getRefunds(organizationId, {
+        const refunds = await getStripeDashboardService().getRefunds(organizationId, {
             limit: parseInt(limit),
             startingAfter
         });
@@ -149,7 +161,7 @@ router.get('/config/:organizationId', authenticateToken, requireAdmin, async (re
         console.log('⚙️ GET /api/stripe-dashboard/config/:organizationId - Fetching dashboard config');
         const { organizationId } = req.params;
 
-        const config = await stripeDashboardService.getDashboardConfig(organizationId);
+        const config = await getStripeDashboardService().getDashboardConfig(organizationId);
         
         console.log('✅ Dashboard config fetched successfully');
         res.json(config);
@@ -168,7 +180,7 @@ router.put('/config/:organizationId', authenticateToken, requireAdmin, async (re
         const { organizationId } = req.params;
         const configData = req.body;
 
-        const updatedConfig = await stripeDashboardService.updateDashboardConfig(organizationId, configData);
+        const updatedConfig = await getStripeDashboardService().updateDashboardConfig(organizationId, configData);
         
         console.log('✅ Dashboard config updated successfully');
         res.json(updatedConfig);
@@ -187,7 +199,7 @@ router.get('/webhooks/:organizationId', authenticateToken, requireAdmin, async (
         const { organizationId } = req.params;
         const { limit = 50, startingAfter, type } = req.query;
 
-        const webhooks = await stripeDashboardService.getWebhookEvents(organizationId, {
+        const webhooks = await getStripeDashboardService().getWebhookEvents(organizationId, {
             limit: parseInt(limit),
             startingAfter,
             type
@@ -209,7 +221,7 @@ router.get('/summary/:organizationId', authenticateToken, requireAdmin, async (r
         console.log('📋 GET /api/stripe-dashboard/summary/:organizationId - Fetching dashboard summary');
         const { organizationId } = req.params;
 
-        const summary = await stripeDashboardService.getDashboardSummary(organizationId);
+        const summary = await getStripeDashboardService().getDashboardSummary(organizationId);
         
         console.log('✅ Dashboard summary fetched successfully');
         res.json(summary);

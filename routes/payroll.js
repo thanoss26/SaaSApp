@@ -2,7 +2,20 @@ const express = require('express');
 const router = express.Router();
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireOrganization } = require('../middleware/auth');
-const stripeService = require('../utils/stripeService');
+
+// Lazy load stripeService to avoid initialization errors
+let stripeService = null;
+function getStripeService() {
+    if (!stripeService) {
+        try {
+            stripeService = require('../utils/stripeService');
+        } catch (error) {
+            console.error('❌ Failed to load Stripe service:', error.message);
+            throw new Error('Stripe service not available');
+        }
+    }
+    return stripeService;
+}
 
 // Get all payrolls for the organization (admin can see all, employees see only their own)
 router.get('/', authenticateToken, requireOrganization, async (req, res) => {
@@ -621,14 +634,14 @@ router.post('/:id/create-payment-intent', authenticateToken, requireOrganization
         }
 
         // Get or create Stripe customer for the employee
-        const customer = await stripeService.createOrGetCustomer(
+        const customer = await getStripeService().createOrGetCustomer(
             payroll.employee_id,
             payroll.employee.email,
             `${payroll.employee.first_name} ${payroll.employee.last_name}`
         );
 
         // Create payment intent
-        const paymentIntent = await stripeService.createPaymentIntent(
+        const paymentIntent = await getStripeService().createPaymentIntent(
             payroll.id,
             payroll.total_amount,
             payroll.currency || 'eur',
@@ -710,7 +723,7 @@ router.post('/:id/process-stripe-payment', authenticateToken, requireOrganizatio
         }
 
         // Process the payment
-        const paymentIntent = await stripeService.processPayment(paymentIntentId, paymentMethodId);
+        const paymentIntent = await getStripeService().processPayment(paymentIntentId, paymentMethodId);
 
         if (paymentIntent.status === 'succeeded') {
             // Update payroll status to completed
@@ -798,7 +811,7 @@ router.get('/customer/:customerId/payment-methods', authenticateToken, requireOr
             return res.status(403).json({ error: 'Admin access required' });
         }
 
-        const paymentMethods = await stripeService.getCustomerPaymentMethods(req.params.customerId);
+        const paymentMethods = await getStripeService().getCustomerPaymentMethods(req.params.customerId);
         
         console.log('✅ Payment methods retrieved successfully');
         res.json({ paymentMethods });
@@ -831,7 +844,7 @@ router.post('/customer/:customerId/setup-intent', authenticateToken, requireOrga
             return res.status(403).json({ error: 'Admin access required' });
         }
 
-        const setupIntent = await stripeService.createSetupIntent(req.params.customerId);
+        const setupIntent = await getStripeService().createSetupIntent(req.params.customerId);
         
         console.log('✅ Setup intent created successfully');
         res.json({
@@ -871,7 +884,7 @@ router.get('/customer/:customerId/payments', authenticateToken, requireOrganizat
         }
 
         const limit = parseInt(req.query.limit) || 10;
-        const payments = await stripeService.getCustomerPayments(req.params.customerId, limit);
+        const payments = await getStripeService().getCustomerPayments(req.params.customerId, limit);
         
         console.log('✅ Payment history retrieved successfully');
         res.json({ payments });
@@ -924,7 +937,7 @@ router.post('/:id/refund', authenticateToken, requireOrganization, async (req, r
         }
 
         // Create refund
-        const refund = await stripeService.createRefund(
+        const refund = await getStripeService().createRefund(
             payroll.stripe_payment_intent_id,
             amount,
             reason || 'requested_by_customer'

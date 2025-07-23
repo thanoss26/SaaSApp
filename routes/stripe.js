@@ -1,6 +1,19 @@
 const express = require('express');
 const router = express.Router();
-const stripeService = require('../utils/stripeService');
+
+// Lazy load stripeService to avoid initialization errors
+let stripeService = null;
+function getStripeService() {
+    if (!stripeService) {
+        try {
+            stripeService = require('../utils/stripeService');
+        } catch (error) {
+            console.error('❌ Failed to load Stripe service:', error.message);
+            throw new Error('Stripe service not available');
+        }
+    }
+    return stripeService;
+}
 
 // Stripe webhook endpoint
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
@@ -11,7 +24,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     try {
         // Verify webhook signature
-        event = stripeService.verifyWebhookSignature(req.body, sig, webhookSecret);
+        event = getStripeService().verifyWebhookSignature(req.body, sig, webhookSecret);
         console.log('✅ Webhook signature verified');
     } catch (err) {
         console.error('❌ Webhook signature verification failed:', err.message);
@@ -20,7 +33,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
 
     try {
         // Handle the event
-        await stripeService.handleWebhookEvent(event);
+        await getStripeService().handleWebhookEvent(event);
         console.log('✅ Webhook event processed successfully');
         res.json({ received: true });
     } catch (error) {
