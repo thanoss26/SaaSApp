@@ -26,8 +26,8 @@ router.get('/invitations', authenticateToken, async (req, res) => {
 
         console.log('📧 User email:', userProfile.email);
 
-        // Get invitations for this email
-        const { data: invitations, error: invitationsError } = await supabase
+        // Get invitations for this email using admin client to bypass RLS
+        const { data: invitations, error: invitationsError } = await supabaseAdmin
             .from('invites')
             .select(`
                 *,
@@ -98,8 +98,8 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
         console.log('🔍 User ID:', userId);
         console.log('🔍 Invitation ID:', invitationId);
 
-        // Get the invitation
-        const { data: invitation, error: invitationError } = await supabase
+        // Get the invitation using admin client to bypass RLS
+        const { data: invitation, error: invitationError } = await supabaseAdmin
             .from('invites')
             .select('*')
             .eq('id', invitationId)
@@ -134,8 +134,8 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
             return res.status(403).json({ error: 'You are not authorized to accept this invitation' });
         }
 
-        // Update the invitation to mark it as used
-        const { error: updateError } = await supabase
+        // Update the invitation to mark it as used using admin client
+        const { error: updateError } = await supabaseAdmin
             .from('invites')
             .update({
                 is_used: true,
@@ -254,7 +254,7 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
 });
 
 // POST /api/mailbox/invitations/:id/decline - Decline an invitation (no organization required)
-router.post('/invitations/:id/decline', authenticateToken, requireNotificationsAccess, async (req, res) => {
+router.post('/invitations/:id/decline', authenticateToken, async (req, res) => {
     console.log('❌ POST /api/mailbox/invitations/:id/decline - Declining invitation');
     
     try {
@@ -264,8 +264,8 @@ router.post('/invitations/:id/decline', authenticateToken, requireNotificationsA
         console.log('🔍 User ID:', userId);
         console.log('🔍 Invitation ID:', invitationId);
 
-        // Get the invitation
-        const { data: invitation, error: invitationError } = await supabase
+        // Get the invitation using admin client to bypass RLS
+        const { data: invitation, error: invitationError } = await supabaseAdmin
             .from('invites')
             .select('*')
             .eq('id', invitationId)
@@ -300,8 +300,8 @@ router.post('/invitations/:id/decline', authenticateToken, requireNotificationsA
             return res.status(403).json({ error: 'You are not authorized to decline this invitation' });
         }
 
-        // Update the invitation to mark it as declined (we'll use a custom status)
-        const { error: updateError } = await supabase
+        // Update the invitation to mark it as declined using admin client
+        const { error: updateError } = await supabaseAdmin
             .from('invites')
             .update({
                 is_used: true,

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Toggle Test</title>
+    <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 40px;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-info {
+            background: #f0f9ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .test-info h2 {
+            color: #1e40af;
+            margin-bottom: 10px;
+        }
+        .test-info p {
+            color: #1e3a8a;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-info">
+            <h2>Pricing Toggle Test</h2>
+            <p>This page tests the monthly/annual pricing toggle functionality.</p>
+            <p>Open the browser console to see debug information.</p>
+            <p>Toggle the switch below to test the functionality.</p>
+        </div>
+
+        <!-- Pricing Toggle -->
+        <div class="pricing-toggle">
+            <span>Monthly</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="billingToggle">
+                <span class="slider"></span>
+            </label>
+            <span>Annual <span class="discount">Save 20%</span></span>
+        </div>
+        
+        <!-- Pricing Grid -->
+        <div class="pricing-grid">
+            <div class="pricing-card">
+                <div class="pricing-header">
+                    <h3>Starter</h3>
+                    <div class="price">
+                        <span class="currency">€</span>
+                        <span class="amount">29</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p>Perfect for small teams</p>
+                </div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> Up to 50 employees</li>
+                    <li><i class="fas fa-check"></i> Basic HR features</li>
+                    <li><i class="fas fa-check"></i> Email support</li>
+                    <li><i class="fas fa-check"></i> Standard reports</li>
+                </ul>
+                <button class="btn btn-outline btn-full">Get Started</button>
+            </div>
+            
+            <div class="pricing-card featured">
+                <div class="pricing-badge">Most Popular</div>
+                <div class="pricing-header">
+                    <h3>Professional</h3>
+                    <div class="price">
+                        <span class="currency">€</span>
+                        <span class="amount">79</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p>Ideal for growing companies</p>
+                </div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> Up to 200 employees</li>
+                    <li><i class="fas fa-check"></i> Advanced HR features</li>
+                    <li><i class="fas fa-check"></i> Priority support</li>
+                    <li><i class="fas fa-check"></i> Custom reports</li>
+                    <li><i class="fas fa-check"></i> API access</li>
+                    <li><i class="fas fa-check"></i> Integrations</li>
+                </ul>
+                <button class="btn btn-primary btn-full">Get Started</button>
+            </div>
+            
+            <div class="pricing-card">
+                <div class="pricing-header">
+                    <h3>Enterprise</h3>
+                    <div class="price">
+                        <span class="currency">€</span>
+                        <span class="amount">199</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <p>For large organizations</p>
+                </div>
+                <ul class="pricing-features">
+                    <li><i class="fas fa-check"></i> Unlimited employees</li>
+                    <li><i class="fas fa-check"></i> All features included</li>
+                    <li><i class="fas fa-check"></i> 24/7 support</li>
+                    <li><i class="fas fa-check"></i> Custom integrations</li>
+                    <li><i class="fas fa-check"></i> Dedicated account manager</li>
+                    <li><i class="fas fa-check"></i> Advanced security</li>
+                </ul>
+                <button class="btn btn-outline btn-full">Contact Sales</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simplified pricing toggle for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('billingToggle');
+            
+            // Test pricing data
+            const testPlans = [
+                {
+                    id: 'starter',
+                    name: 'Starter',
+                    monthly: { amount: 29 },
+                    annual: { amount: 299, savings: 14 }
+                },
+                {
+                    id: 'professional',
+                    name: 'Professional',
+                    monthly: { amount: 79 },
+                    annual: { amount: 799, savings: 16 }
+                },
+                {
+                    id: 'enterprise',
+                    name: 'Enterprise',
+                    monthly: { amount: 199 },
+                    annual: { amount: 1999, savings: 16 }
+                }
+            ];
+            
+            function updatePricingDisplay(isAnnual) {
+                console.log('🔄 Updating pricing display:', isAnnual ? 'Annual' : 'Monthly');
+                
+                const pricingCards = document.querySelectorAll('.pricing-card');
+                console.log('📋 Found pricing cards:', pricingCards.length);
+                
+                pricingCards.forEach((card, index) => {
+                    const plan = testPlans[index];
+                    if (!plan) {
+                        console.log('❌ No plan found for index:', index);
+                        return;
+                    }
+                    
+                    const priceElement = card.querySelector('.amount');
+                    const periodElement = card.querySelector('.period');
+                    const currencyElement = card.querySelector('.currency');
+                    
+                    console.log(`📊 Updating card ${index + 1}:`, {
+                        plan: plan.name,
+                        priceElement: !!priceElement,
+                        periodElement: !!periodElement,
+                        currencyElement: !!currencyElement
+                    });
+                    
+                    if (priceElement && periodElement && currencyElement) {
+                        const pricing = isAnnual ? plan.annual : plan.monthly;
+                        
+                        // Update price
+                        priceElement.textContent = pricing.amount;
+                        
+                        // Update period text
+                        if (isAnnual) {
+                            periodElement.textContent = '/year';
+                            // Show savings badge if available
+                            if (plan.annual.savings) {
+                                const existingBadge = card.querySelector('.savings-badge');
+                                if (!existingBadge) {
+                                    const savingsBadge = document.createElement('div');
+                                    savingsBadge.className = 'savings-badge';
+                                    savingsBadge.textContent = `Save ${plan.annual.savings}%`;
+                                    card.querySelector('.pricing-header').appendChild(savingsBadge);
+                                }
+                            }
+                        } else {
+                            periodElement.textContent = '/month';
+                            // Remove savings badge
+                            const savingsBadge = card.querySelector('.savings-badge');
+                            if (savingsBadge) {
+                                savingsBadge.remove();
+                            }
+                        }
+                        
+                        // Update currency to Euro
+                        currencyElement.textContent = '€';
+                        
+                        console.log(`✅ Updated card ${index + 1}: €${pricing.amount}${isAnnual ? '/year' : '/month'}`);
+                    } else {
+                        console.log(`❌ Missing elements in card ${index + 1}:`, {
+                            priceElement: !!priceElement,
+                            periodElement: !!periodElement,
+                            currencyElement: !!currencyElement
+                        });
+                    }
+                });
+            }
+            
+            if (toggle) {
+                console.log('✅ Toggle found, adding event listener');
+                
+                toggle.addEventListener('change', function() {
+                    const isAnnual = this.checked;
+                    console.log('🔄 Toggle changed to:', isAnnual ? 'Annual' : 'Monthly');
+                    updatePricingDisplay(isAnnual);
+                });
+                
+                // Initialize with monthly pricing
+                updatePricingDisplay(false);
+            } else {
+                console.log('❌ Toggle not found');
+            }
+        });
+    </script>
+</body>
+</html> 

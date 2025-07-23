@@ -772,12 +772,24 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
       .eq('email', email)
       .single();
 
+    console.log('🔍 Checking existing user for email:', email);
+    console.log('🔍 Existing user data:', existingUser);
+    console.log('🔍 Current user organization:', profile.organization_id);
+
     // If user exists and already belongs to an organization, check if it's the same organization
     if (existingUser && existingUser.organization_id) {
       if (existingUser.organization_id === profile.organization_id) {
-        return res.status(400).json({ error: 'User is already a member of this organization' });
+        console.log('❌ User already belongs to this organization');
+        return res.status(400).json({ 
+          error: 'User is already a member of this organization',
+          details: 'This email address is already associated with a member of your organization. Please use a different email address or contact the existing member directly.'
+        });
       } else {
-        return res.status(400).json({ error: 'User already belongs to another organization' });
+        console.log('❌ User belongs to different organization');
+        return res.status(400).json({ 
+          error: 'User already belongs to another organization',
+          details: 'This email address is already associated with a member of another organization. Users can only belong to one organization at a time.'
+        });
       }
     }
 

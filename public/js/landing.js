@@ -105,26 +105,235 @@ function initAnimations() {
 // Pricing toggle functionality
 function initPricingToggle() {
     const toggle = document.getElementById('billingToggle');
-    const prices = document.querySelectorAll('.amount');
+    let subscriptionPlans = null;
+    let isLoading = false;
+    let lastLoadTime = 0;
+    const CACHE_DURATION = 30000; // 30 seconds cache
     
-    if (toggle) {
-        toggle.addEventListener('change', function() {
-            const isAnnual = this.checked;
+    // Show loading state initially
+    function showLoadingState() {
+        const pricingCards = document.querySelectorAll('.pricing-card');
+        pricingCards.forEach((card, index) => {
+            const priceElement = card.querySelector('.amount');
+            const periodElement = card.querySelector('.period');
+            const currencyElement = card.querySelector('.currency');
             
-            prices.forEach(price => {
-                const currentPrice = parseInt(price.textContent);
-                let newPrice;
-                
-                if (isAnnual) {
-                    newPrice = Math.round(currentPrice * 0.8); // 20% discount
-                } else {
-                    newPrice = Math.round(currentPrice / 0.8); // Remove discount
-                }
-                
-                price.textContent = newPrice;
-            });
+            if (priceElement && periodElement && currencyElement) {
+                priceElement.textContent = '...';
+                periodElement.textContent = '';
+                currencyElement.textContent = '';
+            }
         });
     }
+    
+    // Load subscription plans from API with caching
+    async function loadSubscriptionPlans(forceRefresh = false) {
+        // Prevent duplicate requests
+        if (isLoading) {
+            console.log('⏳ Request already in progress, skipping...');
+            return;
+        }
+        
+        // Check cache duration
+        const now = Date.now();
+        if (!forceRefresh && subscriptionPlans && (now - lastLoadTime) < CACHE_DURATION) {
+            console.log('⚡ Using cached subscription plans');
+            updatePricingDisplay(false);
+            return;
+        }
+        
+        isLoading = true;
+        
+        try {
+            console.log('🔄 Loading subscription plans from API...');
+            const url = forceRefresh ? '/api/subscriptions/plans?refresh=true' : '/api/subscriptions/plans';
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success && data.plans && data.plans.length > 0) {
+                subscriptionPlans = data.plans;
+                // Make plans globally accessible
+                window.subscriptionPlans = subscriptionPlans;
+                lastLoadTime = now;
+                console.log('✅ Subscription plans loaded from API:', subscriptionPlans);
+            } else {
+                throw new Error('API returned no plans');
+            }
+            updatePricingDisplay(false); // Start with monthly
+        } catch (error) {
+            console.log('⚠️ API not available:', error.message);
+            // Don't use fallback data, keep loading state
+            showLoadingState();
+        } finally {
+            isLoading = false;
+        }
+    }
+    
+    // Force refresh subscription plans
+    async function forceRefreshPlans() {
+        console.log('🔄 Force refreshing subscription plans...');
+        await loadSubscriptionPlans(true);
+    }
+    
+    // Update pricing display based on billing period
+    function updatePricingDisplay(isAnnual) {
+        if (!subscriptionPlans) {
+            console.log('❌ No subscription plans available');
+            return;
+        }
+        
+        console.log('🔄 Updating pricing display:', isAnnual ? 'Annual' : 'Monthly');
+        
+        const pricingCards = document.querySelectorAll('.pricing-card');
+        console.log('📋 Found pricing cards:', pricingCards.length);
+        
+        pricingCards.forEach((card, index) => {
+            const plan = subscriptionPlans[index];
+            if (!plan) {
+                console.log('❌ No plan found for index:', index);
+                return;
+            }
+            
+            const priceElement = card.querySelector('.amount');
+            const periodElement = card.querySelector('.period');
+            const currencyElement = card.querySelector('.currency');
+            
+            console.log(`📊 Updating card ${index + 1}:`, {
+                plan: plan.name,
+                priceElement: !!priceElement,
+                periodElement: !!periodElement,
+                currencyElement: !!currencyElement
+            });
+            
+            if (priceElement && periodElement && currencyElement) {
+                const pricing = isAnnual ? plan.annual : plan.monthly;
+                
+                // Update price
+                priceElement.textContent = pricing.amount.toFixed(0);
+                
+                // Update period
+                periodElement.textContent = isAnnual ? '/year' : '/month';
+                
+                // Update currency (should be €)
+                currencyElement.textContent = '€';
+                
+                // Update savings badge for annual
+                const savingsBadge = card.querySelector('.savings-badge');
+                if (savingsBadge) {
+                    if (isAnnual && plan.annual.savings) {
+                        savingsBadge.textContent = `Save ${plan.annual.savings}%`;
+                        savingsBadge.style.display = 'inline-block';
+                    } else {
+                        savingsBadge.style.display = 'none';
+                    }
+                }
+                
+                console.log(`✅ Updated ${plan.name}: €${pricing.amount.toFixed(0)}${isAnnual ? '/year' : '/month'}`);
+            } else {
+                console.log(`❌ Missing elements for ${plan.name}`);
+            }
+        });
+    }
+    
+    // Initialize pricing toggle
+    if (toggle) {
+        // Show loading state immediately
+        showLoadingState();
+        
+        toggle.addEventListener('change', function() {
+            updatePricingDisplay(this.checked);
+        });
+        
+        // Load plans immediately
+        loadSubscriptionPlans();
+    }
+    
+    // Expose refresh function globally for testing
+    window.refreshPricing = forceRefreshPlans;
+    
+    // Initialize subscription buttons
+    initSubscriptionButtons();
+}
+
+// Initialize subscription buttons
+function initSubscriptionButtons() {
+    const subscribeButtons = document.querySelectorAll('.subscribe-btn');
+    
+    subscribeButtons.forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const plan = this.getAttribute('data-plan');
+            const isAnnual = document.getElementById('billingToggle')?.checked || false;
+            
+            console.log('🛒 Starting subscription for:', plan, isAnnual ? 'annual' : 'monthly');
+            
+            // Check if user is authenticated
+            const token = localStorage.getItem('supabase.auth.token');
+            if (!token) {
+                console.log('❌ User not authenticated, redirecting to login');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // Use cached plans if available, otherwise fetch
+                let planData;
+                if (window.subscriptionPlans) {
+                    planData = window.subscriptionPlans.find(p => p.id === plan);
+                }
+                
+                if (!planData) {
+                    console.log('📋 Fetching plans for subscription...');
+                    const response = await fetch('/api/subscriptions/plans');
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error('Failed to fetch subscription plans');
+                    }
+                    
+                    planData = data.plans.find(p => p.id === plan);
+                    if (!planData) {
+                        throw new Error('Plan not found');
+                    }
+                }
+                
+                const priceId = isAnnual ? planData.annual.priceId : planData.monthly.priceId;
+                
+                // Create checkout session
+                const checkoutResponse = await fetch('/api/subscriptions/create-checkout-session', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        priceId: priceId,
+                        successUrl: `${window.location.origin}/dashboard.html?subscription=success`,
+                        cancelUrl: `${window.location.origin}/landing.html`
+                    })
+                });
+                
+                const checkoutData = await checkoutResponse.json();
+                
+                if (checkoutData.success && checkoutData.url) {
+                    // Redirect to Stripe checkout
+                    window.location.href = checkoutData.url;
+                } else {
+                    throw new Error('Failed to create checkout session');
+                }
+                
+            } catch (error) {
+                console.error('❌ Error starting subscription:', error);
+                showNotification('Failed to start subscription process. Please try again.', 'error');
+            }
+        });
+    });
 }
 
 // Contact form handling

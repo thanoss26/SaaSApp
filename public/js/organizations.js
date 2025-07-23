@@ -171,6 +171,7 @@ class OrganizationsManager {
         if (this.currentUser && ['admin', 'super_admin'].includes(this.currentUser.role)) {
             document.getElementById('edit-org-btn').style.display = 'inline-flex';
             document.getElementById('invite-members-btn').style.display = 'inline-flex';
+            document.getElementById('add-member-btn').style.display = 'inline-flex';
         }
 
         // Hide loading, show content
@@ -206,6 +207,15 @@ class OrganizationsManager {
     createMemberCard(member) {
         const card = document.createElement('div');
         card.className = 'member-card';
+        card.setAttribute('data-member-id', member.id);
+        
+        // Only show pointer cursor if user can view this member
+        if (this.canViewMember(member)) {
+            card.style.cursor = 'pointer';
+        } else {
+            card.style.cursor = 'default';
+            card.classList.add('no-access');
+        }
 
         const initials = this.getInitials(member.first_name, member.last_name);
         const roleClass = member.role || 'employee';
@@ -226,7 +236,23 @@ class OrganizationsManager {
                 <div class="status-indicator ${statusClass}"></div>
                 <span class="status-text">${member.is_active ? 'Active' : 'Inactive'}</span>
             </div>
+            <div class="member-actions">
+                <button class="member-action-btn view-btn" title="${this.canViewMember(member) ? 'View Details' : 'You can only view your own profile'}" ${!this.canViewMember(member) ? 'disabled' : ''}>
+                    <i class="fas fa-eye"></i>
+                </button>
+                ${this.currentUser.role === 'admin' || this.currentUser.role === 'super_admin' ? `
+                    <button class="member-action-btn edit-btn" title="Edit Member">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="member-action-btn remove-btn" title="Remove from Organization">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                ` : ''}
+            </div>
         `;
+
+        // Add click event listeners
+        this.addMemberCardEventListeners(card, member);
 
         return card;
     }
@@ -359,6 +385,111 @@ class OrganizationsManager {
             });
         }
 
+        // Add member button
+        const addMemberBtn = document.getElementById('add-member-btn');
+        if (addMemberBtn) {
+            addMemberBtn.addEventListener('click', () => {
+                this.showAddMemberModal();
+            });
+        }
+
+        // Member detail modal close button
+        const closeMemberDetailModal = document.getElementById('close-member-detail-modal');
+        if (closeMemberDetailModal) {
+            closeMemberDetailModal.addEventListener('click', () => {
+                this.closeMemberDetailModal();
+            });
+        }
+
+        // Member detail modal backdrop click
+        const memberDetailModal = document.getElementById('member-detail-modal');
+        if (memberDetailModal) {
+            memberDetailModal.addEventListener('click', (e) => {
+                if (e.target === memberDetailModal) {
+                    this.closeMemberDetailModal();
+                }
+            });
+        }
+
+        // Member detail tabs
+        const memberTabs = document.querySelectorAll('.member-tab');
+        memberTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                this.switchMemberTab(tabName);
+            });
+        });
+
+        // Remove member modal close button
+        const closeRemoveMemberModal = document.getElementById('close-remove-member-modal');
+        if (closeRemoveMemberModal) {
+            closeRemoveMemberModal.addEventListener('click', () => {
+                this.closeRemoveMemberModal();
+            });
+        }
+
+        // Remove member modal backdrop click
+        const removeMemberModal = document.getElementById('remove-member-modal');
+        if (removeMemberModal) {
+            removeMemberModal.addEventListener('click', (e) => {
+                if (e.target === removeMemberModal) {
+                    this.closeRemoveMemberModal();
+                }
+            });
+        }
+
+        // Cancel remove member button
+        const cancelRemoveMember = document.getElementById('cancel-remove-member');
+        if (cancelRemoveMember) {
+            cancelRemoveMember.addEventListener('click', () => {
+                this.closeRemoveMemberModal();
+            });
+        }
+
+        // Edit member modal close button
+        const closeEditMemberModal = document.getElementById('close-edit-member-modal');
+        if (closeEditMemberModal) {
+            closeEditMemberModal.addEventListener('click', () => {
+                this.closeEditMemberModal();
+            });
+        }
+
+        // Edit member modal backdrop click
+        const editMemberModal = document.getElementById('edit-member-modal');
+        if (editMemberModal) {
+            editMemberModal.addEventListener('click', (e) => {
+                if (e.target === editMemberModal) {
+                    this.closeEditMemberModal();
+                }
+            });
+        }
+
+        // Edit member tabs
+        const editTabs = document.querySelectorAll('.edit-tab');
+        editTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.getAttribute('data-tab');
+                this.switchEditTab(tabName);
+            });
+        });
+
+        // Cancel edit member button
+        const cancelEditMember = document.getElementById('cancel-edit-member');
+        if (cancelEditMember) {
+            cancelEditMember.addEventListener('click', () => {
+                this.closeEditMemberModal();
+            });
+        }
+
+        // Edit member form submission
+        const editMemberForm = document.getElementById('edit-member-form');
+        if (editMemberForm) {
+            editMemberForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleEditMemberSubmit();
+            });
+        }
+
         // Step-by-step invite functionality
         const methodOptions = document.querySelectorAll('.method-option');
         methodOptions.forEach(option => {
@@ -392,10 +523,31 @@ class OrganizationsManager {
             });
         }
 
+        // Send invitation button
+        const sendInviteBtn = document.getElementById('send-invite-btn');
+        if (sendInviteBtn) {
+            sendInviteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.sendEmailInvitation();
+            });
+        }
+
+        // File upload event handlers
+        this.setupFileUploadHandlers();
+
         // Link invite form
         const linkInviteForm = document.getElementById('link-invite-form-element');
         if (linkInviteForm) {
             linkInviteForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.generateInviteLink();
+            });
+        }
+
+        // Generate invite link button
+        const generateInviteBtn = document.getElementById('generate-invite-btn');
+        if (generateInviteBtn) {
+            generateInviteBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 this.generateInviteLink();
             });
@@ -492,6 +644,57 @@ class OrganizationsManager {
                 this.closeDeleteModal();
             });
         }
+
+        // Add member modal events
+        const closeAddMemberModal = document.getElementById('close-add-member-modal');
+        if (closeAddMemberModal) {
+            closeAddMemberModal.addEventListener('click', () => {
+                this.closeAddMemberModal();
+            });
+        }
+
+        const cancelAddMemberBtn = document.getElementById('cancel-add-member-btn');
+        if (cancelAddMemberBtn) {
+            cancelAddMemberBtn.addEventListener('click', () => {
+                this.closeAddMemberModal();
+            });
+        }
+
+        const addMemberForm = document.getElementById('add-member-form');
+        if (addMemberForm) {
+            addMemberForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.addOfflineMember();
+            });
+        }
+
+        // Submit form button (for step 4)
+        const submitFormBtn = document.getElementById('add-member-submit-form-btn');
+        if (submitFormBtn) {
+            submitFormBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.addOfflineMember();
+            });
+        }
+
+        // Add member modal step navigation
+        const addMemberNextStepBtn = document.getElementById('add-member-next-step-btn');
+        const addMemberPrevStepBtn = document.getElementById('add-member-prev-step-btn');
+        const addMemberSubmitFormBtn = document.getElementById('add-member-submit-form-btn');
+
+        if (addMemberNextStepBtn) {
+            addMemberNextStepBtn.addEventListener('click', () => {
+                this.nextAddMemberStep();
+            });
+        }
+
+        if (addMemberPrevStepBtn) {
+            addMemberPrevStepBtn.addEventListener('click', () => {
+                this.previousAddMemberStep();
+            });
+        }
+
+
 
         const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
         if (confirmDeleteBtn) {
@@ -754,16 +957,414 @@ class OrganizationsManager {
         }, 5000);
     }
 
-    viewMember(memberId) {
-        console.log('👤 View member clicked:', memberId);
-        // TODO: Implement member viewing
-        alert('Member viewing feature coming soon!');
+    addMemberCardEventListeners(card, member) {
+        // View member details
+        const viewBtn = card.querySelector('.view-btn');
+        if (viewBtn) {
+            viewBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (this.canViewMember(member)) {
+                    this.viewMember(member.id);
+                } else {
+                    this.showErrorMessage('You can only view your own profile');
+                }
+            });
+        }
+
+        // Edit member
+        const editBtn = card.querySelector('.edit-btn');
+        if (editBtn) {
+            editBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.editMember(member.id);
+            });
+        }
+
+        // Remove member
+        const removeBtn = card.querySelector('.remove-btn');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showRemoveMemberConfirmation(member);
+            });
+        }
+
+        // Card click to view details - only allow if user has permission
+        card.addEventListener('click', () => {
+            // Check if user can view this member
+            if (this.canViewMember(member)) {
+                this.viewMember(member.id);
+            } else {
+                this.showErrorMessage('You can only view your own profile');
+            }
+        });
     }
 
-    editMember(memberId) {
+    canViewMember(member) {
+        // Admins can view any member in their organization
+        if (this.currentUser.role === 'admin' || this.currentUser.role === 'super_admin') {
+            return true;
+        }
+        
+        // Regular members can only view themselves
+        return member.id === this.currentUser.id;
+    }
+
+    async viewMember(memberId) {
+        console.log('👤 View member clicked:', memberId);
+        try {
+            this.showMemberDetailLoading();
+            this.showMemberDetailModal();
+
+            const response = await fetch(`/api/organizations/members/${memberId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch member details: ${response.status}`);
+            }
+
+            const memberData = await response.json();
+            this.displayMemberDetails(memberData.member);
+            
+        } catch (error) {
+            console.error('❌ Error viewing member:', error);
+            this.showErrorMessage('Failed to load member details');
+        }
+    }
+
+    async editMember(memberId) {
         console.log('✏️ Edit member clicked:', memberId);
-        // TODO: Implement member editing
-        alert('Member editing feature coming soon!');
+        try {
+            this.showEditMemberLoading();
+            this.showEditMemberModal();
+
+            const response = await fetch(`/api/organizations/members/${memberId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch member details: ${response.status}`);
+            }
+
+            const memberData = await response.json();
+            this.populateEditMemberForm(memberData.member);
+            this.currentEditingMemberId = memberId;
+            
+        } catch (error) {
+            console.error('❌ Error editing member:', error);
+            this.showErrorMessage('Failed to load member information for editing');
+        }
+    }
+
+    showEditMemberModal() {
+        document.getElementById('edit-member-modal').style.display = 'flex';
+    }
+
+    closeEditMemberModal() {
+        document.getElementById('edit-member-modal').style.display = 'none';
+        this.currentEditingMemberId = null;
+    }
+
+    showEditMemberLoading() {
+        document.getElementById('edit-member-loading').style.display = 'flex';
+        document.getElementById('edit-member-form').style.display = 'none';
+    }
+
+    hideEditMemberLoading() {
+        document.getElementById('edit-member-loading').style.display = 'none';
+        document.getElementById('edit-member-form').style.display = 'block';
+    }
+
+    populateEditMemberForm(member) {
+        console.log('📝 Populating edit form with member data:', member);
+        
+        // Update modal title
+        document.getElementById('edit-member-title').textContent = `Edit ${member.first_name} ${member.last_name}`;
+
+        // Personal Info
+        document.getElementById('edit-first-name').value = member.first_name || '';
+        document.getElementById('edit-last-name').value = member.last_name || '';
+        document.getElementById('edit-email').value = member.email || '';
+        document.getElementById('edit-phone').value = member.phone || '';
+        document.getElementById('edit-date-of-birth').value = member.date_of_birth ? member.date_of_birth.split('T')[0] : '';
+        document.getElementById('edit-bio').value = member.bio || '';
+
+        // Address Info
+        document.getElementById('edit-address-line1').value = member.address_line1 || '';
+        document.getElementById('edit-address-line2').value = member.address_line2 || '';
+        document.getElementById('edit-city').value = member.city || '';
+        document.getElementById('edit-state').value = member.state_province || '';
+        document.getElementById('edit-postal').value = member.postal_code || '';
+        document.getElementById('edit-country').value = member.country || '';
+
+        // Emergency Contact
+        document.getElementById('edit-emergency-name').value = member.emergency_contact_name || '';
+        document.getElementById('edit-emergency-phone').value = member.emergency_contact_phone || '';
+
+        // Employment Info
+        document.getElementById('edit-job-title').value = member.job_title || '';
+        document.getElementById('edit-department').value = member.department || '';
+        document.getElementById('edit-employment-type').value = member.employment_type || '';
+        document.getElementById('edit-work-location').value = member.work_location || '';
+        document.getElementById('edit-start-date').value = member.employment_start_date ? member.employment_start_date.split('T')[0] : '';
+        document.getElementById('edit-end-date').value = member.employment_end_date ? member.employment_end_date.split('T')[0] : '';
+        document.getElementById('edit-salary').value = member.salary || '';
+        document.getElementById('edit-currency').value = member.currency || 'EUR';
+
+        // Banking Info
+        document.getElementById('edit-iban').value = member.iban || '';
+        document.getElementById('edit-bank-name').value = member.bank_name || '';
+        document.getElementById('edit-bank-country').value = member.bank_country || '';
+
+        // Role & Status
+        document.getElementById('edit-role').value = member.role || 'employee';
+        document.getElementById('edit-status').value = member.is_active ? 'true' : 'false';
+
+        this.hideEditMemberLoading();
+    }
+
+    switchEditTab(tabName) {
+        console.log('📑 Switching to edit tab:', tabName);
+        
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.edit-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.edit-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Add active class to selected tab and content
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`edit-${tabName}-tab`).classList.add('active');
+    }
+
+    async saveMemberChanges(formData) {
+        console.log('💾 Saving member changes:', formData);
+        
+        try {
+            const response = await fetch(`/api/organizations/members/${this.currentEditingMemberId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to update member');
+            }
+
+            const result = await response.json();
+            
+            // Close modal
+            this.closeEditMemberModal();
+            
+            // Show success message
+            this.showSuccessMessage('Member updated successfully');
+            
+            // Refresh the members list
+            await this.loadOrganizationInfo();
+            
+        } catch (error) {
+            console.error('❌ Error saving member changes:', error);
+            this.showErrorMessage(error.message);
+        }
+    }
+
+    handleEditMemberSubmit() {
+        console.log('📝 Handling edit member form submission');
+        
+        const form = document.getElementById('edit-member-form');
+        const formData = new FormData(form);
+        
+        // Convert FormData to object
+        const memberData = {};
+        for (let [key, value] of formData.entries()) {
+            // Handle boolean values
+            if (key === 'is_active') {
+                memberData[key] = value === 'true';
+            } else if (key === 'salary') {
+                memberData[key] = value ? parseFloat(value) : null;
+            } else {
+                memberData[key] = value || null;
+            }
+        }
+        
+        console.log('📊 Form data to save:', memberData);
+        
+        // Validate required fields
+        if (!memberData.first_name || !memberData.last_name || !memberData.email) {
+            this.showErrorMessage('First name, last name, and email are required');
+            return;
+        }
+        
+        // Save the changes
+        this.saveMemberChanges(memberData);
+    }
+
+    showMemberDetailModal() {
+        document.getElementById('member-detail-modal').style.display = 'flex';
+    }
+
+    closeMemberDetailModal() {
+        document.getElementById('member-detail-modal').style.display = 'none';
+    }
+
+    showMemberDetailLoading() {
+        document.getElementById('member-detail-loading').style.display = 'flex';
+        document.getElementById('member-detail-content').style.display = 'none';
+        document.getElementById('member-detail-actions').style.display = 'none';
+    }
+
+    hideMemberDetailLoading() {
+        document.getElementById('member-detail-loading').style.display = 'none';
+        document.getElementById('member-detail-content').style.display = 'block';
+        document.getElementById('member-detail-actions').style.display = 'flex';
+    }
+
+    displayMemberDetails(member) {
+        console.log('🎨 Displaying member details:', member);
+        
+        // Update header
+        document.getElementById('member-detail-title').textContent = `${member.first_name} ${member.last_name}`;
+        document.getElementById('member-detail-name').textContent = `${member.first_name} ${member.last_name}`;
+        document.getElementById('member-detail-email').textContent = member.email;
+        document.getElementById('member-detail-role').textContent = this.formatRole(member.role);
+        document.getElementById('member-detail-status').textContent = member.is_active ? 'Active' : 'Inactive';
+        document.getElementById('member-detail-status').className = `member-detail-status ${member.is_active ? 'active' : 'inactive'}`;
+
+        // Update avatar
+        const avatar = document.getElementById('member-detail-avatar');
+        avatar.innerHTML = this.getInitials(member.first_name, member.last_name);
+        avatar.className = `member-detail-avatar ${member.role || 'employee'}`;
+
+        // Update personal info
+        document.getElementById('member-phone').textContent = member.phone || 'N/A';
+        document.getElementById('member-dob').textContent = member.date_of_birth ? this.formatDate(member.date_of_birth) : 'N/A';
+        document.getElementById('member-bio').textContent = member.bio || 'N/A';
+
+        // Update address info
+        document.getElementById('member-address1').textContent = member.address_line1 || 'N/A';
+        document.getElementById('member-address2').textContent = member.address_line2 || 'N/A';
+        document.getElementById('member-city').textContent = member.city || 'N/A';
+        document.getElementById('member-state').textContent = member.state_province || 'N/A';
+        document.getElementById('member-postal').textContent = member.postal_code || 'N/A';
+        document.getElementById('member-country').textContent = member.country || 'N/A';
+
+        // Update emergency contact
+        document.getElementById('member-emergency-name').textContent = member.emergency_contact_name || 'N/A';
+        document.getElementById('member-emergency-phone').textContent = member.emergency_contact_phone || 'N/A';
+
+        // Update employment info
+        document.getElementById('member-job-title').textContent = member.job_title || 'N/A';
+        document.getElementById('member-department').textContent = member.department || 'N/A';
+        document.getElementById('member-employment-type').textContent = member.employment_type || 'N/A';
+        document.getElementById('member-work-location').textContent = member.work_location || 'N/A';
+        document.getElementById('member-start-date').textContent = member.employment_start_date ? this.formatDate(member.employment_start_date) : 'N/A';
+        document.getElementById('member-end-date').textContent = member.employment_end_date ? this.formatDate(member.employment_end_date) : 'N/A';
+        document.getElementById('member-salary').textContent = member.salary ? this.formatCurrency(member.salary) : 'N/A';
+        document.getElementById('member-currency').textContent = member.currency || 'N/A';
+
+        // Update banking info
+        document.getElementById('member-iban').textContent = member.iban || 'N/A';
+        document.getElementById('member-bank-name').textContent = member.bank_name || 'N/A';
+        document.getElementById('member-bank-country').textContent = member.bank_country || 'N/A';
+
+        // Update documents info
+        document.getElementById('member-tax-doc').textContent = member.tax_id_document ? 'Document uploaded' : 'N/A';
+        document.getElementById('member-national-doc').textContent = member.national_id_document ? 'Document uploaded' : 'N/A';
+        document.getElementById('member-passport-doc').textContent = member.passport_document ? 'Document uploaded' : 'N/A';
+
+        // Show/hide actions based on user role
+        const actionsDiv = document.getElementById('member-detail-actions');
+        if (this.currentUser.role === 'admin' || this.currentUser.role === 'super_admin') {
+            actionsDiv.style.display = 'flex';
+            // Set up action buttons
+            document.getElementById('edit-member-btn').onclick = () => this.editMember(member.id);
+            document.getElementById('remove-member-btn').onclick = () => this.showRemoveMemberConfirmation(member);
+        } else {
+            actionsDiv.style.display = 'none';
+        }
+
+        this.hideMemberDetailLoading();
+    }
+
+    showRemoveMemberConfirmation(member) {
+        console.log('🗑️ Show remove member confirmation:', member);
+        
+        // Update confirmation modal content
+        document.getElementById('remove-member-name').textContent = `${member.first_name} ${member.last_name}`;
+        document.getElementById('remove-member-email').textContent = member.email;
+        document.getElementById('remove-member-role').textContent = this.formatRole(member.role);
+        
+        // Show confirmation modal
+        document.getElementById('remove-member-modal').style.display = 'flex';
+        
+        // Set up confirmation button
+        document.getElementById('confirm-remove-member').onclick = () => this.removeMember(member.id);
+    }
+
+    closeRemoveMemberModal() {
+        document.getElementById('remove-member-modal').style.display = 'none';
+    }
+
+    switchMemberTab(tabName) {
+        console.log('📑 Switching to member tab:', tabName);
+        
+        // Remove active class from all tabs and content
+        document.querySelectorAll('.member-tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.querySelectorAll('.member-tab-content').forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Add active class to selected tab and content
+        document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        document.getElementById(`${tabName}-tab`).classList.add('active');
+    }
+
+    async removeMember(memberId) {
+        console.log('🗑️ Removing member:', memberId);
+        
+        try {
+            const response = await fetch(`/api/organizations/members/${memberId}/remove`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to remove member');
+            }
+
+            const result = await response.json();
+            
+            // Close modals
+            this.closeRemoveMemberModal();
+            this.closeMemberDetailModal();
+            
+            // Show success message
+            this.showSuccessMessage('Member removed from organization successfully');
+            
+            // Refresh the members list
+            await this.loadOrganizationInfo();
+            
+        } catch (error) {
+            console.error('❌ Error removing member:', error);
+            this.showErrorMessage(error.message);
+        }
     }
 
     showLoading() {
@@ -812,6 +1413,404 @@ class OrganizationsManager {
     closeInviteModal() {
         console.log('📧 Closing invite modal');
         document.getElementById('invite-members-modal').style.display = 'none';
+    }
+
+    // Add member functionality methods
+    showAddMemberModal() {
+        console.log('👤 Showing add member modal');
+        document.getElementById('add-member-modal').style.display = 'flex';
+        this.resetAddMemberForm();
+        this.goToAddMemberStep(1);
+    }
+
+    closeAddMemberModal() {
+        console.log('👤 Closing add member modal');
+        document.getElementById('add-member-modal').style.display = 'none';
+    }
+
+    resetAddMemberForm() {
+        console.log('🔄 Resetting add member form');
+        const form = document.getElementById('add-member-form');
+        if (form) {
+            form.reset();
+        }
+        // Reset to first step
+        this.goToAddMemberStep(1);
+    }
+
+    // Multi-step form navigation for add member modal
+    nextAddMemberStep() {
+        console.log('🔄 Next button clicked');
+        const currentStep = this.getCurrentAddMemberStep();
+        const nextStep = currentStep + 1;
+        
+        console.log(`Current step: ${currentStep}, Next step: ${nextStep}`);
+        
+        if (this.validateCurrentStep(currentStep)) {
+            console.log('✅ Validation passed, going to next step');
+            this.goToAddMemberStep(nextStep);
+        } else {
+            console.log('❌ Validation failed');
+        }
+    }
+
+    previousAddMemberStep() {
+        const currentStep = this.getCurrentAddMemberStep();
+        const prevStep = currentStep - 1;
+        
+        if (prevStep >= 1) {
+            this.goToAddMemberStep(prevStep);
+        }
+    }
+
+    getCurrentAddMemberStep() {
+        const activeStep = document.querySelector('#add-member-modal .form-step.active');
+        const stepNumber = activeStep ? parseInt(activeStep.dataset.step) : 1;
+        console.log(`🔍 Current step detected: ${stepNumber}`);
+        return stepNumber;
+    }
+
+    goToAddMemberStep(stepNumber) {
+        console.log(`🔄 Going to add member step ${stepNumber}`);
+        
+        // Hide all steps
+        const steps = document.querySelectorAll('#add-member-modal .form-step');
+        console.log(`Found ${steps.length} form steps`);
+        steps.forEach(step => {
+            step.classList.remove('active');
+            console.log(`Step ${step.dataset.step}: ${step.classList.contains('active') ? 'active' : 'inactive'}`);
+        });
+        
+        // Show target step
+        const targetStep = document.querySelector(`#add-member-modal .form-step[data-step="${stepNumber}"]`);
+        if (targetStep) {
+            targetStep.classList.add('active');
+            console.log(`✅ Activated step ${stepNumber}`);
+        } else {
+            console.log(`❌ Step ${stepNumber} not found`);
+        }
+        
+        // Update progress indicator
+        this.updateAddMemberStepProgress(stepNumber);
+        
+        // Update navigation buttons
+        this.updateAddMemberStepButtons(stepNumber);
+    }
+
+    updateAddMemberStepProgress(stepNumber) {
+        const steps = document.querySelectorAll('#add-member-modal .form-step-progress .step');
+        
+        steps.forEach((step, index) => {
+            const stepNum = index + 1;
+            step.classList.remove('active', 'completed');
+            
+            if (stepNum < stepNumber) {
+                step.classList.add('completed');
+            } else if (stepNum === stepNumber) {
+                step.classList.add('active');
+            }
+        });
+    }
+
+    updateAddMemberStepButtons(stepNumber) {
+        const prevBtn = document.getElementById('add-member-prev-step-btn');
+        const nextBtn = document.getElementById('add-member-next-step-btn');
+        const submitBtn = document.getElementById('add-member-submit-form-btn');
+        
+        if (prevBtn) {
+            prevBtn.style.display = stepNumber > 1 ? 'inline-flex' : 'none';
+        }
+        
+        if (nextBtn) {
+            nextBtn.style.display = stepNumber < 4 ? 'inline-flex' : 'none';
+        }
+        
+        if (submitBtn) {
+            submitBtn.style.display = stepNumber === 4 ? 'inline-flex' : 'none';
+        }
+    }
+
+    validateCurrentStep(stepNumber) {
+        const currentStep = document.querySelector(`#add-member-modal .form-step[data-step="${stepNumber}"]`);
+        if (!currentStep) return false;
+        
+        // Only validate required fields on step 1 (basic info)
+        if (stepNumber === 1) {
+            const requiredFields = currentStep.querySelectorAll('input[required], select[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('error');
+                    
+                    // Add error message
+                    let errorMsg = field.parentNode.querySelector('.error-message');
+                    if (!errorMsg) {
+                        errorMsg = document.createElement('div');
+                        errorMsg.className = 'error-message';
+                        errorMsg.style.color = '#ef4444';
+                        errorMsg.style.fontSize = '12px';
+                        errorMsg.style.marginTop = '4px';
+                        field.parentNode.appendChild(errorMsg);
+                    }
+                    errorMsg.textContent = this.t('common:field_required');
+                } else {
+                    field.classList.remove('error');
+                    const errorMsg = field.parentNode.querySelector('.error-message');
+                    if (errorMsg) {
+                        errorMsg.remove();
+                    }
+                }
+            });
+            
+            return isValid;
+        }
+        
+        // For other steps, just allow progression
+        return true;
+    }
+
+    validateAllRequiredFields() {
+        const form = document.getElementById('add-member-form');
+        if (!form) return false;
+        
+        const requiredFields = form.querySelectorAll('input[required], select[required]');
+        let isValid = true;
+        
+        // Clear all previous errors
+        form.querySelectorAll('.error-message').forEach(msg => msg.remove());
+        form.querySelectorAll('.error').forEach(field => field.classList.remove('error'));
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('error');
+                
+                // Add error message
+                let errorMsg = field.parentNode.querySelector('.error-message');
+                if (!errorMsg) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.className = 'error-message';
+                    errorMsg.style.color = '#ef4444';
+                    errorMsg.style.fontSize = '12px';
+                    errorMsg.style.marginTop = '4px';
+                    field.parentNode.appendChild(errorMsg);
+                }
+                errorMsg.textContent = this.t('common:field_required');
+                
+                // Scroll to first error
+                if (isValid === false) {
+                    field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
+        return isValid;
+    }
+
+    setupFileUploadHandlers() {
+        const fileInputs = document.querySelectorAll('.file-input');
+        
+        fileInputs.forEach(input => {
+            const wrapper = input.closest('.file-upload-wrapper');
+            const display = wrapper.querySelector('.file-upload-display');
+            const preview = wrapper.querySelector('.file-preview');
+            const fileName = preview?.querySelector('.file-name');
+            
+            // File input change event
+            input.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleFileSelection(file, wrapper, display, preview, fileName);
+                }
+            });
+            
+            // Drag and drop events
+            display.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                wrapper.classList.add('dragover');
+            });
+            
+            display.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                wrapper.classList.remove('dragover');
+            });
+            
+            display.addEventListener('drop', (e) => {
+                e.preventDefault();
+                wrapper.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    this.handleFileSelection(files[0], wrapper, display, preview, fileName);
+                }
+            });
+            
+            // Click to trigger file input
+            display.addEventListener('click', () => {
+                input.click();
+            });
+        });
+    }
+    
+    handleFileSelection(file, wrapper, display, preview, fileName) {
+        // Validate file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            this.showErrorMessage(`File ${file.name} is too large. Maximum size is 5MB.`);
+            return;
+        }
+        
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        if (!allowedTypes.includes(file.type)) {
+            this.showErrorMessage(`File ${file.name} is not a supported format. Please use PDF, JPG, PNG, or DOC files.`);
+            return;
+        }
+        
+        // Update UI
+        if (fileName) {
+            fileName.textContent = file.name;
+        }
+        
+        wrapper.classList.add('has-file');
+        wrapper.classList.remove('error');
+        wrapper.classList.add('success');
+    }
+    
+    removeFile(inputId) {
+        const input = document.getElementById(inputId);
+        const wrapper = input.closest('.file-upload-wrapper');
+        const display = wrapper.querySelector('.file-upload-display');
+        const preview = wrapper.querySelector('.file-preview');
+        
+        // Clear the file input
+        input.value = '';
+        
+        // Reset UI
+        wrapper.classList.remove('has-file', 'error', 'success');
+        if (preview) {
+            preview.style.display = 'none';
+        }
+    }
+
+    async addOfflineMember() {
+        console.log('👤 Adding offline member...');
+        
+        // Validate all required fields before submission
+        if (!this.validateAllRequiredFields()) {
+            this.showErrorMessage('Please fill in all required fields.');
+            return;
+        }
+        
+        const form = document.getElementById('add-member-form');
+        const formData = new FormData(form);
+        
+        // Handle file uploads
+        const documents = {};
+        const fileInputs = form.querySelectorAll('input[type="file"]');
+        
+        for (const fileInput of fileInputs) {
+            const file = fileInput.files[0];
+            if (file) {
+                // Validate file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    this.showErrorMessage(`File ${file.name} is too large. Maximum size is 5MB.`);
+                    return;
+                }
+                
+                // Validate file type
+                const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                if (!allowedTypes.includes(file.type)) {
+                    this.showErrorMessage(`File ${file.name} is not a supported format. Please use PDF, JPG, PNG, or DOC files.`);
+                    return;
+                }
+                
+                documents[fileInput.name] = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size
+                };
+            }
+        }
+        
+        const memberData = {
+            // Basic Information
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            email: formData.get('email'),
+            phone: formData.get('phone') || null,
+            date_of_birth: formData.get('date_of_birth') || null,
+            bio: formData.get('bio') || null,
+            
+            // Employment Information
+            role: formData.get('role'),
+            job_title: formData.get('job_title') || null,
+            department: formData.get('department') || null,
+            employment_type: formData.get('employment_type') || null,
+            employment_start_date: formData.get('employment_start_date') || null,
+            work_location: formData.get('work_location') || null,
+            salary: formData.get('salary') ? parseFloat(formData.get('salary')) : null,
+            currency: formData.get('currency') || 'EUR',
+            
+            // Banking Information
+            iban: formData.get('iban') || null,
+            bank_name: formData.get('bank_name') || null,
+            
+            // Documents and Additional Information
+            documents: Object.keys(documents).length > 0 ? documents : null,
+            emergency_contact_name: formData.get('emergency_contact_name') || null,
+            emergency_contact_phone: formData.get('emergency_contact_phone') || null,
+            address_line1: formData.get('address_line1') || null,
+            address_line2: formData.get('address_line2') || null,
+            city: formData.get('city') || null,
+            state_province: formData.get('state_province') || null,
+            postal_code: formData.get('postal_code') || null,
+            country: formData.get('country') || null,
+            
+            organization_id: this.currentUser.organization_id
+        };
+
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoading = submitBtn.querySelector('.btn-loading');
+        
+        btnText.style.display = 'none';
+        btnLoading.style.display = 'inline-flex';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/organizations/add-offline-member', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: JSON.stringify(memberData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                this.showSuccessMessage('Offline member added successfully!');
+                this.closeAddMemberModal();
+                
+                // Refresh the members list
+                await this.loadOrganizationInfo();
+            } else {
+                throw new Error(result.error || 'Failed to add offline member');
+            }
+        } catch (error) {
+            console.error('❌ Error adding offline member:', error);
+            this.showErrorMessage(error.message || 'Failed to add offline member. Please try again.');
+        } finally {
+            // Reset button state
+            btnText.style.display = 'inline-flex';
+            btnLoading.style.display = 'none';
+            submitBtn.disabled = false;
+        }
     }
 
     goToStep(stepNumber) {
@@ -892,7 +1891,7 @@ class OrganizationsManager {
         const linkForm = document.getElementById('link-invite-form');
         const step2Title = document.getElementById('step-2-title');
         const step2Description = document.getElementById('step-2-description');
-
+        
         if (method === 'email') {
             emailForm.style.display = 'block';
             linkForm.style.display = 'none';
@@ -925,7 +1924,7 @@ class OrganizationsManager {
         // Hide result sections
         document.getElementById('email-success').style.display = 'none';
         document.getElementById('link-success').style.display = 'none';
-
+        
         // Reset method selection
         this.selectedMethod = null;
         document.querySelectorAll('.method-option').forEach(option => {
@@ -963,6 +1962,7 @@ class OrganizationsManager {
     async sendEmailInvitation() {
         try {
             console.log('📧 Sending email invitation...');
+            console.log('📧 Button clicked, starting invitation process...');
             
             const sendBtn = document.getElementById('send-invite-btn');
             sendBtn.classList.add('loading');
@@ -978,6 +1978,9 @@ class OrganizationsManager {
                 role: formData.get('role'),
                 message: formData.get('message')
             };
+            
+            console.log('📧 Form data collected:', inviteData);
+            console.log('📧 Making API request to /api/auth/generate-invite...');
 
             const response = await fetch('/api/auth/generate-invite', {
                 method: 'POST',
@@ -990,7 +1993,8 @@ class OrganizationsManager {
 
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to send invitation');
+                const errorMessage = errorData.details ? `${errorData.error}: ${errorData.details}` : errorData.error || 'Failed to send invitation';
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
@@ -1116,4 +2120,9 @@ function loadOrganizationInfo() {
     }
 }
 
- 
+// Global function for removing files (accessible from HTML onclick)
+function removeFile(inputId) {
+    if (window.organizationsManager) {
+        window.organizationsManager.removeFile(inputId);
+    }
+}

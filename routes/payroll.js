@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireOrganization } = require('../middleware/auth');
+const stripeService = require('../utils/stripeService');
 
 // Get all payrolls for the organization (admin can see all, employees see only their own)
 router.get('/', authenticateToken, requireOrganization, async (req, res) => {
@@ -19,8 +20,10 @@ router.get('/', authenticateToken, requireOrganization, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch user profile' });
         }
 
-        // Get payrolls for this organization using admin client to bypass RLS
-        const { data: payrolls, error: fetchError } = await supabaseAdmin
+        console.log('👤 User role:', profile.role);
+        console.log('🏢 Organization ID:', profile.organization_id);
+
+        let payrollsQuery = supabaseAdmin
             .from('payrolls')
             .select(`
                 *,
@@ -32,7 +35,19 @@ router.get('/', authenticateToken, requireOrganization, async (req, res) => {
                     role
                 )
             `)
-            .eq('organization_id', profile.organization_id)
+            .eq('organization_id', profile.organization_id);
+
+        // Filter based on user role
+        if (['admin', 'super_admin'].includes(profile.role)) {
+            // Admins can see all payrolls in their organization
+            console.log('✅ Admin user - fetching all payrolls for organization');
+        } else {
+            // Regular employees can only see their own payrolls
+            console.log('✅ Employee user - fetching only their own payrolls');
+            payrollsQuery = payrollsQuery.eq('employee_id', req.user.id);
+        }
+
+        const { data: payrolls, error: fetchError } = await payrollsQuery
             .order('created_at', { ascending: false });
 
         if (fetchError) {
@@ -41,7 +56,13 @@ router.get('/', authenticateToken, requireOrganization, async (req, res) => {
         }
 
         console.log('✅ Payrolls fetched successfully:', payrolls?.length || 0);
-        res.json({ payrolls: payrolls || [] });
+        console.log('🔍 Payrolls for user role:', profile.role);
+        
+        res.json({ 
+            payrolls: payrolls || [],
+            userRole: profile.role,
+            isAdmin: ['admin', 'super_admin'].includes(profile.role)
+        });
 
     } catch (error) {
         console.error('❌ Error in payrolls route:', error);
@@ -65,11 +86,23 @@ router.get('/stats', authenticateToken, requireOrganization, async (req, res) =>
             return res.status(500).json({ error: 'Failed to fetch user profile' });
         }
 
-        // Get payroll statistics
-        const { data: stats, error } = await supabase
+        console.log('👤 User role for stats:', profile.role);
+
+        let statsQuery = supabase
             .from('payrolls')
-            .select('total_amount, status, created_at')
+            .select('total_amount, status, created_at, employee_id')
             .eq('organization_id', profile.organization_id);
+
+        // Filter based on user role
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            // Regular employees can only see their own payroll statistics
+            console.log('✅ Employee user - fetching only their own payroll stats');
+            statsQuery = statsQuery.eq('employee_id', req.user.id);
+        } else {
+            console.log('✅ Admin user - fetching all payroll stats for organization');
+        }
+
+        const { data: stats, error } = await statsQuery;
 
         if (error) {
             console.error('❌ Error fetching payroll stats:', error);
@@ -90,7 +123,9 @@ router.get('/stats', authenticateToken, requireOrganization, async (req, res) =>
             totalExpense: totalPayroll * 0.2, // Mock expense calculation
             pendingPayments: pendingPayrolls,
             totalPayrolls: totalPayrolls,
-            monthlyTrend: monthlyTrend
+            monthlyTrend: monthlyTrend,
+            userRole: profile.role,
+            isAdmin: ['admin', 'super_admin'].includes(profile.role)
         };
 
         console.log('✅ Payroll statistics calculated:', payrollStats);
@@ -319,6 +354,14 @@ router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
         // Process payment based on method
         let paymentResult;
         
+        // Map payment methods to database schema
+        let dbPaymentMethod = payment_method;
+        if (payment_method === 'bank' || payment_method === 'iban') {
+            dbPaymentMethod = 'bank_transfer';
+        }
+        
+        console.log('🔧 Processing payment with method:', payment_method, '-> DB method:', dbPaymentMethod);
+        
         switch (payment_method) {
             case 'card':
                 paymentResult = await processCardPayment(payroll, card_number, card_holder, card_expiry, card_cvv);
@@ -346,37 +389,46 @@ router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
             return res.status(400).json({ error: paymentResult.error });
         }
         
-        // Update payroll status to paid
+        // Update payroll status to completed
         const { error: updateError } = await supabaseAdmin
             .from('payrolls')
             .update({ 
-                status: 'paid',
+                status: 'completed',
                 paid_at: new Date().toISOString(),
-                payment_method: payment_method,
                 payment_reference: paymentResult.reference
             })
             .eq('id', req.params.id);
             
         if (updateError) {
             console.error('❌ Error updating payroll status:', updateError);
+            console.error('❌ Update error details:', JSON.stringify(updateError, null, 2));
             return res.status(500).json({ error: 'Failed to update payroll status' });
         }
         
-        // Create payment record
-        const { error: paymentRecordError } = await supabaseAdmin
-            .from('payments')
-            .insert({
-                payroll_id: req.params.id,
-                amount: payroll.total_amount,
-                payment_method: payment_method,
-                payment_reference: paymentResult.reference,
-                status: 'completed',
-                processed_by: req.user.id,
-                organization_id: userProfile.organization_id
-            });
-            
-        if (paymentRecordError) {
-            console.error('❌ Error creating payment record:', paymentRecordError);
+        // Create payment record (optional - don't fail if this fails)
+        try {
+            const { error: paymentRecordError } = await supabaseAdmin
+                .from('payments')
+                .insert({
+                    payroll_id: req.params.id,
+                    amount: payroll.total_amount,
+                    payment_method: dbPaymentMethod,
+                    payment_reference: paymentResult.reference,
+                    payment_status: 'completed',
+                    processed_by: req.user.id,
+                    processed_at: new Date().toISOString(),
+                    completed_at: new Date().toISOString()
+                });
+                
+            if (paymentRecordError) {
+                console.error('❌ Error creating payment record:', paymentRecordError);
+                console.error('❌ Payment record error details:', JSON.stringify(paymentRecordError, null, 2));
+                // Don't fail the request, just log the error
+            } else {
+                console.log('✅ Payment record created successfully');
+            }
+        } catch (paymentError) {
+            console.error('❌ Exception creating payment record:', paymentError);
             // Don't fail the request, just log the error
         }
         
@@ -402,14 +454,14 @@ async function processCardPayment(payroll, cardNumber, cardHolder, cardExpiry, c
     
     // In a real implementation, you would integrate with a payment processor
     // For now, simulate successful payment
-    const reference = `CARD_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `CARD_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     
     return { success: true, reference };
 }
 
 async function processBankTransfer(payroll, userProfile) {
     // Use organization's bank details if available
-    const reference = `BANK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `BANK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     
     return { success: true, reference };
 }
@@ -426,7 +478,7 @@ async function processIBANPayment(payroll, userProfile) {
     }
     
     // In a real implementation, you would integrate with SEPA or local banking APIs
-    const reference = `IBAN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `IBAN_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     
     return { success: true, reference };
 }
@@ -443,18 +495,18 @@ async function processStripePayment(payroll, userProfile) {
     // 2. Create payment intent with Stripe
     // 3. Process the payment
     
-    const reference = `STRIPE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `STRIPE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     
     return { success: true, reference };
 }
 
 async function processRevolutPayment(payroll) {
-    const reference = `REVOLUT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `REVOLUT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     return { success: true, reference };
 }
 
 async function processPaypalPayment(payroll) {
-    const reference = `PAYPAL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reference = `PAYPAL_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${payroll.id.slice(-8)}`;
     return { success: true, reference };
 }
 
@@ -520,6 +572,392 @@ router.get('/:id', authenticateToken, requireOrganization, async (req, res) => {
     } catch (error) {
         console.error('❌ Error in payroll details route:', error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// ==================== STRIPE INTEGRATION ROUTES ====================
+
+// Create payment intent for payroll (admin only)
+router.post('/:id/create-payment-intent', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('💳 Creating payment intent for payroll:', req.params.id);
+        
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can create payment intents
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to create payment intent');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get payroll details
+        const { data: payroll, error: payrollError } = await supabase
+            .from('payrolls')
+            .select(`
+                *,
+                employee:profiles!payrolls_employee_id_fkey(
+                    id,
+                    first_name,
+                    last_name,
+                    email
+                )
+            `)
+            .eq('id', req.params.id)
+            .eq('organization_id', profile.organization_id)
+            .single();
+
+        if (payrollError || !payroll) {
+            console.error('❌ Payroll not found:', payrollError);
+            return res.status(404).json({ error: 'Payroll not found' });
+        }
+
+        // Get or create Stripe customer for the employee
+        const customer = await stripeService.createOrGetCustomer(
+            payroll.employee_id,
+            payroll.employee.email,
+            `${payroll.employee.first_name} ${payroll.employee.last_name}`
+        );
+
+        // Create payment intent
+        const paymentIntent = await stripeService.createPaymentIntent(
+            payroll.id,
+            payroll.total_amount,
+            payroll.currency || 'eur',
+            customer.id
+        );
+
+        // Update payroll with payment intent ID
+        const { error: updateError } = await supabaseAdmin
+            .from('payrolls')
+            .update({ 
+                stripe_payment_intent_id: paymentIntent.id,
+                status: 'payment_pending'
+            })
+            .eq('id', payroll.id);
+
+        if (updateError) {
+            console.error('❌ Error updating payroll with payment intent:', updateError);
+        }
+
+        console.log('✅ Payment intent created successfully');
+        res.json({
+            paymentIntent: {
+                id: paymentIntent.id,
+                client_secret: paymentIntent.client_secret,
+                amount: paymentIntent.amount,
+                currency: paymentIntent.currency,
+                status: paymentIntent.status
+            },
+            customer: {
+                id: customer.id
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating payment intent:', error);
+        res.status(500).json({ error: 'Failed to create payment intent' });
+    }
+});
+
+// Process Stripe payment (admin only)
+router.post('/:id/process-stripe-payment', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('💳 Processing Stripe payment for payroll:', req.params.id);
+        
+        const { paymentIntentId, paymentMethodId } = req.body;
+
+        if (!paymentIntentId) {
+            return res.status(400).json({ error: 'Payment intent ID is required' });
+        }
+
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can process payments
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to process payment');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get payroll details
+        const { data: payroll, error: payrollError } = await supabase
+            .from('payrolls')
+            .select('*')
+            .eq('id', req.params.id)
+            .eq('organization_id', profile.organization_id)
+            .single();
+
+        if (payrollError || !payroll) {
+            console.error('❌ Payroll not found:', payrollError);
+            return res.status(404).json({ error: 'Payroll not found' });
+        }
+
+        // Process the payment
+        const paymentIntent = await stripeService.processPayment(paymentIntentId, paymentMethodId);
+
+        if (paymentIntent.status === 'succeeded') {
+            // Update payroll status to completed
+            const { error: updateError } = await supabaseAdmin
+                .from('payrolls')
+                .update({
+                    status: 'completed',
+                    paid_at: new Date().toISOString(),
+                    payment_reference: paymentIntent.id
+                })
+                .eq('id', payroll.id);
+
+            if (updateError) {
+                console.error('❌ Error updating payroll status:', updateError);
+            }
+
+            // Create payment record
+            const { error: paymentError } = await supabaseAdmin
+                .from('stripe_payments')
+                .insert({
+                    payroll_id: payroll.id,
+                    stripe_payment_intent_id: paymentIntent.id,
+                    stripe_charge_id: paymentIntent.latest_charge,
+                    amount: payroll.total_amount,
+                    currency: payroll.currency || 'eur',
+                    status: 'succeeded',
+                    customer_id: paymentIntent.customer,
+                    metadata: {
+                        processed_by: req.user.id,
+                        payment_method: paymentMethodId
+                    }
+                });
+
+            if (paymentError) {
+                console.error('❌ Error creating payment record:', paymentError);
+            }
+
+            console.log('✅ Payment processed successfully');
+            res.json({
+                success: true,
+                paymentIntent: {
+                    id: paymentIntent.id,
+                    status: paymentIntent.status,
+                    amount: paymentIntent.amount,
+                    currency: paymentIntent.currency
+                }
+            });
+        } else {
+            console.log('❌ Payment failed:', paymentIntent.status);
+            res.json({
+                success: false,
+                error: paymentIntent.last_payment_error?.message || 'Payment failed',
+                paymentIntent: {
+                    id: paymentIntent.id,
+                    status: paymentIntent.status
+                }
+            });
+        }
+
+    } catch (error) {
+        console.error('❌ Error processing payment:', error);
+        res.status(500).json({ error: 'Failed to process payment' });
+    }
+});
+
+// Get customer payment methods (admin only)
+router.get('/customer/:customerId/payment-methods', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('💳 Fetching payment methods for customer:', req.params.customerId);
+        
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can view payment methods
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to view payment methods');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const paymentMethods = await stripeService.getCustomerPaymentMethods(req.params.customerId);
+        
+        console.log('✅ Payment methods retrieved successfully');
+        res.json({ paymentMethods });
+
+    } catch (error) {
+        console.error('❌ Error fetching payment methods:', error);
+        res.status(500).json({ error: 'Failed to fetch payment methods' });
+    }
+});
+
+// Create setup intent for saving payment methods (admin only)
+router.post('/customer/:customerId/setup-intent', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('🔧 Creating setup intent for customer:', req.params.customerId);
+        
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can create setup intents
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to create setup intent');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const setupIntent = await stripeService.createSetupIntent(req.params.customerId);
+        
+        console.log('✅ Setup intent created successfully');
+        res.json({
+            setupIntent: {
+                id: setupIntent.id,
+                client_secret: setupIntent.client_secret,
+                status: setupIntent.status
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating setup intent:', error);
+        res.status(500).json({ error: 'Failed to create setup intent' });
+    }
+});
+
+// Get payment history for customer (admin only)
+router.get('/customer/:customerId/payments', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('📊 Fetching payment history for customer:', req.params.customerId);
+        
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can view payment history
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to view payment history');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const limit = parseInt(req.query.limit) || 10;
+        const payments = await stripeService.getCustomerPayments(req.params.customerId, limit);
+        
+        console.log('✅ Payment history retrieved successfully');
+        res.json({ payments });
+
+    } catch (error) {
+        console.error('❌ Error fetching payment history:', error);
+        res.status(500).json({ error: 'Failed to fetch payment history' });
+    }
+});
+
+// Create refund for payment (admin only)
+router.post('/:id/refund', authenticateToken, requireOrganization, async (req, res) => {
+    try {
+        console.log('🔄 Creating refund for payroll:', req.params.id);
+        
+        const { amount, reason } = req.body;
+
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can create refunds
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ Non-admin user attempted to create refund');
+            return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        // Get payroll details
+        const { data: payroll, error: payrollError } = await supabase
+            .from('payrolls')
+            .select('*')
+            .eq('id', req.params.id)
+            .eq('organization_id', profile.organization_id)
+            .single();
+
+        if (payrollError || !payroll) {
+            console.error('❌ Payroll not found:', payrollError);
+            return res.status(404).json({ error: 'Payroll not found' });
+        }
+
+        if (!payroll.stripe_payment_intent_id) {
+            return res.status(400).json({ error: 'No Stripe payment found for this payroll' });
+        }
+
+        // Create refund
+        const refund = await stripeService.createRefund(
+            payroll.stripe_payment_intent_id,
+            amount,
+            reason || 'requested_by_customer'
+        );
+
+        // Update payroll status
+        const { error: updateError } = await supabaseAdmin
+            .from('payrolls')
+            .update({
+                status: 'refunded',
+                notes: `Refunded: ${refund.id} - ${reason || 'requested_by_customer'}`
+            })
+            .eq('id', payroll.id);
+
+        if (updateError) {
+            console.error('❌ Error updating payroll status:', updateError);
+        }
+
+        console.log('✅ Refund created successfully');
+        res.json({
+            success: true,
+            refund: {
+                id: refund.id,
+                amount: refund.amount,
+                currency: refund.currency,
+                status: refund.status,
+                reason: refund.reason
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error creating refund:', error);
+        res.status(500).json({ error: 'Failed to create refund' });
     }
 });
 

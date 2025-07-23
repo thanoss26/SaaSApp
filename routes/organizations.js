@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { v4: uuidv4 } = require('uuid');
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireOrganization, requireInvitePermission, requireInviteUsersAccess, requireOrganizationOverviewAccess } = require('../middleware/auth');
 
@@ -1249,6 +1250,125 @@ router.delete('/:id', authenticateToken, requireOrganizationOverviewAccess, asyn
     }
 });
 
+// POST /api/organizations/add-offline-member - Add offline member to organization
+router.post('/add-offline-member', authenticateToken, async (req, res) => {
+    try {
+        console.log('👤 POST /api/organizations/add-offline-member - Adding offline member');
+        
+        const {
+            // Basic Information
+            first_name, last_name, email, phone, date_of_birth, bio,
+            // Employment Information
+            role, job_title, department, employment_type, employment_start_date, 
+            work_location, salary, currency,
+            // Banking Information
+            iban, bank_name,
+            // Documents and Additional Information
+            documents, emergency_contact_name,
+            emergency_contact_phone, address_line1,
+            address_line2, city, state_province, postal_code, country,
+            organization_id
+        } = req.body;
+        
+        // Validate required fields
+        if (!first_name || !last_name || !email || !role || !organization_id) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        // Get user profile to check role
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only admins can add offline members
+        if (!['admin', 'super_admin'].includes(profile.role)) {
+            console.log('❌ User role not admin:', profile.role);
+            return res.status(403).json({ error: 'Only admins can add offline members' });
+        }
+
+        // Verify user belongs to the organization they're trying to add members to
+        if (profile.organization_id !== organization_id) {
+            console.log('❌ User does not belong to this organization');
+            return res.status(403).json({ error: 'You can only add members to your own organization' });
+        }
+
+        // Check if email already exists in the organization
+        const { data: existingMember, error: existingError } = await supabase
+            .from('profiles')
+            .select('id, email')
+            .eq('email', email)
+            .eq('organization_id', organization_id)
+            .single();
+
+        if (existingError && existingError.code !== 'PGRST116') {
+            console.error('❌ Error checking existing member:', existingError);
+            return res.status(500).json({ error: 'Failed to check existing member' });
+        }
+
+        if (existingMember) {
+            return res.status(400).json({ error: 'A member with this email already exists in the organization' });
+        }
+
+        // Generate a UUID for the new member
+        const newMemberId = uuidv4();
+
+        // Use the database function to create offline member profile
+        // This function handles the foreign key constraint properly
+        const { data: newMember, error: memberError } = await supabase
+            .rpc('create_offline_member_profile', {
+                p_id: newMemberId,
+                p_email: email,
+                p_first_name: first_name,
+                p_last_name: last_name,
+                p_role: role,
+                p_organization_id: organization_id,
+                p_phone: phone,
+                p_date_of_birth: date_of_birth,
+                p_bio: bio,
+                p_job_title: job_title,
+                p_department: department,
+                p_employment_type: employment_type,
+                p_employment_start_date: employment_start_date,
+                p_work_location: work_location,
+                p_salary: salary,
+                p_currency: currency,
+                p_iban: iban,
+                p_bank_name: bank_name,
+                p_documents: documents,
+                p_emergency_contact_name: emergency_contact_name,
+                p_emergency_contact_phone: emergency_contact_phone,
+                p_address_line1: address_line1,
+                p_address_line2: address_line2,
+                p_city: city,
+                p_state_province: state_province,
+                p_postal_code: postal_code,
+                p_country: country
+            });
+
+        if (memberError) {
+            console.error('❌ Error creating offline member:', memberError);
+            return res.status(500).json({ error: 'Failed to create offline member: ' + memberError.message });
+        }
+
+        console.log('✅ Offline member added successfully:', newMember);
+        res.json({ 
+            message: 'Offline member added successfully',
+            member: { id: newMember }
+        });
+
+    } catch (error) {
+        console.error('❌ Error in add offline member route:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // Helper function to generate invite code
 function generateInviteCode() {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -1259,6 +1379,295 @@ function generateInviteCode() {
     return result;
 }
 
+// GET /api/organizations/members/:id - Get member details
+router.get('/members/:id', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
+    console.log('👤 GET /api/organizations/members/:id - Fetching member details');
+    
+    try {
+        const memberId = req.params.id;
+        const userId = req.user.id;
+        
+        console.log('🔍 Member ID:', memberId);
+        console.log('🔍 User ID:', userId);
 
+        // Get user profile to check permissions
+        const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', userId)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to verify user permissions' });
+        }
+
+        // Get member details
+        const { data: member, error: memberError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', memberId)
+            .single();
+
+        if (memberError) {
+            console.error('❌ Error fetching member:', memberError);
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
+        // Check if user has permission to view this member
+        // Admin/super_admin can view any member in their organization
+        // Regular members can only view themselves
+        if (userProfile.role === 'admin' || userProfile.role === 'super_admin') {
+            if (member.organization_id !== userProfile.organization_id) {
+                console.error('❌ Member not in same organization');
+                return res.status(403).json({ error: 'You can only view members in your organization' });
+            }
+        } else {
+            if (member.id !== userId) {
+                console.error('❌ Regular member trying to view other member');
+                return res.status(403).json({ error: 'You can only view your own profile' });
+            }
+        }
+
+        console.log('✅ Member details fetched successfully');
+        res.json({ member });
+
+    } catch (error) {
+        console.error('❌ Error in GET /api/organizations/members/:id:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// POST /api/organizations/members/:id/remove - Remove member from organization
+router.post('/members/:id/remove', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
+    console.log('🗑️ POST /api/organizations/members/:id/remove - Removing member from organization');
+    
+    try {
+        const memberId = req.params.id;
+        const userId = req.user.id;
+        
+        console.log('🔍 Member ID to remove:', memberId);
+        console.log('🔍 User ID performing removal:', userId);
+
+        // Get user profile to check permissions
+        const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', userId)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to verify user permissions' });
+        }
+
+        // Only admins can remove members
+        if (!['admin', 'super_admin'].includes(userProfile.role)) {
+            console.error('❌ User not authorized to remove members');
+            return res.status(403).json({ error: 'Only administrators can remove members' });
+        }
+
+        // Get member details
+        const { data: member, error: memberError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', memberId)
+            .single();
+
+        if (memberError) {
+            console.error('❌ Error fetching member:', memberError);
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
+        // Check if member is in the same organization
+        if (member.organization_id !== userProfile.organization_id) {
+            console.error('❌ Member not in same organization');
+            return res.status(403).json({ error: 'You can only remove members from your organization' });
+        }
+
+        // Prevent removing the last admin
+        if (member.role === 'admin' || member.role === 'super_admin') {
+            const { count: adminCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', userProfile.organization_id)
+                .in('role', ['admin', 'super_admin']);
+
+            if (adminCount <= 1) {
+                console.error('❌ Cannot remove the last administrator');
+                return res.status(400).json({ error: 'Cannot remove the last administrator from the organization' });
+            }
+        }
+
+        // Prevent removing yourself
+        if (member.id === userId) {
+            console.error('❌ User trying to remove themselves');
+            return res.status(400).json({ error: 'You cannot remove yourself from the organization' });
+        }
+
+        // Remove member from organization by setting organization_id to null
+        const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+                organization_id: null,
+                role: 'organization_member', // Reset to default role
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', memberId);
+
+        if (updateError) {
+            console.error('❌ Error removing member:', updateError);
+            return res.status(500).json({ error: 'Failed to remove member from organization' });
+        }
+
+        console.log('✅ Member removed from organization successfully');
+        res.json({ 
+            message: 'Member removed from organization successfully',
+            member: {
+                id: member.id,
+                name: `${member.first_name} ${member.last_name}`,
+                email: member.email
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ Error in POST /api/organizations/members/:id/remove:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// PUT /api/organizations/members/:id - Update member details
+router.put('/members/:id', authenticateToken, requireOrganizationOverviewAccess, async (req, res) => {
+    console.log('✏️ PUT /api/organizations/members/:id - Updating member details');
+    
+    try {
+        const memberId = req.params.id;
+        const userId = req.user.id;
+        const updateData = req.body;
+        
+        console.log('🔍 Member ID:', memberId);
+        console.log('🔍 User ID:', userId);
+        console.log('📝 Update data:', updateData);
+
+        // Get user profile to check permissions
+        const { data: userProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', userId)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to verify user permissions' });
+        }
+
+        // Only admins can edit members
+        if (!['admin', 'super_admin'].includes(userProfile.role)) {
+            console.error('❌ User not authorized to edit members');
+            return res.status(403).json({ error: 'Only administrators can edit members' });
+        }
+
+        // Get member details
+        const { data: member, error: memberError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', memberId)
+            .single();
+
+        if (memberError) {
+            console.error('❌ Error fetching member:', memberError);
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
+        // Check if member is in the same organization
+        if (member.organization_id !== userProfile.organization_id) {
+            console.error('❌ Member not in same organization');
+            return res.status(403).json({ error: 'You can only edit members in your organization' });
+        }
+
+        // Prevent editing yourself (for role changes)
+        if (member.id === userId && updateData.role && updateData.role !== member.role) {
+            console.error('❌ User trying to change their own role');
+            return res.status(400).json({ error: 'You cannot change your own role' });
+        }
+
+        // Prevent removing the last admin
+        if (member.role === 'admin' && updateData.role && updateData.role !== 'admin') {
+            const { count: adminCount } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', userProfile.organization_id)
+                .in('role', ['admin', 'super_admin']);
+
+            if (adminCount <= 1) {
+                console.error('❌ Cannot remove the last administrator');
+                return res.status(400).json({ error: 'Cannot remove the last administrator from the organization' });
+            }
+        }
+
+        // Prepare update data
+        const updateFields = {
+            first_name: updateData.first_name,
+            last_name: updateData.last_name,
+            email: updateData.email,
+            phone: updateData.phone,
+            date_of_birth: updateData.date_of_birth,
+            bio: updateData.bio,
+            address_line1: updateData.address_line1,
+            address_line2: updateData.address_line2,
+            city: updateData.city,
+            state_province: updateData.state_province,
+            postal_code: updateData.postal_code,
+            country: updateData.country,
+            emergency_contact_name: updateData.emergency_contact_name,
+            emergency_contact_phone: updateData.emergency_contact_phone,
+            job_title: updateData.job_title,
+            department: updateData.department,
+            employment_type: updateData.employment_type,
+            employment_start_date: updateData.employment_start_date,
+            employment_end_date: updateData.employment_end_date,
+            work_location: updateData.work_location,
+            salary: updateData.salary,
+            currency: updateData.currency,
+            iban: updateData.iban,
+            bank_name: updateData.bank_name,
+            bank_country: updateData.bank_country,
+            role: updateData.role,
+            is_active: updateData.is_active,
+            updated_at: new Date().toISOString()
+        };
+
+        // Remove undefined values
+        Object.keys(updateFields).forEach(key => {
+            if (updateFields[key] === undefined) {
+                delete updateFields[key];
+            }
+        });
+
+        // Update member
+        const { data: updatedMember, error: updateError } = await supabase
+            .from('profiles')
+            .update(updateFields)
+            .eq('id', memberId)
+            .select()
+            .single();
+
+        if (updateError) {
+            console.error('❌ Error updating member:', updateError);
+            return res.status(500).json({ error: 'Failed to update member' });
+        }
+
+        console.log('✅ Member updated successfully');
+
+        res.json({
+            message: 'Member updated successfully',
+            member: updatedMember
+        });
+
+    } catch (error) {
+        console.error('❌ Error in PUT /api/organizations/members/:id:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 module.exports = router; 

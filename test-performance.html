@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Test - Dynamic Pricing</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .result {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; background: #d4edda; }
+        .error { border-left-color: #dc3545; background: #f8d7da; }
+        .warning { border-left-color: #ffc107; background: #fff3cd; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>⚡ Performance Test - Dynamic Pricing</h1>
+    
+    <div class="test-section">
+        <h2>📊 Performance Metrics</h2>
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-value" id="firstLoad">-</div>
+                <div class="metric-label">First Load (ms)</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="cachedLoad">-</div>
+                <div class="metric-label">Cached Load (ms)</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="apiCalls">0</div>
+                <div class="metric-label">API Calls Made</div>
+            </div>
+            <div class="metric">
+                <div class="metric-value" id="cacheHits">0</div>
+                <div class="metric-label">Cache Hits</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>🧪 Performance Tests</h2>
+        <button onclick="testFirstLoad()">Test First Load</button>
+        <button onclick="testCachedLoad()">Test Cached Load</button>
+        <button onclick="testMultipleCalls()">Test Multiple Calls</button>
+        <button onclick="testForceRefresh()">Test Force Refresh</button>
+        <button onclick="resetMetrics()">Reset Metrics</button>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>💰 Current Pricing</h2>
+        <div id="currentPricing">Loading...</div>
+    </div>
+
+    <script>
+        let apiCallCount = 0;
+        let cacheHitCount = 0;
+        let firstLoadTime = 0;
+        let cachedLoadTime = 0;
+
+        // Test first load (no cache)
+        async function testFirstLoad() {
+            const startTime = performance.now();
+            addResult('🔄 Testing first load (no cache)...', 'warning');
+            
+            try {
+                const response = await fetch('/api/subscriptions/plans');
+                const data = await response.json();
+                
+                const endTime = performance.now();
+                firstLoadTime = Math.round(endTime - startTime);
+                
+                document.getElementById('firstLoad').textContent = firstLoadTime;
+                document.getElementById('apiCalls').textContent = ++apiCallCount;
+                
+                addResult(`✅ First load completed in ${firstLoadTime}ms`, 'success');
+                updatePricingDisplay(data.plans);
+                
+            } catch (error) {
+                addResult(`❌ First load failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test cached load
+        async function testCachedLoad() {
+            const startTime = performance.now();
+            addResult('⚡ Testing cached load...', 'warning');
+            
+            try {
+                const response = await fetch('/api/subscriptions/plans');
+                const data = await response.json();
+                
+                const endTime = performance.now();
+                cachedLoadTime = Math.round(endTime - startTime);
+                
+                document.getElementById('cachedLoad').textContent = cachedLoadTime;
+                document.getElementById('cacheHits').textContent = ++cacheHitCount;
+                
+                addResult(`✅ Cached load completed in ${cachedLoadTime}ms`, 'success');
+                updatePricingDisplay(data.plans);
+                
+            } catch (error) {
+                addResult(`❌ Cached load failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Test multiple rapid calls
+        async function testMultipleCalls() {
+            addResult('🔄 Testing multiple rapid calls...', 'warning');
+            
+            const promises = [];
+            for (let i = 0; i < 5; i++) {
+                promises.push(fetch('/api/subscriptions/plans'));
+            }
+            
+            const startTime = performance.now();
+            const responses = await Promise.all(promises);
+            const endTime = performance.now();
+            
+            const totalTime = Math.round(endTime - startTime);
+            const avgTime = Math.round(totalTime / 5);
+            
+            addResult(`✅ 5 concurrent calls completed in ${totalTime}ms (avg: ${avgTime}ms)`, 'success');
+            document.getElementById('apiCalls').textContent = apiCallCount + 5;
+        }
+
+        // Test force refresh
+        async function testForceRefresh() {
+            const startTime = performance.now();
+            addResult('🔄 Testing force refresh...', 'warning');
+            
+            try {
+                const response = await fetch('/api/subscriptions/plans?refresh=true');
+                const data = await response.json();
+                
+                const endTime = performance.now();
+                const refreshTime = Math.round(endTime - startTime);
+                
+                document.getElementById('apiCalls').textContent = ++apiCallCount;
+                
+                addResult(`✅ Force refresh completed in ${refreshTime}ms`, 'success');
+                updatePricingDisplay(data.plans);
+                
+            } catch (error) {
+                addResult(`❌ Force refresh failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Reset metrics
+        function resetMetrics() {
+            apiCallCount = 0;
+            cacheHitCount = 0;
+            firstLoadTime = 0;
+            cachedLoadTime = 0;
+            
+            document.getElementById('firstLoad').textContent = '-';
+            document.getElementById('cachedLoad').textContent = '-';
+            document.getElementById('apiCalls').textContent = '0';
+            document.getElementById('cacheHits').textContent = '0';
+            
+            addResult('🔄 Metrics reset', 'success');
+        }
+
+        // Add test result
+        function addResult(message, type = '') {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            
+            // Keep only last 10 results
+            while (resultsDiv.children.length > 10) {
+                resultsDiv.removeChild(resultsDiv.firstChild);
+            }
+        }
+
+        // Update pricing display
+        function updatePricingDisplay(plans) {
+            const pricingDiv = document.getElementById('currentPricing');
+            if (plans && plans.length > 0) {
+                pricingDiv.innerHTML = plans.map(plan => `
+                    <div class="result">
+                        <strong>${plan.name}</strong><br>
+                        Monthly: ${plan.monthly.displayPrice}<br>
+                        Annual: ${plan.annual.displayPrice} (${plan.annual.savings}% savings)
+                    </div>
+                `).join('');
+            } else {
+                pricingDiv.innerHTML = '<div class="result error">No pricing data available</div>';
+            }
+        }
+
+        // Auto-run first test on page load
+        window.onload = function() {
+            setTimeout(testFirstLoad, 1000);
+        };
+    </script>
+</body>
+</html> 

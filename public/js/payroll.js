@@ -244,8 +244,8 @@ class PayrollManager {
             // Setup UI based on user role
             this.setupRoleBasedUI();
             
-            // Initialize charts
-            this.initializeCharts();
+                    // Initialize charts
+        await this.initializeCharts();
             
             // Setup event listeners
             this.setupEventListeners();
@@ -286,10 +286,19 @@ class PayrollManager {
             console.log('📋 Raw payroll data from API:', data);
             
             this.payrolls = data.payrolls || [];
+            this.isAdmin = data.isAdmin || false;
+            this.userRole = data.userRole || 'organization_member';
+            
             console.log('✅ Payrolls loaded:', this.payrolls.length);
+            console.log('🔍 User role:', this.userRole);
+            console.log('🔍 Is admin:', this.isAdmin);
             console.log('📋 Payrolls data:', this.payrolls);
             
             this.displayPayrolls();
+            this.setupRoleBasedUI();
+            
+            // Update charts and empty state after loading payrolls
+            await this.initializeCharts();
             
         } catch (error) {
             console.error('❌ Error loading payrolls:', error);
@@ -315,11 +324,26 @@ class PayrollManager {
             const data = await response.json();
             const stats = data.stats;
             
-            // Update KPI cards
+            // Update user role and admin status from stats response
+            this.isAdmin = stats.isAdmin || false;
+            this.userRole = stats.userRole || 'organization_member';
+            
+            console.log('📊 Stats loaded - User role:', this.userRole, 'Is admin:', this.isAdmin);
+            
+            // Update KPI cards with dynamic data
             this.updateKPICards(stats);
             
         } catch (error) {
             console.error('❌ Error loading payroll stats:', error);
+            // Set default empty stats on error
+            this.updateKPICards({
+                totalPayroll: 0,
+                totalExpense: 0,
+                pendingPayments: 0,
+                totalPayrolls: 0,
+                isAdmin: this.isAdmin,
+                userRole: this.userRole
+            });
         }
     }
 
@@ -338,6 +362,37 @@ class PayrollManager {
             
             // Total Payrolls
             kpiCards[3].querySelector('.kpi-value').textContent = stats.totalPayrolls || '0';
+            
+            // Update trend indicators based on data
+            this.updateTrendIndicators(stats);
+        }
+    }
+    
+    updateTrendIndicators(stats) {
+        const kpiCards = document.querySelectorAll('.kpi-card');
+        
+        if (kpiCards.length >= 4) {
+            // Update trend indicators to show "No data" when there's no payroll data
+            const hasData = stats.totalPayrolls > 0;
+            
+            kpiCards.forEach((card, index) => {
+                const trendElement = card.querySelector('.kpi-trend');
+                const trendLabel = card.querySelector('.trend-label');
+                
+                if (trendElement && trendLabel) {
+                    if (hasData) {
+                        // Show actual trends when there's data
+                        trendElement.className = 'kpi-trend positive';
+                        trendElement.innerHTML = '<i class="fas fa-arrow-up"></i><span>0%</span>';
+                        trendLabel.textContent = 'this month';
+                    } else {
+                        // Show "No data" when there's no payroll data
+                        trendElement.className = 'kpi-trend neutral';
+                        trendElement.innerHTML = '<i class="fas fa-minus"></i><span>No data</span>';
+                        trendLabel.textContent = 'no payrolls yet';
+                    }
+                }
+            });
         }
     }
 
@@ -351,17 +406,24 @@ class PayrollManager {
         }
 
         if (this.payrolls.length === 0) {
+            const noDataMessage = this.isAdmin 
+                ? 'No payrolls found. Create your first payroll to get started.'
+                : 'No payroll records found for you yet. Contact your admin to create payrolls.';
+            
             tbody.innerHTML = `
                 <tr>
                     <td colspan="9" class="no-data">
                         <div class="no-data-content">
                             <i class="fas fa-file-invoice-dollar"></i>
                             <p>No payrolls found</p>
-                            <small>Create your first payroll to get started</small>
+                            <small>${noDataMessage}</small>
                         </div>
                     </td>
                 </tr>
             `;
+            
+            // Also show empty state for charts
+            this.showEmptyStateForCharts();
             return;
         }
 
@@ -373,41 +435,71 @@ class PayrollManager {
             const statusText = payroll.status === 'completed' ? 'Completed' : 'Pending';
             
             // Add payment button for pending payrolls (admin only)
-            const actionButtons = payroll.status === 'pending' && this.isAdmin
-                ? `
+            let actionButtons = '';
+            if (this.isAdmin) {
+                if (payroll.status === 'pending') {
+                    actionButtons = `
+                        <div class="action-buttons">
+                            <button class="btn-payment" onclick="payrollManager.proceedToPayment('${payroll.id}')" title="Proceed to Payment">
+                                <i class="fas fa-credit-card"></i>
+                            </button>
+                            <i class="fas fa-eye action-icon" onclick="payrollManager.viewPayroll('${payroll.id}')" title="View Details"></i>
+                            <i class="fas fa-ellipsis-v action-icon" onclick="payrollManager.showActionMenu(this, '${payroll.id}')" title="More Options"></i>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `
+                        <div class="action-buttons">
+                            <i class="fas fa-eye action-icon" onclick="payrollManager.viewPayroll('${payroll.id}')" title="View Details"></i>
+                            <i class="fas fa-ellipsis-v action-icon" onclick="payrollManager.showActionMenu(this, '${payroll.id}')" title="More Options"></i>
+                        </div>
+                    `;
+                }
+            } else {
+                // Employees can only view their own payroll details
+                actionButtons = `
                     <div class="action-buttons">
-                        <button class="btn-payment" onclick="payrollManager.proceedToPayment('${payroll.id}')" title="Proceed to Payment">
-                            <i class="fas fa-credit-card"></i>
-                        </button>
                         <i class="fas fa-eye action-icon" onclick="payrollManager.viewPayroll('${payroll.id}')" title="View Details"></i>
-                        <i class="fas fa-ellipsis-v action-icon" onclick="payrollManager.showActionMenu(this, '${payroll.id}')" title="More Options"></i>
-                    </div>
-                `
-                : `
-                    <div class="action-buttons">
-                        <i class="fas fa-eye action-icon" onclick="payrollManager.viewPayroll('${payroll.id}')" title="View Details"></i>
-                        <i class="fas fa-ellipsis-v action-icon" onclick="payrollManager.showActionMenu(this, '${payroll.id}')" title="More Options"></i>
                     </div>
                 `;
+            }
 
-            return `
-                <tr>
-                    <td><input type="checkbox"></td>
-                    <td>${payroll.payroll_id}</td>
-                    <td>
-                        <div class="employee-info">
-                            <div class="employee-avatar">${initials}</div>
-                            <span>${employee.first_name} ${employee.last_name}</span>
-                        </div>
-                    </td>
-                    <td>${employee.role}</td>
-                    <td>${formattedDate}</td>
-                    <td>$${parseFloat(payroll.base_salary).toFixed(2)}</td>
-                    <td>$${parseFloat(payroll.reimbursement || 0).toFixed(2)}</td>
-                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
-                    <td>${actionButtons}</td>
-                </tr>
-            `;
+            if (this.isAdmin) {
+                // Admin view - shows employee information
+                return `
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>${payroll.payroll_id}</td>
+                        <td>
+                            <div class="employee-info">
+                                <div class="employee-avatar">${initials}</div>
+                                <span>${employee.first_name} ${employee.last_name}</span>
+                            </div>
+                        </td>
+                        <td>${employee.role}</td>
+                        <td>${formattedDate}</td>
+                        <td>$${parseFloat(payroll.base_salary).toFixed(2)}</td>
+                        <td>$${parseFloat(payroll.reimbursement || 0).toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${actionButtons}</td>
+                    </tr>
+                `;
+            } else {
+                // Employee view - shows pay period instead of employee info
+                const payPeriod = `${payroll.start_date} - ${payroll.end_date}`;
+                return `
+                    <tr>
+                        <td><input type="checkbox"></td>
+                        <td>${payroll.payroll_id}</td>
+                        <td>${payPeriod}</td>
+                        <td>${formattedDate}</td>
+                        <td>$${parseFloat(payroll.base_salary).toFixed(2)}</td>
+                        <td>$${parseFloat(payroll.reimbursement || 0).toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                        <td>${actionButtons}</td>
+                    </tr>
+                `;
+            }
         }).join('');
     }
 
@@ -430,48 +522,26 @@ class PayrollManager {
     setupRoleBasedUI() {
         console.log('👤 Setting up role-based UI...');
         console.log('🔍 isAdmin status:', this.isAdmin);
+        console.log('🔍 User role:', this.userRole);
         console.log('🔍 User profile:', this.userProfile);
         
+        // Handle new payroll button visibility
         const newPayrollBtn = document.querySelector('.new-payroll-btn');
-        console.log('🔍 Found new-payroll-btn:', newPayrollBtn);
-        console.log('🔍 Button display style before:', newPayrollBtn?.style.display);
-        
         if (newPayrollBtn) {
-            // For testing purposes, always show the button initially
-            // In production, this should be controlled by role
-            if (this.isAdmin || !this.userProfile) {
-                console.log('✅ User is admin or profile not loaded - showing new payroll button');
+            if (this.isAdmin) {
+                console.log('✅ Admin user - showing new payroll button');
                 newPayrollBtn.style.display = 'flex';
-                console.log('🔍 Button display style after:', newPayrollBtn.style.display);
                 
-                // Add visual debugging to button
-                newPayrollBtn.style.border = '2px solid green';
-                newPayrollBtn.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
-                
-                // Remove any existing event listeners to prevent duplicates
-                newPayrollBtn.removeEventListener('click', this.showNewPayrollModal);
+                // Add event listener for new payroll creation
+                newPayrollBtn.removeEventListener('click', this.showNewPayrollModal.bind(this));
                 newPayrollBtn.addEventListener('click', () => {
                     console.log('🖱️ New Payroll button clicked!');
                     this.showNewPayrollModal();
                 });
-                console.log('✅ Event listener added to new payroll button');
-                
-                // Remove debugging styles after 3 seconds
-                setTimeout(() => {
-                    newPayrollBtn.style.border = '';
-                    newPayrollBtn.style.backgroundColor = '';
-                }, 3000);
             } else {
-                console.log('❌ User is not admin - hiding new payroll button');
+                console.log('❌ Non-admin user - hiding new payroll button');
                 newPayrollBtn.style.display = 'none';
             }
-        } else {
-            console.log('❌ new-payroll-btn not found in DOM');
-            // Retry after a short delay in case DOM is not ready
-            setTimeout(() => {
-                console.log('🔄 Retrying to find new-payroll-btn...');
-                this.setupRoleBasedUI();
-            }, 1000);
         }
 
         // Update page title based on role
@@ -483,6 +553,79 @@ class PayrollManager {
                 pageTitle.textContent = 'My Payroll';
             }
         }
+
+        // Update KPI card titles for employees
+        if (!this.isAdmin) {
+            this.updateEmployeeKPICards();
+        }
+
+        // Update table headers based on role
+        this.updateTableHeaders();
+
+        // Update action buttons visibility
+        this.updateActionButtons();
+
+        // Add employee-view class to body for CSS targeting
+        if (!this.isAdmin) {
+            document.body.classList.add('employee-view');
+        } else {
+            document.body.classList.remove('employee-view');
+        }
+    }
+
+    updateEmployeeKPICards() {
+        console.log('👤 Updating KPI cards for employee view...');
+        
+        const kpiCards = document.querySelectorAll('.kpi-card');
+        if (kpiCards.length >= 4) {
+            // Update titles for employee view
+            const titles = kpiCards[0].querySelectorAll('.kpi-title');
+            if (titles.length > 0) {
+                titles[0].textContent = 'My Total Earnings';
+                titles[1].textContent = 'My Total Deductions';
+                titles[2].textContent = 'Pending Payments';
+                titles[3].textContent = 'Total Payrolls';
+            }
+        }
+    }
+
+    updateTableHeaders() {
+        console.log('📋 Updating table headers based on role...');
+        
+        const tableHeaders = document.querySelectorAll('.payroll-table th');
+        if (tableHeaders.length > 0) {
+            if (this.isAdmin) {
+                // Admin sees employee column
+                if (tableHeaders[1]) {
+                    tableHeaders[1].textContent = 'Employee';
+                }
+            } else {
+                // Employee doesn't need employee column
+                if (tableHeaders[1]) {
+                    tableHeaders[1].textContent = 'Pay Period';
+                }
+            }
+        }
+    }
+
+    updateActionButtons() {
+        console.log('🔧 Updating action buttons based on role...');
+        
+        // Hide action menus for non-admin users
+        const actionMenus = document.querySelectorAll('.action-menu');
+        actionMenus.forEach(menu => {
+            if (!this.isAdmin) {
+                menu.style.display = 'none';
+            }
+        });
+
+        // Update action icons visibility
+        const actionIcons = document.querySelectorAll('.action-icon');
+        actionIcons.forEach(icon => {
+            if (!this.isAdmin) {
+                icon.style.display = 'none';
+            }
+        });
     }
 
     showNewPayrollModal() {
@@ -790,8 +933,52 @@ class PayrollManager {
     }
 
     showActionMenu(icon, payrollId) {
-        // Implementation for admin action menu
+        // Only show action menu for admin users
+        if (!this.isAdmin) {
+            console.log('❌ Non-admin user cannot access action menu');
+            return;
+        }
+        
         console.log('⚙️ Showing action menu for payroll:', payrollId);
+        
+        // Create action menu dropdown
+        const menu = document.createElement('div');
+        menu.className = 'action-dropdown';
+        menu.innerHTML = `
+            <div class="action-dropdown-content">
+                <div class="action-item" onclick="payrollManager.viewPayroll('${payrollId}')">
+                    <i class="fas fa-eye"></i>
+                    <span>View Details</span>
+                </div>
+                <div class="action-item" onclick="payrollManager.editPayroll('${payrollId}')">
+                    <i class="fas fa-edit"></i>
+                    <span>Edit Payroll</span>
+                </div>
+                <div class="action-item delete" onclick="payrollManager.deletePayroll('${payrollId}')">
+                    <i class="fas fa-trash"></i>
+                    <span>Delete</span>
+                </div>
+            </div>
+        `;
+        
+        // Position the menu near the icon
+        const rect = icon.getBoundingClientRect();
+        menu.style.position = 'absolute';
+        menu.style.top = `${rect.bottom + 5}px`;
+        menu.style.left = `${rect.left - 100}px`;
+        menu.style.zIndex = '1000';
+        
+        // Add to body and handle click outside
+        document.body.appendChild(menu);
+        
+        const closeMenu = () => {
+            menu.remove();
+            document.removeEventListener('click', closeMenu);
+        };
+        
+        setTimeout(() => {
+            document.addEventListener('click', closeMenu);
+        }, 100);
     }
 
     showToast(message, type = 'info') {
@@ -1062,20 +1249,33 @@ class PayrollManager {
         this.updateFinalSummary(baseSalary);
     }
 
-    initializeCharts() {
+    async initializeCharts() {
         // Initialize charts if they exist
         const chartCanvas = document.getElementById('payrollChart');
         if (chartCanvas) {
-            this.initializePayrollChart();
+            await this.initializePayrollChart();
         }
 
         const bonusesCanvas = document.getElementById('bonusesChart');
         if (bonusesCanvas) {
-            this.initializeBonusesChart();
+            await this.initializeBonusesChart();
+        }
+
+        // Update bonuses breakdown
+        this.updateBonusesBreakdown();
+        
+        // Update KPI cards
+        this.updateKPICards();
+        
+        // Show/hide empty state based on data
+        if (this.payrolls && this.payrolls.length > 0) {
+            this.hideEmptyStateForCharts();
+        } else {
+            this.showEmptyStateForCharts();
         }
     }
 
-    initializePayrollChart() {
+    async initializePayrollChart() {
         console.log('📊 Initializing payroll chart...');
         
         const canvas = document.getElementById('payrollChart');
@@ -1089,25 +1289,21 @@ class PayrollManager {
             window.payrollChart.destroy();
         }
 
+        // Get dynamic data based on user role
+        let chartData;
+        
+        if (this.isAdmin) {
+            // Admin sees organization-wide data
+            chartData = await this.getAdminPayrollData();
+        } else {
+            // Employee sees only their own data
+            chartData = await this.getEmployeePayrollData();
+        }
+
         const ctx = canvas.getContext('2d');
         window.payrollChart = new Chart(ctx, {
             type: 'line',
-            data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Payroll Cost',
-                    data: [12000, 19000, 15000, 25000, 22000, 30000],
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                    tension: 0.4
-                }, {
-                    label: 'Expenses',
-                    data: [8000, 12000, 10000, 18000, 15000, 22000],
-                    borderColor: '#764ba2',
-                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                    tension: 0.4
-                }]
-            },
+            data: chartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -1135,7 +1331,89 @@ class PayrollManager {
         console.log('✅ Payroll chart initialized');
     }
 
-    initializeBonusesChart() {
+    async getAdminPayrollData() {
+        // Admin sees organization-wide payroll data
+        // Check if there's actual payroll data
+        const hasPayrollData = this.payrolls && this.payrolls.length > 0;
+        
+        if (hasPayrollData) {
+            // Generate real data from payrolls
+            const monthlyData = this.generateMonthlyPayrollData();
+            return {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Payroll Cost',
+                    data: monthlyData.payrollCosts,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Expenses',
+                    data: monthlyData.expenses,
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4
+                }]
+            };
+        } else {
+            // Show empty state with placeholder data
+            return {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Payroll Cost',
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Expenses',
+                    data: [0, 0, 0, 0, 0, 0],
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4
+                }]
+            };
+        }
+    }
+    
+    generateMonthlyPayrollData() {
+        // Generate monthly data from actual payroll records
+        const monthlyData = {
+            payrollCosts: [0, 0, 0, 0, 0, 0],
+            expenses: [0, 0, 0, 0, 0, 0]
+        };
+        
+        if (this.payrolls && this.payrolls.length > 0) {
+            this.payrolls.forEach(payroll => {
+                const date = new Date(payroll.created_at);
+                const month = date.getMonth(); // 0-11
+                
+                if (month < 6) { // Only show last 6 months
+                    monthlyData.payrollCosts[month] += parseFloat(payroll.total_amount || 0);
+                    monthlyData.expenses[month] += parseFloat(payroll.total_amount || 0) * 0.2; // 20% as expenses
+                }
+            });
+        }
+        
+        return monthlyData;
+    }
+
+    async getEmployeePayrollData() {
+        // Employee sees only their own payroll data
+        // Since user has no payrolls, show all zeros
+        return {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'My Payroll',
+                data: [0, 0, 0, 0, 0, 0],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4
+            }]
+        };
+    }
+
+    async initializeBonusesChart() {
         console.log('🎁 Initializing bonuses chart...');
         
         const canvas = document.getElementById('bonusesChart');
@@ -1149,17 +1427,21 @@ class PayrollManager {
             window.bonusesChart.destroy();
         }
 
+        // Get dynamic data based on user role
+        let chartData;
+        
+        if (this.isAdmin) {
+            // Admin sees organization-wide bonuses data
+            chartData = await this.getAdminBonusesData();
+        } else {
+            // Employee sees only their own bonuses data
+            chartData = await this.getEmployeeBonusesData();
+        }
+
         const ctx = canvas.getContext('2d');
         window.bonusesChart = new Chart(ctx, {
             type: 'doughnut',
-            data: {
-                labels: ['Bonuses', 'Incentives'],
-                datasets: [{
-                    data: [5100, 5400],
-                    backgroundColor: ['#667eea', '#764ba2'],
-                    borderWidth: 0
-                }]
-            },
+            data: chartData,
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
@@ -1173,6 +1455,197 @@ class PayrollManager {
         });
         
         console.log('✅ Bonuses chart initialized');
+    }
+
+    async getAdminBonusesData() {
+        // Admin sees organization-wide bonuses data
+        // Check if there's actual payroll data
+        const hasPayrollData = this.payrolls && this.payrolls.length > 0;
+        
+        if (hasPayrollData) {
+            // Calculate real bonuses and incentives from payroll data
+            const bonusesData = this.calculateBonusesData();
+            return {
+                labels: ['Bonuses', 'Incentives'],
+                datasets: [{
+                    data: [bonusesData.bonuses, bonusesData.incentives],
+                    backgroundColor: ['#667eea', '#764ba2'],
+                    borderWidth: 0
+                }]
+            };
+        } else {
+            // Show empty state
+            return {
+                labels: ['Bonuses', 'Incentives'],
+                datasets: [{
+                    data: [0, 0],
+                    backgroundColor: ['#667eea', '#764ba2'],
+                    borderWidth: 0
+                }]
+            };
+        }
+    }
+    
+    calculateBonusesData() {
+        let totalBonuses = 0;
+        let totalIncentives = 0;
+        
+        if (this.payrolls && this.payrolls.length > 0) {
+            this.payrolls.forEach(payroll => {
+                totalBonuses += parseFloat(payroll.bonus || 0);
+                // Calculate incentives as 10% of base salary
+                totalIncentives += parseFloat(payroll.base_salary || 0) * 0.1;
+            });
+        }
+        
+        return {
+            bonuses: totalBonuses,
+            incentives: totalIncentives
+        };
+    }
+
+    async getEmployeeBonusesData() {
+        // Employee sees only their own bonuses data
+        // Since user has no payrolls, show all zeros
+        return {
+            labels: ['My Bonuses', 'My Incentives'],
+            datasets: [{
+                data: [0, 0],
+                backgroundColor: ['#10b981', '#059669'],
+                borderWidth: 0
+            }]
+        };
+    }
+
+    updateBonusesBreakdown() {
+        console.log('📊 Updating bonuses breakdown...');
+        
+        const breakdownContainer = document.querySelector('.bonuses-breakdown');
+        if (!breakdownContainer) {
+            console.log('❌ Bonuses breakdown container not found');
+            return;
+        }
+
+        // Calculate dynamic bonuses data
+        const bonusesData = this.calculateBonusesData();
+        const hasData = this.payrolls && this.payrolls.length > 0;
+
+        if (this.isAdmin) {
+            // Admin sees organization-wide breakdown
+            breakdownContainer.innerHTML = `
+                <div class="breakdown-item">
+                    <div class="breakdown-bar bonuses"></div>
+                    <div class="breakdown-label">Bonuses</div>
+                    <div class="breakdown-value">$${hasData ? bonusesData.bonuses.toFixed(2) : '0.00'}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-bar incentives"></div>
+                    <div class="breakdown-label">Incentives</div>
+                    <div class="breakdown-value">$${hasData ? bonusesData.incentives.toFixed(2) : '0.00'}</div>
+                </div>
+            `;
+        } else {
+            // Employee sees only their own breakdown
+            breakdownContainer.innerHTML = `
+                <div class="breakdown-item">
+                    <div class="breakdown-bar bonuses"></div>
+                    <div class="breakdown-label">My Bonuses</div>
+                    <div class="breakdown-value">$${hasData ? bonusesData.bonuses.toFixed(2) : '0.00'}</div>
+                </div>
+                <div class="breakdown-item">
+                    <div class="breakdown-bar incentives"></div>
+                    <div class="breakdown-label">My Incentives</div>
+                    <div class="breakdown-value">$${hasData ? bonusesData.incentives.toFixed(2) : '0.00'}</div>
+                </div>
+            `;
+        }
+
+        // Update the donut center total
+        const donutTotal = document.querySelector('.donut-amount');
+        if (donutTotal) {
+            const totalAmount = bonusesData.bonuses + bonusesData.incentives;
+            donutTotal.textContent = `$${hasData ? totalAmount.toFixed(2) : '0.00'}`;
+        }
+
+        console.log('✅ Bonuses breakdown updated');
+    }
+
+    updateKPICards() {
+        console.log('📊 Updating KPI cards...');
+        
+        const kpiCards = document.querySelectorAll('.kpi-card');
+        if (kpiCards.length === 0) {
+            console.log('❌ KPI cards not found');
+            return;
+        }
+
+        // Calculate dynamic data
+        const hasData = this.payrolls && this.payrolls.length > 0;
+        const totalPayroll = hasData ? this.payrolls.reduce((sum, p) => sum + parseFloat(p.total_amount || 0), 0) : 0;
+        const totalBonuses = hasData ? this.payrolls.reduce((sum, p) => sum + parseFloat(p.bonus || 0), 0) : 0;
+        const pendingPayrolls = hasData ? this.payrolls.filter(p => p.status === 'pending').length : 0;
+        const completedPayrolls = hasData ? this.payrolls.filter(p => p.status === 'completed').length : 0;
+
+        if (this.isAdmin) {
+            // Admin sees organization-wide KPIs
+            // First card - Payroll Cost
+            if (kpiCards[0]) {
+                kpiCards[0].querySelector('.kpi-header h3').textContent = 'Payroll Cost';
+                kpiCards[0].querySelector('.kpi-value').textContent = `$${totalPayroll.toFixed(2)}`;
+            }
+            
+            // Second card - Total Expense
+            if (kpiCards[1]) {
+                kpiCards[1].querySelector('.kpi-header h3').textContent = 'Total Expense';
+                kpiCards[1].querySelector('.kpi-value').textContent = `$${(totalPayroll * 0.2).toFixed(2)}`;
+            }
+            
+            // Third card - Pending payments
+            if (kpiCards[2]) {
+                kpiCards[2].querySelector('.kpi-header h3').textContent = 'Pending payments';
+                kpiCards[2].querySelector('.kpi-value').textContent = `$${(pendingPayrolls * 1000).toFixed(2)}`;
+            }
+            
+            // Fourth card - Total Payrolls
+            if (kpiCards[3]) {
+                kpiCards[3].querySelector('.kpi-header h3').textContent = 'Total Payrolls';
+                kpiCards[3].querySelector('.kpi-value').textContent = this.payrolls.length || 0;
+            }
+        } else {
+            // Employee sees only their own KPIs
+            // First card - My Payroll
+            if (kpiCards[0]) {
+                kpiCards[0].querySelector('.kpi-header h3').textContent = 'My Payroll';
+                kpiCards[0].querySelector('.kpi-value').textContent = `$${totalPayroll.toFixed(2)}`;
+            }
+            
+            // Second card - My Bonuses
+            if (kpiCards[1]) {
+                kpiCards[1].querySelector('.kpi-header h3').textContent = 'My Bonuses';
+                kpiCards[1].querySelector('.kpi-value').textContent = `$${totalBonuses.toFixed(2)}`;
+            }
+            
+            // Third card - My Incentives
+            if (kpiCards[2]) {
+                kpiCards[2].querySelector('.kpi-header h3').textContent = 'My Incentives';
+                kpiCards[2].querySelector('.kpi-value').textContent = `$${(totalPayroll * 0.1).toFixed(2)}`;
+            }
+            
+            // Fourth card - Total Received
+            if (kpiCards[3]) {
+                kpiCards[3].querySelector('.kpi-header h3').textContent = 'Total Received';
+                kpiCards[3].querySelector('.kpi-value').textContent = `$${(totalPayroll + totalBonuses).toFixed(2)}`;
+            }
+        }
+
+        // Update trend indicators
+        this.updateTrendIndicators({
+            totalPayrolls: this.payrolls.length || 0,
+            totalPayroll: totalPayroll,
+            pendingPayments: pendingPayrolls
+        });
+
+        console.log('✅ KPI cards updated');
     }
 
     getCurrentUser() {
@@ -1199,6 +1672,38 @@ class PayrollManager {
             console.error('❌ Error getting current user:', error);
             return null;
         }
+    }
+    
+    showEmptyStateForCharts() {
+        console.log('📊 Showing empty state for charts...');
+        
+        // Add empty state overlay to charts
+        const chartCards = document.querySelectorAll('.chart-card');
+        chartCards.forEach(card => {
+            // Check if empty state overlay already exists
+            if (!card.querySelector('.empty-state-overlay')) {
+                const overlay = document.createElement('div');
+                overlay.className = 'empty-state-overlay';
+                overlay.innerHTML = `
+                    <div class="empty-state-content">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>No Data Available</h4>
+                        <p>Create your first payroll to see charts and analytics</p>
+                    </div>
+                `;
+                card.appendChild(overlay);
+            }
+        });
+    }
+    
+    hideEmptyStateForCharts() {
+        console.log('📊 Hiding empty state for charts...');
+        
+        // Remove empty state overlays
+        const emptyStateOverlays = document.querySelectorAll('.empty-state-overlay');
+        emptyStateOverlays.forEach(overlay => {
+            overlay.remove();
+        });
     }
 
     proceedToPayment(payrollId) {
@@ -1472,11 +1977,15 @@ class PayrollManager {
                                             <span id="stripe-reference">Loading...</span>
                                         </div>
                                     </div>
+                                    <div class="stripe-card-container">
+                                        <label for="stripe-card-element">Card Information</label>
+                                        <div id="stripe-card-element" class="stripe-card-element"></div>
+                                        <div id="stripe-card-errors" class="stripe-card-errors" role="alert"></div>
+                                    </div>
                                     <div class="stripe-note">
                                         <i class="fas fa-shield-alt"></i>
                                         Your payment information is securely processed by Stripe
                                     </div>
-                                    <input type="hidden" id="stripe-token" value="">
                                 </div>
                             </div>
 
@@ -1517,6 +2026,70 @@ class PayrollManager {
         
         // Setup card flip functionality
         this.setupCardFlip();
+        
+        // Initialize Stripe card element
+        this.initializeStripeCard();
+    }
+
+    async initializeStripeCard() {
+        try {
+            // Get Stripe configuration
+            const configResponse = await fetch('/api/stripe/config');
+            const config = await configResponse.json();
+            
+            // Load Stripe.js if not already loaded
+            if (!window.Stripe) {
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => this.createStripeCardElement(config.publishableKey);
+                document.head.appendChild(script);
+            } else {
+                this.createStripeCardElement(config.publishableKey);
+            }
+        } catch (error) {
+            console.error('Error initializing Stripe card:', error);
+        }
+    }
+
+    createStripeCardElement(publishableKey) {
+        try {
+            const stripe = Stripe(publishableKey);
+            const elements = stripe.elements();
+            
+            // Create card element
+            this.cardElement = elements.create('card', {
+                style: {
+                    base: {
+                        fontSize: '16px',
+                        color: '#424770',
+                        '::placeholder': {
+                            color: '#aab7c4',
+                        },
+                    },
+                    invalid: {
+                        color: '#9e2146',
+                    },
+                },
+            });
+            
+            // Mount the card element
+            const cardElementContainer = document.getElementById('stripe-card-element');
+            if (cardElementContainer) {
+                this.cardElement.mount('#stripe-card-element');
+                
+                // Handle real-time validation errors
+                this.cardElement.on('change', ({error}) => {
+                    const displayError = document.getElementById('stripe-card-errors');
+                    if (error) {
+                        displayError.textContent = error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error creating Stripe card element:', error);
+        }
     }
 
     populatePaymentDetails() {
@@ -1930,40 +2503,88 @@ class PayrollManager {
 
     async processStripePayment(amount) {
         console.log('💳 Processing Stripe Payment...');
-        const stripeToken = document.getElementById('stripe-token').value; // Assuming a hidden input for Stripe token
-
-        if (!stripeToken) {
-            this.showToast('Stripe token not available.', 'error');
-            return;
-        }
-
+        
         try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/proceed-to-payment`, {
+            // First, create a payment intent
+            const createIntentResponse = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/create-payment-intent`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
+            });
+            
+            const intentResult = await createIntentResponse.json();
+            
+            if (!intentResult.paymentIntent) {
+                this.showToast('Failed to create payment intent.', 'error');
+                return;
+            }
+            
+            // Get Stripe configuration
+            const configResponse = await fetch('/api/stripe/config');
+            const config = await configResponse.json();
+            
+            // Load Stripe.js
+            if (!window.Stripe) {
+                const script = document.createElement('script');
+                script.src = 'https://js.stripe.com/v3/';
+                script.onload = () => this.initializeStripePayment(config.publishableKey, intentResult.paymentIntent);
+                document.head.appendChild(script);
+            } else {
+                this.initializeStripePayment(config.publishableKey, intentResult.paymentIntent);
+            }
+            
+        } catch (error) {
+            console.error('Payment error:', error);
+            this.showToast('Payment processing failed.', 'error');
+        }
+    }
+
+    async initializeStripePayment(publishableKey, paymentIntent) {
+        try {
+            const stripe = Stripe(publishableKey);
+            
+            // Create payment method
+            const { paymentMethod, error } = await stripe.createPaymentMethod({
+                type: 'card',
+                card: this.cardElement,
+                billing_details: {
+                    name: this.currentEmployeeName || 'Employee Payment'
+                }
+            });
+            
+            if (error) {
+                this.showToast(`Payment method error: ${error.message}`, 'error');
+                return;
+            }
+            
+            // Process the payment
+            const response = await fetch(`/api/payroll/${this.currentPaymentPayroll.id}/process-stripe-payment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify({
-                    payment_method: 'stripe',
-                    stripe_token: stripeToken
+                    paymentIntentId: paymentIntent.id,
+                    paymentMethodId: paymentMethod.id
                 })
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to process payment');
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showToast('Stripe payment processed successfully!', 'success');
+                this.closePaymentModal();
+                this.loadPayrolls(); // Refresh the payroll list
+            } else {
+                this.showToast(result.error || 'Payment failed.', 'error');
             }
-
-            const data = await response.json();
-            console.log('✅ Payment processed successfully:', data);
-            this.showToast('Stripe payment processed successfully!', 'success');
-            this.closePaymentModal();
-            await this.loadPayrolls(); // Refresh payroll list to update status
+            
         } catch (error) {
-            console.error('❌ Error processing payment:', error);
-            this.showToast(error.message, 'error');
+            console.error('Stripe payment error:', error);
+            this.showToast('Payment processing failed.', 'error');
         }
     }
 }
