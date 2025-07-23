@@ -1,7 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const stripeSubscriptionService = require('../utils/stripeSubscriptionService');
 const { supabase, supabaseAdmin } = require('../config/supabase');
+
+// Lazy load stripeSubscriptionService to avoid initialization errors
+let stripeSubscriptionService = null;
+function getStripeSubscriptionService() {
+    if (!stripeSubscriptionService) {
+        try {
+            stripeSubscriptionService = require('../utils/stripeSubscriptionService');
+        } catch (error) {
+            console.error('❌ Failed to load Stripe subscription service:', error.message);
+            throw new Error('Stripe subscription service not available');
+        }
+    }
+    return stripeSubscriptionService;
+}
 
 // Middleware to verify authentication
 const authenticateUser = async (req, res, next) => {
@@ -29,7 +42,7 @@ router.get('/plans', async (req, res) => {
     try {
         const forceRefresh = req.query.refresh === 'true';
         console.log('📋 Fetching subscription plans...', forceRefresh ? '(force refresh)' : '');
-        const plans = await stripeSubscriptionService.getSubscriptionPlans(forceRefresh);
+        const plans = await getStripeSubscriptionService().getSubscriptionPlans(forceRefresh);
         res.json({ success: true, plans });
     } catch (error) {
         console.error('❌ Error fetching plans:', error);
@@ -41,8 +54,8 @@ router.get('/plans', async (req, res) => {
 router.post('/plans/refresh', async (req, res) => {
     try {
         console.log('🔄 Force refreshing subscription plans cache...');
-        stripeSubscriptionService.clearCache();
-        const plans = await stripeSubscriptionService.getSubscriptionPlans(true);
+        getStripeSubscriptionService().clearCache();
+        const plans = await getStripeSubscriptionService().getSubscriptionPlans(true);
         res.json({ success: true, plans, message: 'Cache refreshed successfully' });
     } catch (error) {
         console.error('❌ Error refreshing plans:', error);
@@ -56,7 +69,7 @@ router.get('/plans/:planId', async (req, res) => {
         const { planId } = req.params;
         console.log('📋 Fetching pricing for plan:', planId);
         
-        const plan = await stripeSubscriptionService.getPlanPricing(planId);
+        const plan = await getStripeSubscriptionService().getPlanPricing(planId);
         res.json({ success: true, plan });
     } catch (error) {
         console.error('❌ Error fetching plan pricing:', error);
@@ -107,14 +120,14 @@ router.post('/create-checkout-session', authenticateUser, async (req, res) => {
         console.log('💰 Price ID:', priceId);
         
         // Get or create Stripe customer
-        const customerId = await stripeSubscriptionService.getOrCreateCustomer(
+        const customerId = await getStripeSubscriptionService().getOrCreateCustomer(
             req.user.id,
             req.user.email,
             req.user.user_metadata?.full_name || req.user.email
         );
         
         // Create checkout session
-        const session = await stripeSubscriptionService.createCheckoutSession(
+        const session = await getStripeSubscriptionService().createCheckoutSession(
             customerId,
             priceId,
             successUrl || `${req.protocol}://${req.get('host')}/dashboard.html`,
@@ -156,7 +169,7 @@ router.post('/create-portal-session', authenticateUser, async (req, res) => {
         }
         
         // Create portal session
-        const session = await stripeSubscriptionService.createPortalSession(
+        const session = await getStripeSubscriptionService().createPortalSession(
             customer.stripe_customer_id,
             returnUrl || `${req.protocol}://${req.get('host')}/dashboard.html`
         );
@@ -196,7 +209,7 @@ router.post('/cancel', authenticateUser, async (req, res) => {
         }
         
         // Cancel subscription
-        const cancelledSubscription = await stripeSubscriptionService.cancelSubscription(
+        const cancelledSubscription = await getStripeSubscriptionService().cancelSubscription(
             subscriptionId,
             cancelAtPeriodEnd
         );
@@ -236,7 +249,7 @@ router.post('/reactivate', authenticateUser, async (req, res) => {
         }
         
         // Reactivate subscription
-        const reactivatedSubscription = await stripeSubscriptionService.reactivateSubscription(
+        const reactivatedSubscription = await getStripeSubscriptionService().reactivateSubscription(
             subscriptionId
         );
         
@@ -276,7 +289,7 @@ router.post('/update', authenticateUser, async (req, res) => {
         }
         
         // Update subscription
-        const updatedSubscription = await stripeSubscriptionService.updateSubscription(
+        const updatedSubscription = await getStripeSubscriptionService().updateSubscription(
             subscriptionId,
             newPriceId
         );
@@ -312,7 +325,7 @@ router.get('/:subscriptionId', authenticateUser, async (req, res) => {
         }
         
         // Get detailed subscription from Stripe
-        const stripeSubscription = await stripeSubscriptionService.getSubscription(subscriptionId);
+        const stripeSubscription = await getStripeSubscriptionService().getSubscription(subscriptionId);
         
         res.json({ 
             success: true, 
@@ -384,14 +397,14 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         let event;
         
         try {
-            event = stripeSubscriptionService.stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+            event = getStripeSubscriptionService().stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
         } catch (err) {
             console.error('❌ Webhook signature verification failed:', err.message);
             return res.status(400).json({ error: 'Webhook signature verification failed' });
         }
         
         // Handle the event
-        await stripeSubscriptionService.handleWebhookEvent(event);
+                    await getStripeSubscriptionService().handleWebhookEvent(event);
         
         res.json({ received: true });
         

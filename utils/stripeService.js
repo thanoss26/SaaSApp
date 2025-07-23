@@ -1,9 +1,21 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { supabase, supabaseAdmin } = require('../config/supabase');
 
 class StripeService {
     constructor() {
-        this.stripe = stripe;
+        this._stripe = null;
+    }
+
+    /**
+     * Get Stripe instance with lazy initialization
+     */
+    get stripe() {
+        if (!this._stripe) {
+            if (!process.env.STRIPE_SECRET_KEY) {
+                throw new Error('STRIPE_SECRET_KEY environment variable is not set');
+            }
+            this._stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+        }
+        return this._stripe;
     }
 
     /**
