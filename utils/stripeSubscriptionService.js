@@ -1,9 +1,22 @@
+// Load environment variables
+require('dotenv').config();
+
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { supabase, supabaseAdmin } = require('../config/supabase');
 
 class StripeSubscriptionService {
     constructor() {
-        this.stripe = stripe;
+        // Validate Stripe configuration
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.error('❌ STRIPE_SECRET_KEY is not set in environment variables');
+            console.error('💡 Please set STRIPE_SECRET_KEY in your environment variables');
+            console.error('⚠️ Stripe functionality will be disabled');
+            this.stripe = null;
+            this.isStripeEnabled = false;
+        } else {
+            this.stripe = stripe;
+            this.isStripeEnabled = true;
+        }
         
         // Cache for subscription plans (5 minutes)
         this.plansCache = {
@@ -88,6 +101,11 @@ class StripeSubscriptionService {
      */
     async validatePriceIds() {
         try {
+            if (!this.isStripeEnabled) {
+                console.log('⚠️ Stripe is disabled, skipping price ID validation');
+                return;
+            }
+            
             console.log('🔍 Validating Stripe price IDs...');
             
             for (const [planKey, plan] of Object.entries(this.products)) {
@@ -119,6 +137,12 @@ class StripeSubscriptionService {
      */
     async getPlanPricing(planKey) {
         try {
+            if (!this.isStripeEnabled) {
+                console.log('⚠️ Stripe is disabled, returning fallback plan pricing');
+                const fallbackPlans = this.getFallbackPlans();
+                return fallbackPlans.find(plan => plan.id === planKey);
+            }
+            
             const plan = this.products[planKey];
             if (!plan) {
                 throw new Error(`Plan ${planKey} not found`);
@@ -150,7 +174,9 @@ class StripeSubscriptionService {
 
         } catch (error) {
             console.error(`❌ Error fetching pricing for plan ${planKey}:`, error);
-            throw error;
+            // Return fallback plan if Stripe fails
+            const fallbackPlans = this.getFallbackPlans();
+            return fallbackPlans.find(plan => plan.id === planKey);
         }
     }
 
@@ -159,6 +185,12 @@ class StripeSubscriptionService {
      */
     async getSubscriptionPlans(forceRefresh = false) {
         try {
+            // Check if Stripe is enabled
+            if (!this.isStripeEnabled) {
+                console.log('⚠️ Stripe is disabled, returning fallback pricing');
+                return this.getFallbackPlans();
+            }
+            
             // Check cache first (unless force refresh is requested)
             if (!forceRefresh && this.isCacheValid()) {
                 console.log('⚡ Returning cached subscription plans');
@@ -236,8 +268,75 @@ class StripeSubscriptionService {
             
         } catch (error) {
             console.error('❌ Error fetching subscription plans:', error);
-            throw error;
+            // Return fallback plans if everything fails
+            return this.getFallbackPlans();
         }
+    }
+
+    /**
+     * Get fallback plans when Stripe is not available
+     */
+    getFallbackPlans() {
+        console.log('📋 Returning fallback subscription plans');
+        return [
+            {
+                id: 'starter',
+                name: 'Starter',
+                monthly: {
+                    priceId: 'price_starter_monthly',
+                    amount: 50,
+                    currency: 'eur',
+                    interval: 'month',
+                    displayPrice: '€50/month'
+                },
+                annual: {
+                    priceId: 'price_starter_annual',
+                    amount: 299,
+                    currency: 'eur',
+                    interval: 'year',
+                    displayPrice: '€299/year',
+                    savings: 50
+                }
+            },
+            {
+                id: 'professional',
+                name: 'Professional',
+                monthly: {
+                    priceId: 'price_professional_monthly',
+                    amount: 79,
+                    currency: 'eur',
+                    interval: 'month',
+                    displayPrice: '€79/month'
+                },
+                annual: {
+                    priceId: 'price_professional_annual',
+                    amount: 790,
+                    currency: 'eur',
+                    interval: 'year',
+                    displayPrice: '€790/year',
+                    savings: 17
+                }
+            },
+            {
+                id: 'enterprise',
+                name: 'Enterprise',
+                monthly: {
+                    priceId: 'price_enterprise_monthly',
+                    amount: 199,
+                    currency: 'eur',
+                    interval: 'month',
+                    displayPrice: '€199/month'
+                },
+                annual: {
+                    priceId: 'price_enterprise_annual',
+                    amount: 1990,
+                    currency: 'eur',
+                    interval: 'year',
+                    displayPrice: '€1990/year',
+                    savings: 17
+                }
+            }
+        ];
     }
 
     /**
