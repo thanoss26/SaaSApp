@@ -10,11 +10,73 @@ function getStripeSubscriptionService() {
             stripeSubscriptionService = require('../utils/stripeSubscriptionService');
         } catch (error) {
             console.error('❌ Failed to load Stripe subscription service:', error.message);
-            throw new Error('Stripe subscription service not available');
+            // Return null instead of throwing error - will be handled in routes
+            return null;
         }
     }
     return stripeSubscriptionService;
 }
+
+// Fallback subscription plans when Stripe is not available
+const fallbackPlans = [
+    {
+        id: "starter",
+        name: "Starter",
+        monthly: {
+            priceId: "fallback_starter_monthly",
+            amount: 29,
+            currency: "eur",
+            interval: "month",
+            displayPrice: "€29/month"
+        },
+        annual: {
+            priceId: "fallback_starter_annual",
+            amount: 299,
+            currency: "eur",
+            interval: "year",
+            displayPrice: "€299/year",
+            savings: 14
+        }
+    },
+    {
+        id: "professional",
+        name: "Professional",
+        monthly: {
+            priceId: "fallback_professional_monthly",
+            amount: 79,
+            currency: "eur",
+            interval: "month",
+            displayPrice: "€79/month"
+        },
+        annual: {
+            priceId: "fallback_professional_annual",
+            amount: 790,
+            currency: "eur",
+            interval: "year",
+            displayPrice: "€790/year",
+            savings: 17
+        }
+    },
+    {
+        id: "enterprise",
+        name: "Enterprise",
+        monthly: {
+            priceId: "fallback_enterprise_monthly",
+            amount: 199,
+            currency: "eur",
+            interval: "month",
+            displayPrice: "€199/month"
+        },
+        annual: {
+            priceId: "fallback_enterprise_annual",
+            amount: 1990,
+            currency: "eur",
+            interval: "year",
+            displayPrice: "€1990/year",
+            savings: 17
+        }
+    }
+];
 
 // Middleware to verify authentication
 const authenticateUser = async (req, res, next) => {
@@ -42,11 +104,20 @@ router.get('/plans', async (req, res) => {
     try {
         const forceRefresh = req.query.refresh === 'true';
         console.log('📋 Fetching subscription plans...', forceRefresh ? '(force refresh)' : '');
-        const plans = await getStripeSubscriptionService().getSubscriptionPlans(forceRefresh);
+        
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            console.log('⚠️ Stripe service not available, using fallback plans');
+            res.json({ success: true, plans: fallbackPlans });
+            return;
+        }
+        
+        const plans = await service.getSubscriptionPlans(forceRefresh);
         res.json({ success: true, plans });
     } catch (error) {
         console.error('❌ Error fetching plans:', error);
-        res.status(500).json({ error: 'Failed to fetch subscription plans' });
+        console.log('⚠️ Using fallback plans due to error');
+        res.json({ success: true, plans: fallbackPlans });
     }
 });
 
@@ -54,12 +125,21 @@ router.get('/plans', async (req, res) => {
 router.post('/plans/refresh', async (req, res) => {
     try {
         console.log('🔄 Force refreshing subscription plans cache...');
-        getStripeSubscriptionService().clearCache();
-        const plans = await getStripeSubscriptionService().getSubscriptionPlans(true);
+        
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            console.log('⚠️ Stripe service not available, returning fallback plans');
+            res.json({ success: true, plans: fallbackPlans, message: 'Fallback plans returned' });
+            return;
+        }
+        
+        service.clearCache();
+        const plans = await service.getSubscriptionPlans(true);
         res.json({ success: true, plans, message: 'Cache refreshed successfully' });
     } catch (error) {
         console.error('❌ Error refreshing plans:', error);
-        res.status(500).json({ error: 'Failed to refresh subscription plans' });
+        console.log('⚠️ Using fallback plans due to error');
+        res.json({ success: true, plans: fallbackPlans, message: 'Fallback plans returned due to error' });
     }
 });
 
@@ -69,11 +149,29 @@ router.get('/plans/:planId', async (req, res) => {
         const { planId } = req.params;
         console.log('📋 Fetching pricing for plan:', planId);
         
-        const plan = await getStripeSubscriptionService().getPlanPricing(planId);
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            console.log('⚠️ Stripe service not available, using fallback plan');
+            const fallbackPlan = fallbackPlans.find(p => p.id === planId);
+            if (fallbackPlan) {
+                res.json({ success: true, plan: fallbackPlan });
+            } else {
+                res.status(404).json({ error: 'Plan not found' });
+            }
+            return;
+        }
+        
+        const plan = await service.getPlanPricing(planId);
         res.json({ success: true, plan });
     } catch (error) {
         console.error('❌ Error fetching plan pricing:', error);
-        res.status(500).json({ error: 'Failed to fetch plan pricing' });
+        console.log('⚠️ Using fallback plan due to error');
+        const fallbackPlan = fallbackPlans.find(p => p.id === planId);
+        if (fallbackPlan) {
+            res.json({ success: true, plan: fallbackPlan });
+        } else {
+            res.status(404).json({ error: 'Plan not found' });
+        }
     }
 });
 
