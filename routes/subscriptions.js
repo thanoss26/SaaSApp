@@ -17,20 +17,68 @@ function getStripeSubscriptionService() {
     return stripeSubscriptionService;
 }
 
+// Real Stripe Price IDs - Update these with your actual Stripe price IDs
+const STRIPE_PRICE_IDS = {
+    starter: {
+        monthly: process.env.STRIPE_STARTER_MONTHLY_PRICE_ID || 'price_1OqX8X2eZvKYlo2C8Q8Q8Q8Q',
+        annual: process.env.STRIPE_STARTER_ANNUAL_PRICE_ID || 'price_1OqX8X2eZvKYlo2C8Q8Q8Q8Q8'
+    },
+    professional: {
+        monthly: process.env.STRIPE_PROFESSIONAL_MONTHLY_PRICE_ID || 'price_1OqX8X2eZvKYlo2C9Q9Q9Q9Q9',
+        annual: process.env.STRIPE_PROFESSIONAL_ANNUAL_PRICE_ID || 'price_1OqX8X2eZvKYlo2C9Q9Q9Q9Q9Q'
+    },
+    enterprise: {
+        monthly: process.env.STRIPE_ENTERPRISE_MONTHLY_PRICE_ID || 'price_1OqX8X2eZvKYlo2C0Q0Q0Q0Q0',
+        annual: process.env.STRIPE_ENTERPRISE_ANNUAL_PRICE_ID || 'price_1OqX8X2eZvKYlo2C0Q0Q0Q0Q0Q'
+    }
+};
+
 // Fallback subscription plans when Stripe is not available
 const fallbackPlans = [
     {
+        id: "free",
+        name: "Free",
+        description: "Perfect for small teams getting started",
+        features: [
+            "Up to 3 employees",
+            "1 organization",
+            "Basic HR features",
+            "Email support"
+        ],
+        monthly: {
+            priceId: "free",
+            amount: 0,
+            currency: "eur",
+            interval: "month",
+            displayPrice: "Free"
+        },
+        annual: {
+            priceId: "free",
+            amount: 0,
+            currency: "eur",
+            interval: "year",
+            displayPrice: "Free"
+        }
+    },
+    {
         id: "starter",
         name: "Starter",
+        description: "Great for growing businesses",
+        features: [
+            "Up to 10 employees",
+            "3 organizations",
+            "Analytics dashboard",
+            "Priority email support"
+        ],
         monthly: {
-            priceId: "fallback_starter_monthly",
+            priceId: STRIPE_PRICE_IDS.starter.monthly,
             amount: 29,
             currency: "eur",
             interval: "month",
             displayPrice: "€29/month"
         },
         annual: {
-            priceId: "fallback_starter_annual",
+            priceId: STRIPE_PRICE_IDS.starter.annual,
             amount: 299,
             currency: "eur",
             interval: "year",
@@ -41,15 +89,23 @@ const fallbackPlans = [
     {
         id: "professional",
         name: "Professional",
+        description: "Advanced features for established companies",
+        features: [
+            "Up to 100 employees",
+            "5 organizations",
+            "Advanced analytics",
+            "API access",
+            "Priority support"
+        ],
         monthly: {
-            priceId: "fallback_professional_monthly",
+            priceId: STRIPE_PRICE_IDS.professional.monthly,
             amount: 79,
             currency: "eur",
             interval: "month",
             displayPrice: "€79/month"
         },
         annual: {
-            priceId: "fallback_professional_annual",
+            priceId: STRIPE_PRICE_IDS.professional.annual,
             amount: 790,
             currency: "eur",
             interval: "year",
@@ -60,15 +116,24 @@ const fallbackPlans = [
     {
         id: "enterprise",
         name: "Enterprise",
+        description: "Unlimited scale for large organizations",
+        features: [
+            "Unlimited employees",
+            "Unlimited organizations",
+            "Advanced analytics",
+            "API access",
+            "Priority support",
+            "Custom integrations"
+        ],
         monthly: {
-            priceId: "fallback_enterprise_monthly",
+            priceId: STRIPE_PRICE_IDS.enterprise.monthly,
             amount: 199,
             currency: "eur",
             interval: "month",
             displayPrice: "€199/month"
         },
         annual: {
-            priceId: "fallback_enterprise_annual",
+            priceId: STRIPE_PRICE_IDS.enterprise.annual,
             amount: 1990,
             currency: "eur",
             interval: "year",
@@ -106,18 +171,75 @@ router.get('/plans', async (req, res) => {
         console.log('📋 Fetching subscription plans...', forceRefresh ? '(force refresh)' : '');
         
         const service = getStripeSubscriptionService();
+        let plans = [];
         if (!service) {
             console.log('⚠️ Stripe service not available, using fallback plans');
-            res.json({ success: true, plans: fallbackPlans });
-            return;
+            plans = fallbackPlans;
+        } else {
+            plans = await service.getSubscriptionPlans(forceRefresh);
         }
-        
-        const plans = await service.getSubscriptionPlans(forceRefresh);
+        // Always ensure the Free plan is present and correct
+        const freePlan = {
+            id: "free",
+            name: "Free",
+            description: "Perfect for small teams getting started",
+            features: [
+                "Up to 3 employees",
+                "1 organization",
+                "Basic HR features",
+                "Email support"
+            ],
+            monthly: {
+                priceId: "free",
+                amount: 0,
+                currency: "eur",
+                interval: "month",
+                displayPrice: "Free"
+            },
+            annual: {
+                priceId: "free",
+                amount: 0,
+                currency: "eur",
+                interval: "year",
+                displayPrice: "Free"
+            }
+        };
+        // Remove any existing free plan from plans
+        plans = plans.filter(p => p.id !== 'free');
+        // Add the correct free plan at the start
+        plans.unshift(freePlan);
         res.json({ success: true, plans });
     } catch (error) {
         console.error('❌ Error fetching plans:', error);
         console.log('⚠️ Using fallback plans due to error');
-        res.json({ success: true, plans: fallbackPlans });
+        // Always ensure the Free plan is present in fallback
+        const plans = fallbackPlans.filter(p => p.id !== 'free');
+        plans.unshift({
+            id: "free",
+            name: "Free",
+            description: "Perfect for small teams getting started",
+            features: [
+                "Up to 3 employees",
+                "1 organization",
+                "Basic HR features",
+                "Email support"
+            ],
+            monthly: {
+                priceId: "free",
+                amount: 0,
+                currency: "eur",
+                interval: "month",
+                displayPrice: "Free"
+            },
+            annual: {
+                priceId: "free",
+                amount: 0,
+                currency: "eur",
+                interval: "year",
+                displayPrice: "Free"
+            }
+        });
+        res.json({ success: true, plans });
     }
 });
 
@@ -181,7 +303,7 @@ router.get('/current', authenticateUser, async (req, res) => {
         console.log('📋 Fetching current subscription for user:', req.user.id);
         
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('*')
             .eq('user_id', req.user.id)
             .in('status', ['active', 'trialing'])
@@ -194,14 +316,115 @@ router.get('/current', authenticateUser, async (req, res) => {
             return res.status(500).json({ error: 'Failed to fetch subscription' });
         }
         
+        // If no subscription found, create a free tier subscription
+        if (!subscription) {
+            console.log('📋 Creating free tier subscription for user:', req.user.id);
+            const { data: newSubscription, error: insertError } = await supabaseAdmin
+                .from('subscriptions')
+                .insert({
+                    user_id: req.user.id,
+                    plan_name: 'free',
+                    status: 'active'
+                })
+                .select()
+                .single();
+            
+            if (insertError) {
+                console.error('❌ Error creating free subscription:', insertError);
+                return res.status(500).json({ error: 'Failed to create free subscription' });
+            }
+            
+            return res.json({ 
+                success: true, 
+                subscription: newSubscription 
+            });
+        }
+        
         res.json({ 
             success: true, 
-            subscription: subscription || null 
+            subscription: subscription 
         });
         
     } catch (error) {
         console.error('❌ Error fetching current subscription:', error);
         res.status(500).json({ error: 'Failed to fetch current subscription' });
+    }
+});
+
+// Create checkout session
+router.post('/create-checkout', authenticateUser, async (req, res) => {
+    try {
+        const { priceId, planId, billingCycle } = req.body;
+        console.log('💳 Creating checkout session for user:', req.user.id, 'plan:', planId);
+        
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            return res.status(500).json({ error: 'Stripe service not available' });
+        }
+        
+        const checkoutSession = await service.createCheckoutSession({
+            userId: req.user.id,
+            priceId: priceId,
+            planId: planId,
+            billingCycle: billingCycle,
+            successUrl: `${process.env.BASE_URL}/subscriptions?success=true`,
+            cancelUrl: `${process.env.BASE_URL}/subscriptions?canceled=true`
+        });
+        
+        res.json({ 
+            success: true, 
+            checkoutUrl: checkoutSession.url 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating checkout session:', error);
+        res.status(500).json({ error: 'Failed to create checkout session' });
+    }
+});
+
+// Create billing portal session
+router.post('/billing-portal', authenticateUser, async (req, res) => {
+    try {
+        console.log('🏦 Creating billing portal session for user:', req.user.id);
+        
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            return res.status(500).json({ error: 'Stripe service not available' });
+        }
+        
+        const portalSession = await service.createPortalSession(req.user.id, `${process.env.BASE_URL}/subscription-settings`);
+        
+        res.json({ 
+            success: true, 
+            portalUrl: portalSession.url 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error creating billing portal session:', error);
+        res.status(500).json({ error: 'Failed to create billing portal session' });
+    }
+});
+
+// Cancel subscription
+router.post('/cancel', authenticateUser, async (req, res) => {
+    try {
+        console.log('❌ Canceling subscription for user:', req.user.id);
+        
+        const service = getStripeSubscriptionService();
+        if (!service) {
+            return res.status(500).json({ error: 'Stripe service not available' });
+        }
+        
+        await service.cancelSubscription(req.user.id);
+        
+        res.json({ 
+            success: true, 
+            message: 'Subscription cancelled successfully' 
+        });
+        
+    } catch (error) {
+        console.error('❌ Error canceling subscription:', error);
+        res.status(500).json({ error: 'Failed to cancel subscription' });
     }
 });
 
@@ -255,20 +478,20 @@ router.post('/create-portal-session', authenticateUser, async (req, res) => {
         
         console.log('🚪 Creating portal session for user:', req.user.id);
         
-        // Get customer ID
-        const { data: customer, error } = await supabaseAdmin
-            .from('stripe_customers')
+        // Get customer ID from users table (already renamed from profiles)
+        const { data: user, error } = await supabaseAdmin
+            .from('users')
             .select('stripe_customer_id')
-            .eq('user_id', req.user.id)
+            .eq('id', req.user.id)
             .single();
         
-        if (error || !customer) {
+        if (error || !user || !user.stripe_customer_id) {
             return res.status(404).json({ error: 'No customer found for this user' });
         }
         
         // Create portal session
         const session = await getStripeSubscriptionService().createPortalSession(
-            customer.stripe_customer_id,
+            user.stripe_customer_id,
             returnUrl || `${req.protocol}://${req.get('host')}/dashboard.html`
         );
         
@@ -296,7 +519,7 @@ router.post('/cancel', authenticateUser, async (req, res) => {
         
         // Verify user owns this subscription
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('stripe_subscription_id')
             .eq('user_id', req.user.id)
             .eq('stripe_subscription_id', subscriptionId)
@@ -336,7 +559,7 @@ router.post('/reactivate', authenticateUser, async (req, res) => {
         
         // Verify user owns this subscription
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('stripe_subscription_id')
             .eq('user_id', req.user.id)
             .eq('stripe_subscription_id', subscriptionId)
@@ -376,7 +599,7 @@ router.post('/update', authenticateUser, async (req, res) => {
         
         // Verify user owns this subscription
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('stripe_subscription_id')
             .eq('user_id', req.user.id)
             .eq('stripe_subscription_id', subscriptionId)
@@ -412,7 +635,7 @@ router.get('/:subscriptionId', authenticateUser, async (req, res) => {
         
         // Verify user owns this subscription
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('*')
             .eq('user_id', req.user.id)
             .eq('stripe_subscription_id', subscriptionId)
@@ -448,7 +671,7 @@ router.get('/:subscriptionId/payments', authenticateUser, async (req, res) => {
         
         // Verify user owns this subscription
         const { data: subscription, error } = await supabaseAdmin
-            .from('user_subscriptions')
+            .from('subscriptions')
             .select('stripe_subscription_id')
             .eq('user_id', req.user.id)
             .eq('stripe_subscription_id', subscriptionId)
@@ -460,7 +683,7 @@ router.get('/:subscriptionId/payments', authenticateUser, async (req, res) => {
         
         // Get payments from database
         const { data: payments, error: paymentsError } = await supabaseAdmin
-            .from('subscription_payments')
+            .from('payments')
             .select('*')
             .eq('stripe_subscription_id', subscriptionId)
             .order('created_at', { ascending: false });
@@ -509,6 +732,111 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
     } catch (error) {
         console.error('❌ Webhook error:', error);
         res.status(500).json({ error: 'Webhook processing failed' });
+    }
+});
+
+// Get user's plan limits
+router.get('/limits/plan', authenticateUser, async (req, res) => {
+    try {
+        console.log('📋 Fetching plan limits for user:', req.user.id);
+        
+        const { data: limits, error } = await supabaseAdmin
+            .rpc('get_user_plan_limits', { user_uuid: req.user.id });
+        
+        if (error) {
+            console.error('❌ Error fetching plan limits:', error);
+            return res.status(500).json({ error: 'Failed to fetch plan limits' });
+        }
+        
+        res.json({ 
+            success: true, 
+            limits: limits[0] || {
+                plan_name: 'free',
+                max_employees: 3,
+                max_organizations: 1,
+                has_analytics: false,
+                has_advanced_features: false,
+                has_api_access: false,
+                has_priority_support: false
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching plan limits:', error);
+        res.status(500).json({ error: 'Failed to fetch plan limits' });
+    }
+});
+
+// Check if user can add more employees
+router.get('/limits/can-add-employee', authenticateUser, async (req, res) => {
+    try {
+        console.log('📋 Checking if user can add employee:', req.user.id);
+        
+        const { data: canAdd, error } = await supabaseAdmin
+            .rpc('can_add_employee', { user_uuid: req.user.id });
+        
+        if (error) {
+            console.error('❌ Error checking employee limit:', error);
+            return res.status(500).json({ error: 'Failed to check employee limit' });
+        }
+        
+        res.json({ 
+            success: true, 
+            canAdd: canAdd || false
+        });
+        
+    } catch (error) {
+        console.error('❌ Error checking employee limit:', error);
+        res.status(500).json({ error: 'Failed to check employee limit' });
+    }
+});
+
+// Get current employee count
+router.get('/limits/employee-count', authenticateUser, async (req, res) => {
+    try {
+        console.log('📋 Fetching employee count for user:', req.user.id);
+        
+        // Get user's organization
+        const { data: user, error: userError } = await supabaseAdmin
+            .from('users')
+            .select('organization_id')
+            .eq('id', req.user.id)
+            .single();
+        
+        if (userError || !user.organization_id) {
+            return res.json({ 
+                success: true, 
+                count: 0,
+                maxEmployees: 3
+            });
+        }
+        
+        // Count employees in the organization
+        const { count, error: countError } = await supabaseAdmin
+            .from('users')
+            .select('*', { count: 'exact', head: true })
+            .eq('organization_id', user.organization_id);
+        
+        if (countError) {
+            console.error('❌ Error counting employees:', countError);
+            return res.status(500).json({ error: 'Failed to count employees' });
+        }
+        
+        // Get plan limits
+        const { data: limits, error: limitsError } = await supabaseAdmin
+            .rpc('get_user_plan_limits', { user_uuid: req.user.id });
+        
+        const maxEmployees = limitsError ? 3 : (limits[0]?.max_employees || 3);
+        
+        res.json({ 
+            success: true, 
+            count: count || 0,
+            maxEmployees: maxEmployees
+        });
+        
+    } catch (error) {
+        console.error('❌ Error fetching employee count:', error);
+        res.status(500).json({ error: 'Failed to fetch employee count' });
     }
 });
 

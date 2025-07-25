@@ -28,7 +28,7 @@ const authenticateToken = async (req, res, next) => {
     console.log('🔍 Fetching user profile for middleware...');
     // Get user profile with role and organization info
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', user.id)
       .single();

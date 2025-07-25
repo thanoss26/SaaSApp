@@ -38,7 +38,7 @@ router.post('/card', authenticateToken, requireOrganization, async (req, res) =>
         }
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -149,7 +149,7 @@ router.post('/bank', authenticateToken, requireOrganization, async (req, res) =>
         }
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -242,7 +242,7 @@ router.get('/history', authenticateToken, requireOrganization, async (req, res) 
         console.log('📋 Fetching payment history...');
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();

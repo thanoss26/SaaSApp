@@ -389,7 +389,7 @@ class StripeDashboardService {
 
             // Enable dashboard access for admin users
             const { error: profileError } = await supabaseAdmin
-                .from('profiles')
+                .from('users')
                 .update({ 
                     stripe_dashboard_access: true,
                     updated_at: new Date().toISOString()
@@ -432,7 +432,7 @@ class StripeDashboardService {
 
             // Disable dashboard access for users
             const { error: profileError } = await supabaseAdmin
-                .from('profiles')
+                .from('users')
                 .update({ 
                     stripe_dashboard_access: false,
                     updated_at: new Date().toISOString()

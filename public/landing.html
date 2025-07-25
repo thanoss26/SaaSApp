@@ -249,7 +249,28 @@
             </div>
             
             <div class="pricing-grid">
-                <div class="pricing-card">
+                <!-- Free Tier -->
+                <div class="pricing-card free-tier" data-plan="free">
+                    <div class="pricing-header">
+                        <h3 data-i18n="landing:pricing_free">Basic</h3>
+                        <div class="price">
+                            <span class="currency">€</span>
+                            <span class="amount">0</span>
+                            <span class="period" data-i18n="landing:pricing_per_month">/month</span>
+                        </div>
+                        <p data-i18n="landing:pricing_free_desc">Perfect for small teams getting started</p>
+                    </div>
+                    <ul class="pricing-features">
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_free_feature_1">Up to 3 employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_free_feature_2">1 organization</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_free_feature_3">Basic HR features</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_free_feature_4">Email support</span></li>
+                    </ul>
+                    <button class="btn btn-outline btn-full subscribe-btn" data-plan="free" data-i18n="landing:pricing_get_started">Get Started</button>
+                </div>
+                
+                <!-- Starter Tier -->
+                <div class="pricing-card" data-plan="starter">
                     <div class="pricing-header">
                         <h3 data-i18n="landing:pricing_starter">Starter</h3>
                         <div class="price">
@@ -257,18 +278,18 @@
                             <span class="amount">29</span>
                             <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p data-i18n="landing:pricing_starter_desc">Perfect for small teams</p>
+                        <p data-i18n="landing:pricing_starter_desc">Great for growing businesses</p>
                     </div>
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_1">Up to 50 employees</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_2">Basic HR features</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_3">Email support</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_4">Standard reports</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_1">Up to 10 employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_2">3 organizations</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_3">Analytics dashboard</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_starter_feature_4">Priority email support</span></li>
                     </ul>
                     <button class="btn btn-outline btn-full subscribe-btn" data-plan="starter" data-i18n="landing:pricing_get_started">Get Started</button>
                 </div>
                 
-                <div class="pricing-card featured">
+                <div class="pricing-card featured" data-plan="professional">
                     <div class="pricing-badge" data-i18n="landing:pricing_most_popular">Most Popular</div>
                     <div class="pricing-header">
                         <h3 data-i18n="landing:pricing_professional">Professional</h3>
@@ -277,20 +298,20 @@
                             <span class="amount">79</span>
                             <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p data-i18n="landing:pricing_professional_desc">Ideal for growing companies</p>
+                        <p data-i18n="landing:pricing_professional_desc">Advanced features for established companies</p>
                     </div>
                     <ul class="pricing-features">
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_1">Up to 200 employees</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_2">Advanced HR features</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_3">Priority support</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_4">Custom reports</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_5">API access</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_1">Up to 100 employees</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_2">5 organizations</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_3">Advanced analytics</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_4">API access</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_5">Priority support</span></li>
                         <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_professional_feature_6">Integrations</span></li>
                     </ul>
                     <button class="btn btn-primary btn-full subscribe-btn" data-plan="professional" data-i18n="landing:pricing_get_started">Get Started</button>
                 </div>
                 
-                <div class="pricing-card">
+                <div class="pricing-card" data-plan="enterprise">
                     <div class="pricing-header">
                         <h3 data-i18n="landing:pricing_enterprise">Enterprise</h3>
                         <div class="price">
@@ -298,15 +319,15 @@
                             <span class="amount">199</span>
                             <span class="period" data-i18n="landing:pricing_per_month">/month</span>
                         </div>
-                        <p data-i18n="landing:pricing_enterprise_desc">For large organizations</p>
+                        <p data-i18n="landing:pricing_enterprise_desc">Unlimited scale for large organizations</p>
                     </div>
                     <ul class="pricing-features">
                         <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_1">Unlimited employees</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_2">All features included</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_3">24/7 support</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_4">Custom integrations</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_5">Dedicated account manager</span></li>
-                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_6">Advanced security</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_2">Unlimited organizations</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_3">Advanced analytics</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_4">API access</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_5">Priority support</span></li>
+                        <li><i class="fas fa-check"></i> <span data-i18n="landing:pricing_enterprise_feature_6">Custom integrations</span></li>
                     </ul>
                     <button class="btn btn-outline btn-full subscribe-btn" data-plan="enterprise" data-i18n="landing:pricing_contact_sales">Contact Sales</button>
                 </div>

@@ -24,6 +24,8 @@ const {
   requireInviteUsersAccess
 } = require('./middleware/auth');
 
+const { checkAnalyticsAccess } = require('./middleware/planLimits');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -349,6 +351,24 @@ app.get('/organizations', (req, res) => {
   }
 });
 
+// Subscription Settings route
+app.get('/subscription-settings', (req, res) => {
+  console.log('⚙️ Subscription Settings route hit');
+  const fs = require('fs');
+  const filePath = __dirname + '/public/subscription-settings.html';
+  if (fs.existsSync(filePath)) {
+    console.log('✅ subscription-settings.html file exists');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('ETag', `"${Date.now()}"`);
+    res.sendFile(filePath);
+  } else {
+    console.log('❌ subscription-settings.html file not found');
+    res.status(404).send('Subscription Settings page not found');
+  }
+});
+
 // Payroll route
 app.get('/payroll', (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -358,8 +378,8 @@ app.get('/payroll', (req, res) => {
   res.sendFile(__dirname + '/public/payroll.html');
 });
 
-// Analytics route
-app.get('/analytics', (req, res) => {
+// Analytics route with plan limits check
+app.get('/analytics', authenticateToken, checkAnalyticsAccess, (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');

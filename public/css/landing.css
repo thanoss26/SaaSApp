@@ -647,6 +647,33 @@ input:checked + .slider:before {
     box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
 }
 
+.pricing-card.free-tier {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    position: relative;
+}
+
+.pricing-card.free-tier::before {
+    content: '🎉';
+    position: absolute;
+    top: -15px;
+    right: 20px;
+    font-size: 1.5rem;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
 .pricing-badge {
     position: absolute;
     top: -12px;

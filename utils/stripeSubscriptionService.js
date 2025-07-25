@@ -623,11 +623,10 @@ class StripeSubscriptionService {
             
             // Update user's subscription status in database
             const { error } = await supabaseAdmin
-                .from('user_subscriptions')
+                .from('subscriptions')
                 .upsert({
                     user_id: subscription.metadata.user_id,
                     stripe_subscription_id: subscription.id,
-                    stripe_customer_id: subscription.customer,
                     status: subscription.status,
                     current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
                     current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
@@ -653,7 +652,7 @@ class StripeSubscriptionService {
             
             // Update subscription in database
             const { error } = await supabaseAdmin
-                .from('user_subscriptions')
+                .from('subscriptions')
                 .update({
                     status: subscription.status,
                     current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
@@ -681,10 +680,9 @@ class StripeSubscriptionService {
             
             // Update subscription status in database
             const { error } = await supabaseAdmin
-                .from('user_subscriptions')
+                .from('subscriptions')
                 .update({
-                    status: 'cancelled',
-                    cancelled_at: new Date().toISOString()
+                    status: 'cancelled'
                 })
                 .eq('stripe_subscription_id', subscription.id);
             
@@ -706,14 +704,13 @@ class StripeSubscriptionService {
             
             // Update payment status in database
             const { error } = await supabaseAdmin
-                .from('subscription_payments')
+                .from('payments')
                 .insert({
-                    stripe_invoice_id: invoice.id,
-                    stripe_subscription_id: invoice.subscription,
+                    stripe_payment_intent_id: invoice.payment_intent,
                     amount: invoice.amount_paid,
                     currency: invoice.currency,
                     status: 'succeeded',
-                    paid_at: new Date().toISOString()
+                    payment_method: 'stripe'
                 });
             
             if (error) {
@@ -734,14 +731,13 @@ class StripeSubscriptionService {
             
             // Update payment status in database
             const { error } = await supabaseAdmin
-                .from('subscription_payments')
+                .from('payments')
                 .insert({
-                    stripe_invoice_id: invoice.id,
-                    stripe_subscription_id: invoice.subscription,
+                    stripe_payment_intent_id: invoice.payment_intent,
                     amount: invoice.amount_due,
                     currency: invoice.currency,
                     status: 'failed',
-                    failure_reason: invoice.last_payment_error?.message || 'Payment failed'
+                    payment_method: 'stripe'
                 });
             
             if (error) {

@@ -11,7 +11,7 @@ router.post('/', authenticateToken, async (req, res) => {
         
         // Get user profile to check role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -101,7 +101,7 @@ router.post('/', authenticateToken, async (req, res) => {
 
         // Update user profile with organization_id
         const { error: updateError } = await supabase
-            .from('profiles')
+            .from('users')
             .update({ organization_id: organization.id })
             .eq('id', req.user.id);
 
@@ -136,7 +136,7 @@ router.get('/', authenticateToken, async (req, res) => {
         
         // Get user profile to check role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role')
             .eq('id', req.user.id)
             .single();
@@ -233,7 +233,7 @@ router.get('/dashboard-metrics', authenticateToken, requireOrganization, async (
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', req.user.id)
             .single();
@@ -305,7 +305,7 @@ router.get('/dashboard-metrics', authenticateToken, requireOrganization, async (
 
         // Get real employee count from profiles table for comparison
         const { data: employees, error: employeeError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('id')
             .eq('organization_id', profile.organization_id)
             .eq('is_active', true);
@@ -396,7 +396,7 @@ router.get('/stats', authenticateToken, async (req, res) => {
 
         // Get total members across all organizations
         const { count: totalMembers } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*', { count: 'exact', head: true })
             .not('organization_id', 'is', null);
 
@@ -472,7 +472,7 @@ router.get('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
 
         // Get all members of the organization
         const { data: members, error: membersError } = await supabase
-            .from('profiles')
+            .from('users')
             .select(`
                 id,
                 first_name,
@@ -523,7 +523,7 @@ router.get('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
         let creatorInfo = null;
         if (organization.organization_creator) {
             const { data: creator, error: creatorError } = await supabase
-                .from('profiles')
+                .from('users')
                 .select(`
                     id,
                     first_name,
@@ -571,7 +571,7 @@ router.get('/:id/members', authenticateToken, requireOrganizationOverviewAccess,
 
         // Get all members of the organization
         const { data: members, error: membersError } = await supabase
-            .from('profiles')
+            .from('users')
             .select(`
                 id,
                 first_name,
@@ -641,7 +641,7 @@ router.put('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
 
         // Check if user is admin or super_admin
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', userId)
             .single();
@@ -722,7 +722,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
         // Get user profile to check role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role')
             .eq('id', req.user.id)
             .single();
@@ -828,7 +828,7 @@ router.get('/:id/members', authenticateToken, async (req, res) => {
         const offset = (page - 1) * limit;
 
         const { data: members, error, count } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*', { count: 'exact' })
             .eq('organization_id', id)
             .range(offset, offset + limit - 1)
@@ -882,7 +882,7 @@ router.get('/:id/teams', authenticateToken, async (req, res) => {
 router.get('/invites/count', authenticateToken, requireOrganization, async (req, res) => {
     try {
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', req.user.id)
             .single();
@@ -916,7 +916,7 @@ router.get('/invites/count', authenticateToken, requireOrganization, async (req,
 router.get('/invites/link', authenticateToken, requireOrganization, async (req, res) => {
     try {
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', req.user.id)
             .single();
@@ -963,7 +963,7 @@ router.get('/invites/link', authenticateToken, requireOrganization, async (req, 
 router.post('/invites/generate', authenticateToken, requireOrganization, async (req, res) => {
     try {
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', req.user.id)
             .single();
@@ -1021,7 +1021,7 @@ router.post('/invites/send', authenticateToken, requireOrganization, requireInvi
         }
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, first_name, last_name')
             .eq('id', req.user.id)
             .single();
@@ -1033,7 +1033,7 @@ router.post('/invites/send', authenticateToken, requireOrganization, requireInvi
 
         // Check if user already exists - but allow invitations to existing users
         const { data: existingUser, error: userError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('id, organization_id')
             .eq('email', email)
             .single();
@@ -1110,7 +1110,7 @@ router.put('/:id', authenticateToken, requireOrganizationOverviewAccess, async (
 
         // Check if user is admin
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -1167,7 +1167,7 @@ router.delete('/:id', authenticateToken, requireOrganizationOverviewAccess, asyn
         
         // Check if user is admin
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -1215,7 +1215,7 @@ router.delete('/:id', authenticateToken, requireOrganizationOverviewAccess, asyn
         
         // Update profiles to remove organization_id (don't delete users)
         const { error: profilesError } = await supabaseAdmin
-            .from('profiles')
+            .from('users')
             .update({
                 organization_id: null,
                 role: 'user',
@@ -1277,7 +1277,7 @@ router.post('/add-offline-member', authenticateToken, async (req, res) => {
 
         // Get user profile to check role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -1301,7 +1301,7 @@ router.post('/add-offline-member', authenticateToken, async (req, res) => {
 
         // Check if email already exists in the organization
         const { data: existingMember, error: existingError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('id, email')
             .eq('email', email)
             .eq('organization_id', organization_id)
@@ -1392,7 +1392,7 @@ router.get('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
 
         // Get user profile to check permissions
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', userId)
             .single();
@@ -1404,7 +1404,7 @@ router.get('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
 
         // Get member details
         const { data: member, error: memberError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', memberId)
             .single();
@@ -1451,7 +1451,7 @@ router.post('/members/:id/remove', authenticateToken, requireOrganizationOvervie
 
         // Get user profile to check permissions
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', userId)
             .single();
@@ -1469,7 +1469,7 @@ router.post('/members/:id/remove', authenticateToken, requireOrganizationOvervie
 
         // Get member details
         const { data: member, error: memberError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', memberId)
             .single();
@@ -1488,7 +1488,7 @@ router.post('/members/:id/remove', authenticateToken, requireOrganizationOvervie
         // Prevent removing the last admin
         if (member.role === 'admin' || member.role === 'super_admin') {
             const { count: adminCount } = await supabase
-                .from('profiles')
+                .from('users')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', userProfile.organization_id)
                 .in('role', ['admin', 'super_admin']);
@@ -1507,7 +1507,7 @@ router.post('/members/:id/remove', authenticateToken, requireOrganizationOvervie
 
         // Remove member from organization by setting organization_id to null
         const { error: updateError } = await supabase
-            .from('profiles')
+            .from('users')
             .update({
                 organization_id: null,
                 role: 'organization_member', // Reset to default role
@@ -1551,7 +1551,7 @@ router.put('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
 
         // Get user profile to check permissions
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', userId)
             .single();
@@ -1569,7 +1569,7 @@ router.put('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
 
         // Get member details
         const { data: member, error: memberError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', memberId)
             .single();
@@ -1594,7 +1594,7 @@ router.put('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
         // Prevent removing the last admin
         if (member.role === 'admin' && updateData.role && updateData.role !== 'admin') {
             const { count: adminCount } = await supabase
-                .from('profiles')
+                .from('users')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', userProfile.organization_id)
                 .in('role', ['admin', 'super_admin']);
@@ -1646,7 +1646,7 @@ router.put('/members/:id', authenticateToken, requireOrganizationOverviewAccess,
 
         // Update member
         const { data: updatedMember, error: updateError } = await supabase
-            .from('profiles')
+            .from('users')
             .update(updateFields)
             .eq('id', memberId)
             .select()

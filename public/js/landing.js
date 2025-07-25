@@ -182,60 +182,41 @@ function initPricingToggle() {
     
     // Update pricing display based on billing period
     function updatePricingDisplay(isAnnual) {
-        if (!subscriptionPlans) {
-            console.log('❌ No subscription plans available');
+        if (!window.subscriptionPlans || !Array.isArray(window.subscriptionPlans)) {
+            console.log('⚠️ No subscription plans available for display');
             return;
         }
         
-        console.log('🔄 Updating pricing display:', isAnnual ? 'Annual' : 'Monthly');
+        console.log('🔄 Updating pricing display with plans:', window.subscriptionPlans);
         
-        const pricingCards = document.querySelectorAll('.pricing-card');
-        console.log('📋 Found pricing cards:', pricingCards.length);
-        
-        pricingCards.forEach((card, index) => {
-            const plan = subscriptionPlans[index];
-            if (!plan) {
-                console.log('❌ No plan found for index:', index);
+        window.subscriptionPlans.forEach(plan => {
+            const card = document.querySelector(`.pricing-card[data-plan="${plan.id}"]`);
+            if (!card) {
+                console.log(`⚠️ No card found for plan: ${plan.id}`);
                 return;
             }
             
-            const priceElement = card.querySelector('.amount');
-            const periodElement = card.querySelector('.period');
-            const currencyElement = card.querySelector('.currency');
+            const price = isAnnual ? plan.annual : plan.monthly;
+            console.log(`📊 Updating ${plan.id} plan with price:`, price);
             
-            console.log(`📊 Updating card ${index + 1}:`, {
-                plan: plan.name,
-                priceElement: !!priceElement,
-                periodElement: !!periodElement,
-                currencyElement: !!currencyElement
-            });
-            
-            if (priceElement && periodElement && currencyElement) {
-                const pricing = isAnnual ? plan.annual : plan.monthly;
-                
-                // Update price
-                priceElement.textContent = pricing.amount.toFixed(0);
-                
-                // Update period
-                periodElement.textContent = isAnnual ? '/year' : '/month';
-                
-                // Update currency (should be €)
-                currencyElement.textContent = '€';
-                
-                // Update savings badge for annual
-                const savingsBadge = card.querySelector('.savings-badge');
-                if (savingsBadge) {
-                    if (isAnnual && plan.annual.savings) {
-                        savingsBadge.textContent = `Save ${plan.annual.savings}%`;
-                        savingsBadge.style.display = 'inline-block';
-                    } else {
-                        savingsBadge.style.display = 'none';
-                    }
+            // Update price display
+            const priceElem = card.querySelector('.price');
+            if (priceElem) {
+                if (plan.id === 'free') {
+                    // For Free plan, show "Free" text
+                    priceElem.innerHTML = `<span class="amount">Free</span>`;
+                } else {
+                    // For paid plans, show the amount and interval
+                    const currency = price.currency === 'eur' ? '€' : '$';
+                    const interval = price.interval === 'month' ? 'month' : 'year';
+                    priceElem.innerHTML = `<span class="currency">${currency}</span><span class="amount">${price.amount}</span><span class="period">/${interval}</span>`;
                 }
-                
-                console.log(`✅ Updated ${plan.name}: €${pricing.amount.toFixed(0)}${isAnnual ? '/year' : '/month'}`);
-            } else {
-                console.log(`❌ Missing elements for ${plan.name}`);
+            }
+            
+            // Update displayPrice if present
+            const displayPriceElem = card.querySelector('.display-price');
+            if (displayPriceElem && price.displayPrice) {
+                displayPriceElem.textContent = price.displayPrice;
             }
         });
     }
@@ -272,6 +253,13 @@ function initSubscriptionButtons() {
             const isAnnual = document.getElementById('billingToggle')?.checked || false;
             
             console.log('🛒 Starting subscription for:', plan, isAnnual ? 'annual' : 'monthly');
+            
+            // Handle free tier differently
+            if (plan === 'free') {
+                console.log('🎉 Free tier selected, redirecting to signup');
+                window.location.href = '/signup.html?plan=free';
+                return;
+            }
             
             // Check if user is authenticated
             const token = localStorage.getItem('supabase.auth.token');
