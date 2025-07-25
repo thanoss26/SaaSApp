@@ -1,148 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Subscription Settings - Chronos HR</title>
-    <link rel="stylesheet" href="css/settings.css">
-    <link rel="stylesheet" href="css/subscription-settings.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription Settings - ChronosHR</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
+  <link rel="stylesheet" href="css/shared.css?v=1.0.1">
+  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+  <link rel="stylesheet" href="css/subscription-settings.css">
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- i18next -->
+  <script src="js/i18n-cdn.js"></script>
+  <script src="js/global-language-switcher.js"></script>
 </head>
-<body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <div class="header-content">
-                <div class="header-left">
-                    <a href="dashboard.html" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Back to Dashboard</span>
-                    </a>
-                    <h1>Subscription Settings</h1>
-                </div>
-                <div class="header-right">
-                    <div class="user-info">
-                        <span id="userName">Loading...</span>
-                        <button id="logoutBtn" class="logout-btn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Current Subscription -->
-            <section class="subscription-section">
-                <div class="section-header">
-                    <h2>Current Subscription</h2>
-                    <p>Manage your subscription and billing information</p>
-                </div>
-                
-                <div class="subscription-card" id="subscriptionCard">
-                    <div class="loading-spinner">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading subscription...</span>
-                    </div>
-                </div>
-            </section>
+<body class="dashboard-bg">
+  <!-- ANTI-FLICKER LOADING OVERLAY -->
+  <div class="anti-flicker-overlay" id="anti-flicker-overlay">
+    <div class="anti-flicker-spinner"></div>
+    <div class="anti-flicker-text">Setting up navigation...</div>
+  </div>
 
-            <!-- Available Plans -->
-            <section class="plans-section">
-                <div class="section-header">
-                    <h2>Available Plans</h2>
-                    <p>Choose the plan that best fits your needs</p>
-                </div>
-                
-                <div class="plans-grid" id="plansGrid">
-                    <div class="loading-spinner">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading plans...</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Payment History -->
-            <section class="payments-section">
-                <div class="section-header">
-                    <h2>Payment History</h2>
-                    <p>View your past payments and invoices</p>
-                </div>
-                
-                <div class="payments-table" id="paymentsTable">
-                    <div class="loading-spinner">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <span>Loading payment history...</span>
-                    </div>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Modals -->
-    <div id="cancelModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Cancel Subscription</h3>
-                <button class="close-btn" onclick="closeModal('cancelModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to cancel your subscription?</p>
-                <div class="cancel-options">
-                    <label class="radio-option">
-                        <input type="radio" name="cancelType" value="end_of_period" checked>
-                        <span class="radio-custom"></span>
-                        <div class="option-content">
-                            <strong>Cancel at end of billing period</strong>
-                            <small>You'll continue to have access until your current period ends</small>
-                        </div>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="cancelType" value="immediately">
-                        <span class="radio-custom"></span>
-                        <div class="option-content">
-                            <strong>Cancel immediately</strong>
-                            <small>Your access will end immediately (no refund)</small>
-                        </div>
-                    </label>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('cancelModal')">Keep Subscription</button>
-                <button class="btn btn-danger" onclick="confirmCancel()">Cancel Subscription</button>
-            </div>
+  <div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="enhanced-sidebar" id="enhanced-sidebar">
+      <div class="enhanced-sidebar-header">
+        <div class="enhanced-sidebar-logo">
+          <div class="logo-icon">⏱️</div>
+          <span class="logo-text">Chronos HR</span>
         </div>
-    </div>
-
-    <div id="changePlanModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Change Plan</h3>
-                <button class="close-btn" onclick="closeModal('changePlanModal')">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <p>Select a new plan for your subscription:</p>
-                <div class="plan-options" id="planOptions">
-                    <!-- Plan options will be populated here -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('changePlanModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmChangePlan()">Change Plan</button>
-            </div>
+        <div class="enhanced-sidebar-controls">
+          <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
+            <i class="fas fa-bars"></i>
+          </button>
+          <button class="enhanced-theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon" id="theme-icon"></i>
+          </button>
         </div>
+      </div>
+
+      <nav class="enhanced-sidebar-nav">
+        <a href="/dashboard" class="nav-item" data-page="dashboard">
+          <i class="fas fa-tachometer-alt"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="/analytics" class="nav-item" data-page="analytics">
+          <i class="fas fa-chart-bar"></i>
+          <span>Analytics</span>
+        </a>
+        <a href="/users" class="nav-item" data-page="users">
+          <i class="fas fa-users"></i>
+          <span>User Management</span>
+        </a>
+        <a href="/payroll" class="nav-item" data-page="payroll">
+          <i class="fas fa-dollar-sign"></i>
+          <span>Payroll</span>
+        </a>
+        <a href="/organizations" class="nav-item" data-page="organizations">
+          <i class="fas fa-building"></i>
+          <span>Organizations</span>
+        </a>
+        <a href="/settings" class="nav-item" data-page="settings">
+          <i class="fas fa-cog"></i>
+          <span>Settings</span>
+        </a>
+        <a href="/subscription-settings" class="nav-item active" data-page="subscription-settings">
+          <i class="fas fa-credit-card"></i>
+          <span>Subscription</span>
+        </a>
+        <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
+          <i class="fas fa-envelope"></i>
+          <span>Mailbox</span>
+          <span class="mailbox-badge" id="mailbox-badge" style="display: none;">0</span>
+        </a>
+      </nav>
+
+      <script src="js/anti-flicker.js"></script>
+
+      <div class="enhanced-sidebar-footer">
+        <div class="enhanced-sidebar-user">
+          <div class="user-avatar">TV</div>
+          <div class="user-details">
+            <div class="user-name">Loading...</div>
+            <div class="user-email">Loading...</div>
+          </div>
+        </div>
+        <button class="enhanced-logout-btn" id="logout-btn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span>Log out</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Mailbox Modal -->
+    <div id="mailbox-modal" class="mailbox-modal">
+      <div class="mailbox-modal-content">
+        <div class="mailbox-modal-header">
+          <h2><i class="fas fa-envelope"></i> Mailbox</h2>
+          <button class="mailbox-close-btn" id="mailbox-close-btn">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="mailbox-modal-body">
+          <div class="mailbox-tabs">
+            <button class="mailbox-tab active" data-tab="invitations">
+              <i class="fas fa-user-plus"></i>
+              Invitations
+            </button>
+            <button class="mailbox-tab" data-tab="notifications">
+              <i class="fas fa-bell"></i>
+              Notifications
+            </button>
+          </div>
+          
+          <div class="mailbox-content">
+            <!-- Invitations Tab -->
+            <div id="invitations-tab" class="mailbox-tab-content active">
+              <div class="mailbox-loading" id="invitations-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading invitations...</span>
+              </div>
+              <div class="mailbox-empty" id="invitations-empty" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <span>No invitations found</span>
+              </div>
+              <div class="mailbox-list" id="invitations-list" style="display: none;">
+                <!-- Invitations will be populated here -->
+              </div>
+            </div>
+            
+            <!-- Notifications Tab -->
+            <div id="notifications-tab" class="mailbox-tab-content">
+              <div class="mailbox-loading" id="notifications-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading notifications...</span>
+              </div>
+              <div class="mailbox-empty" id="notifications-empty" style="display: none;">
+                <i class="fas fa-bell-slash"></i>
+                <span>No notifications</span>
+              </div>
+              <div class="mailbox-list" id="notifications-list" style="display: none;">
+                <!-- Notifications will be populated here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Notification Container -->
-    <div id="notificationContainer" class="notification-container"></div>
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <!-- Topbar -->
+      <header class="dashboard-topbar">
+        <h1 class="dashboard-title">Subscription Settings</h1>
+        <div class="dashboard-search">
+          <input type="text" placeholder="Search subscription options..." />
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="dashboard-user">
+          <div class="user-avatar">TV</div>
+          <div class="user-info">
+            <div class="user-name">Loading...</div>
+            <div class="user-role">Loading...</div>
+          </div>
+        </div>
+      </header>
 
-    <script src="js/subscription-settings.js"></script>
+      <!-- Subscription Content -->
+      <div class="subscription-container">
+        <!-- Current Subscription Status -->
+        <div class="subscription-section">
+          <div class="section-header">
+            <h2><i class="fas fa-info-circle"></i> Current Subscription</h2>
+          </div>
+          <div class="subscription-status-card" id="current-subscription">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Loading subscription status...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Available Plans -->
+        <div class="subscription-section">
+          <div class="section-header">
+            <h2><i class="fas fa-list"></i> Available Plans</h2>
+            <div class="billing-toggle">
+              <span class="toggle-label">Billing:</span>
+              <div class="toggle-switch">
+                <input type="checkbox" id="billing-toggle" />
+                <label for="billing-toggle">
+                  <span class="toggle-option">Monthly</span>
+                  <span class="toggle-option">Annual</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="plans-grid" id="plans-grid">
+            <div class="loading-spinner">
+              <i class="fas fa-spinner fa-spin"></i>
+              <span>Loading plans...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subscription Actions -->
+        <div class="subscription-section">
+          <div class="section-header">
+            <h2><i class="fas fa-cog"></i> Subscription Management</h2>
+          </div>
+          <div class="actions-grid">
+            <div class="action-card" onclick="openBillingPortal()">
+              <div class="action-icon">
+                <i class="fas fa-credit-card"></i>
+              </div>
+              <div class="action-content">
+                <h3>Manage Billing</h3>
+                <p>Update payment methods, view invoices, and manage your billing information</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </div>
+            
+            <div class="action-card" onclick="downloadInvoices()">
+              <div class="action-icon">
+                <i class="fas fa-download"></i>
+              </div>
+              <div class="action-content">
+                <h3>Download Invoices</h3>
+                <p>Access and download your billing history and invoices</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </div>
+            
+            <div class="action-card" onclick="contactSupport()">
+              <div class="action-icon">
+                <i class="fas fa-headset"></i>
+              </div>
+              <div class="action-content">
+                <h3>Get Support</h3>
+                <p>Contact our support team for subscription-related questions</p>
+              </div>
+              <div class="action-arrow">
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Subscription Modal -->
+  <div id="subscriptionModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title">Subscribe to Plan</h2>
+        <button class="modal-close" onclick="closeModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div id="modal-plan-details">
+          <!-- Plan details will be populated here -->
+        </div>
+        <div class="modal-actions">
+          <button class="btn-secondary" onclick="closeModal()">Cancel</button>
+          <button class="btn-primary" id="modal-subscribe-btn" onclick="subscribeToPlan()">
+            <i class="fas fa-credit-card"></i>
+            Subscribe Now
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-content">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Processing...</span>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" class="notification-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/subscription-settings.js"></script>
+  <script src="js/sidebar.js"></script>
 </body>
+
 </html> 

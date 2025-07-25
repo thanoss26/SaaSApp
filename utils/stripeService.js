@@ -27,7 +27,7 @@ class StripeService {
             
             // First check if we already have a Stripe customer ID for this user
             const { data: profile, error: profileError } = await supabase
-                .from('profiles')
+                .from('users')
                 .select('stripe_customer_id')
                 .eq('id', userId)
                 .single();
@@ -55,7 +55,7 @@ class StripeService {
 
             // Save customer ID to database
             const { error: updateError } = await supabase
-                .from('profiles')
+                .from('users')
                 .update({ stripe_customer_id: customer.id })
                 .eq('id', userId);
 

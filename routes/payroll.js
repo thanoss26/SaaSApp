@@ -23,7 +23,7 @@ router.get('/', authenticateToken, requireOrganization, async (req, res) => {
         console.log('💰 Fetching payrolls...');
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -89,7 +89,7 @@ router.get('/stats', authenticateToken, requireOrganization, async (req, res) =>
         console.log('📊 Fetching payroll statistics...');
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -156,7 +156,7 @@ router.get('/employees', authenticateToken, requireOrganization, async (req, res
         console.log('👥 Fetching employees for payroll...');
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -173,7 +173,7 @@ router.get('/employees', authenticateToken, requireOrganization, async (req, res
         }
 
         const { data: employees, error } = await supabase
-            .from('profiles')
+            .from('users')
             .select('id, first_name, last_name, email, role')
             .eq('organization_id', profile.organization_id)
             .eq('is_active', true)
@@ -222,7 +222,7 @@ router.post('/', authenticateToken, requireOrganization, async (req, res) => {
         console.log('🔍 User ID from request:', req.user.id);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -244,7 +244,7 @@ router.post('/', authenticateToken, requireOrganization, async (req, res) => {
         console.log('🔍 Verifying employee:', employee_id, 'belongs to organization:', profile.organization_id);
         
         const { data: employee, error: employeeError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('id, organization_id')
             .eq('id', employee_id)
             .eq('organization_id', profile.organization_id)
@@ -330,7 +330,7 @@ router.post('/:id/proceed-to-payment', authenticateToken, async (req, res) => {
         
         // Get user profile to check payment settings
         const { data: userProfile, error: profileError } = await supabaseAdmin
-            .from('profiles')
+            .from('users')
             .select('*')
             .eq('id', req.user.id)
             .single();
@@ -539,7 +539,7 @@ router.get('/:id', authenticateToken, requireOrganization, async (req, res) => {
         console.log('📋 Fetching payroll details:', req.params.id);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -596,7 +596,7 @@ router.post('/:id/create-payment-intent', authenticateToken, requireOrganization
         console.log('💳 Creating payment intent for payroll:', req.params.id);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -693,7 +693,7 @@ router.post('/:id/process-stripe-payment', authenticateToken, requireOrganizatio
         }
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -795,7 +795,7 @@ router.get('/customer/:customerId/payment-methods', authenticateToken, requireOr
         console.log('💳 Fetching payment methods for customer:', req.params.customerId);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role')
             .eq('id', req.user.id)
             .single();
@@ -828,7 +828,7 @@ router.post('/customer/:customerId/setup-intent', authenticateToken, requireOrga
         console.log('🔧 Creating setup intent for customer:', req.params.customerId);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role')
             .eq('id', req.user.id)
             .single();
@@ -867,7 +867,7 @@ router.get('/customer/:customerId/payments', authenticateToken, requireOrganizat
         console.log('📊 Fetching payment history for customer:', req.params.customerId);
         
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role')
             .eq('id', req.user.id)
             .single();
@@ -903,7 +903,7 @@ router.post('/:id/refund', authenticateToken, requireOrganization, async (req, r
         const { amount, reason } = req.body;
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();
@@ -986,7 +986,7 @@ router.patch('/:id/status', authenticateToken, requireOrganization, async (req, 
         }
 
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('role, organization_id')
             .eq('id', req.user.id)
             .single();

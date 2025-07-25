@@ -14,7 +14,7 @@ router.get('/invitations', authenticateToken, async (req, res) => {
 
         // Get invitations for this user's email
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('email')
             .eq('id', userId)
             .single();
@@ -124,7 +124,7 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
 
         // Verify the invitation is for the current user's email
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('email')
             .eq('id', userId)
             .single();
@@ -151,7 +151,7 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
 
         // Update the user's profile to join the organization
         const { error: profileUpdateError } = await supabase
-            .from('profiles')
+            .from('users')
             .update({
                 organization_id: invitation.organization_id,
                 role: invitation.role || 'organization_member',
@@ -200,14 +200,14 @@ router.post('/invitations/:id/accept', authenticateToken, async (req, res) => {
         try {
             // Get the admin's profile who sent the invitation
             const { data: adminProfile, error: adminError } = await supabase
-                .from('profiles')
+                .from('users')
                 .select('first_name, last_name, email')
                 .eq('id', invitation.created_by)
                 .single();
 
             // Get the user's profile who accepted the invitation
             const { data: userProfile, error: userError } = await supabase
-                .from('profiles')
+                .from('users')
                 .select('first_name, last_name, email')
                 .eq('id', userId)
                 .single();
@@ -290,7 +290,7 @@ router.post('/invitations/:id/decline', authenticateToken, async (req, res) => {
 
         // Verify the invitation is for the current user's email
         const { data: userProfile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('email')
             .eq('id', userId)
             .single();

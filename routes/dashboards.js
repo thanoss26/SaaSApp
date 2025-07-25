@@ -11,6 +11,8 @@ const {
   requireNotificationsAccess
 } = require('../middleware/auth');
 
+const { checkAnalyticsAccess } = require('../middleware/planLimits');
+
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -23,7 +25,7 @@ router.get('/', authenticateToken, async (req, res) => {
         
         // Get user's organization
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', user.id)
             .single();
@@ -60,7 +62,7 @@ router.get('/:slug', authenticateToken, async (req, res) => {
         
         // Get user's organization
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', user.id)
             .single();
@@ -116,7 +118,7 @@ router.post('/', authenticateToken, async (req, res) => {
         
         // Get user's organization
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();
@@ -174,7 +176,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();
@@ -232,7 +234,7 @@ router.delete('/:id', authenticateToken, async (req, res) => {
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();
@@ -276,7 +278,7 @@ router.get('/:dashboardId/widgets', authenticateToken, async (req, res) => {
         
         // Get user's organization
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id')
             .eq('id', user.id)
             .single();
@@ -330,7 +332,7 @@ router.post('/:dashboardId/widgets', authenticateToken, async (req, res) => {
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();
@@ -391,7 +393,7 @@ router.put('/widgets/:widgetId', authenticateToken, async (req, res) => {
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();
@@ -438,7 +440,7 @@ router.delete('/widgets/:widgetId', authenticateToken, async (req, res) => {
         
         // Get user's organization and role
         const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+            .from('users')
             .select('organization_id, role')
             .eq('id', user.id)
             .single();

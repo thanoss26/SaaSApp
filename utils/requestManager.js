@@ -166,7 +166,7 @@ class RequestManager {
     // Get users with optimized query
     async getUsers({ organizationId, role }) {
         let query = supabase
-            .from('profiles')
+            .from('users')
             .select(`
                 *,
                 employment_details (
@@ -206,7 +206,7 @@ class RequestManager {
     // Get user statistics
     async getUserStats({ organizationId, role }) {
         let baseQuery = supabase
-            .from('profiles')
+            .from('users')
             .select('*');
 
         if (role !== 'super_admin' && organizationId) {
@@ -225,7 +225,7 @@ class RequestManager {
     // Create user with transaction
     async createUser(userData) {
         const { data, error } = await supabase
-            .from('profiles')
+            .from('users')
             .insert([userData])
             .select()
             .single();
@@ -243,7 +243,7 @@ class RequestManager {
     // Update user
     async updateUser({ id, updateData }) {
         const { data, error } = await supabase
-            .from('profiles')
+            .from('users')
             .update(updateData)
             .eq('id', id)
             .select()
@@ -262,7 +262,7 @@ class RequestManager {
     // Delete user
     async deleteUser(id) {
         const { error } = await supabase
-            .from('profiles')
+            .from('users')
             .delete()
             .eq('id', id);
 

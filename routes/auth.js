@@ -49,7 +49,7 @@ router.post('/register', [
 
     // Check if user already exists
     const { data: existingUser } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id')
       .eq('email', email)
       .single();
@@ -88,7 +88,7 @@ router.post('/register', [
     };
 
     const { error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from('users')
       .insert(profileData);
 
     if (profileError) {
@@ -131,7 +131,7 @@ router.post('/register', [
     console.log('🔍 Fetching profile for newly registered user ID:', user.id);
     
     const { data: newUserProfile, error: newProfileError } = await supabaseAdmin
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', user.id)
       .single();
@@ -228,7 +228,7 @@ router.post('/login', [
     console.log('🔍 Fetching profile for user ID:', data.user.id);
     
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', data.user.id)
       .single();
@@ -303,7 +303,7 @@ router.post('/join-organization', authenticateToken, [
 
     // Update user profile with organization_id
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from('users')
       .update({ 
         organization_id: organization.id,
         role: 'organization_member'
@@ -342,7 +342,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 
     console.log('🔍 Fetching profile for user:', userId);
     const { data: profile, error } = await supabase
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single();
@@ -387,7 +387,7 @@ router.put('/profile', authenticateToken, [
     if (last_name) updateData.last_name = last_name;
 
     const { data: profile, error } = await supabase
-      .from('profiles')
+      .from('users')
       .update(updateData)
       .eq('id', userId)
       .select()
@@ -428,7 +428,7 @@ router.post('/promote-user', authenticateToken, [
 
     // Get current user's profile to check role
     const { data: currentProfile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('role, organization_id')
       .eq('id', currentUser.id)
       .single();
@@ -444,7 +444,7 @@ router.post('/promote-user', authenticateToken, [
 
     // Get target user's profile
     const { data: targetProfile, error: targetError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', userId)
       .single();
@@ -465,7 +465,7 @@ router.post('/promote-user', authenticateToken, [
 
     // Update user role
     const { data: updatedProfile, error: updateError } = await supabaseAdmin
-      .from('profiles')
+      .from('users')
       .update({ role: newRole })
       .eq('id', userId)
       .select()
@@ -531,7 +531,7 @@ router.get('/verify', async (req, res) => {
 
     // Get user profile
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
+      .from('users')
       .select('*')
       .eq('id', user.id)
       .single();
@@ -582,7 +582,7 @@ router.post('/create-organization', authenticateToken, [
 
     // Get user profile to check role
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('role, organization_id')
       .eq('id', userId)
       .single();
@@ -658,7 +658,7 @@ router.post('/create-organization', authenticateToken, [
 
     // Update user profile with organization_id
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from('users')
       .update({ organization_id: organization.id })
       .eq('id', userId);
 
@@ -695,7 +695,7 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
 
     // Get user profile to check role and organization
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('role, organization_id')
       .eq('id', userId)
       .single();
@@ -767,7 +767,7 @@ router.post('/generate-invite', authenticateToken, requireInviteUsersAccess, asy
 
     // Check if user already exists - but allow invitations to existing users
     const { data: existingUser } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id, organization_id')
       .eq('email', email)
       .single();
@@ -968,7 +968,7 @@ router.post('/accept-invite', [
 
     // Check if user already exists
     const { data: existingUser } = await supabase
-      .from('profiles')
+      .from('users')
       .select('id, organization_id')
       .eq('email', invite.email)
       .single();
@@ -981,7 +981,7 @@ router.post('/accept-invite', [
       user = { id: existingUser.id };
       
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from('users')
         .update({
           organization_id: invite.organization_id,
           role: 'organization_member',
@@ -1016,7 +1016,7 @@ router.post('/accept-invite', [
       };
 
       const { error: insertError } = await supabase
-        .from('profiles')
+        .from('users')
         .insert(profileData);
 
       profileError = insertError;
@@ -1098,7 +1098,7 @@ router.post('/accept-invite', [
       // Clean up if employee creation/update fails
       if (!existingUser) {
         await supabase.auth.admin.deleteUser(user.id);
-        await supabase.from('profiles').delete().eq('id', user.id);
+        await supabase.from('users').delete().eq('id', user.id);
       }
       return res.status(500).json({ error: 'Failed to create/update employee record: ' + employeeError.message });
     }
@@ -1138,7 +1138,7 @@ router.post('/leave-organization', authenticateToken, async (req, res) => {
     
     // Get current user profile
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('users')
       .select('organization_id, role')
       .eq('id', req.user.id)
       .single();
@@ -1161,7 +1161,7 @@ router.post('/leave-organization', authenticateToken, async (req, res) => {
 
     // Update user profile to remove organization_id
     const { error: updateError } = await supabase
-      .from('profiles')
+      .from('users')
       .update({ 
         organization_id: null,
         updated_at: new Date().toISOString()
@@ -1234,7 +1234,7 @@ router.post('/update-payment-settings', authenticateToken, async (req, res) => {
         
         // Update profile with payment information
         const { data: profile, error: profileError } = await supabaseAdmin
-            .from('profiles')
+            .from('users')
             .update({
                 iban: iban || null,
                 bank_name: bank_name || null,
