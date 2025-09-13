@@ -117,42 +117,10 @@ class ProfileManager {
             statusText.textContent = 'Inactive';
         }
 
-        // Update topbar dropdown user information
-        this.updateTopbarDropdown(user);
-
         // Show edit button for admins
         if (user.role === 'admin' || user.role === 'super_admin') {
             document.getElementById('edit-profile-btn').style.display = 'inline-flex';
         }
-    }
-
-    updateTopbarDropdown(user) {
-        console.log('🔄 Updating topbar dropdown with user info...');
-        
-        const fullName = `${user.first_name} ${user.last_name}`;
-        const initials = this.getInitials(user.first_name, user.last_name);
-        const formattedRole = this.formatRole(user.role);
-
-        // Update topbar user info
-        const userNameElement = document.getElementById('user-name');
-        const userRoleElement = document.getElementById('user-role');
-        const userAvatarElement = document.getElementById('user-avatar');
-
-        if (userNameElement) userNameElement.textContent = fullName;
-        if (userRoleElement) userRoleElement.textContent = formattedRole;
-        if (userAvatarElement) userAvatarElement.textContent = initials;
-
-        // Update dropdown user info
-        const dropdownNameElement = document.getElementById('dropdown-name');
-        const dropdownEmailElement = document.getElementById('dropdown-email');
-        const dropdownAvatarElement = document.getElementById('dropdown-avatar');
-
-        if (dropdownNameElement) dropdownNameElement.textContent = fullName;
-        if (dropdownEmailElement) dropdownEmailElement.textContent = user.email;
-        if (dropdownAvatarElement) dropdownAvatarElement.textContent = initials;
-
-
-        console.log('✅ Topbar dropdown updated successfully');
     }
 
     updateProfileDetails(user) {

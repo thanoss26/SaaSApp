@@ -5,20 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chronos HR - My Profile</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=1.1.1">
+  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
   <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
-  <link rel="stylesheet" href="css/dark-mode.css?v=1.0.6">
-  <script>
-    // Immediate theme application to prevent flash of light content
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-  </script>
   <link rel="stylesheet" href="css/profile.css?v=1.0.1">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -36,6 +25,9 @@
         <div class="enhanced-sidebar-controls">
           <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
             <i class="fas fa-bars"></i>
+          </button>
+          <button class="enhanced-theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon" id="theme-icon"></i>
           </button>
         </div>
       </div>
@@ -77,11 +69,6 @@
       </nav>
 
       <div class="enhanced-sidebar-footer">
-        <div class="footer-theme-toggle">
-          <button class="enhanced-theme-toggle" id="theme-toggle">
-            <i class="fas fa-moon" id="theme-icon"></i>
-          </button>
-        </div>
         <div class="enhanced-sidebar-user">
           <div class="user-avatar">TV</div>
           <div class="user-details">
@@ -105,47 +92,14 @@
           <input type="text" placeholder="Search..." disabled />
           <i class="fas fa-search"></i>
         </div>
-        <div class="dashboard-user" id="dashboardUserTrigger">
-          <div class="user-avatar" id="user-avatar">TV</div>
+        <div class="dashboard-user">
+          <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User"
+            class="user-avatar" />
           <div class="user-info">
-            <span class="user-name" id="user-name">Loading...</span>
-            <span class="user-role" id="user-role">Loading...</span>
+            <span class="user-name">Loading...</span>
+            <span class="user-role">Loading...</span>
           </div>
-          <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
-          
-          <!-- User Dropdown Menu -->
-          <div class="user-dropdown-menu" id="userDropdownMenu" style="display: none;">
-            <div class="dropdown-header">
-              <div class="dropdown-avatar">
-                <div class="user-avatar" id="dropdown-avatar">TV</div>
-              </div>
-              <div class="dropdown-details">
-                <div class="dropdown-name" id="dropdown-name">Loading...</div>
-                <div class="dropdown-email" id="dropdown-email">Loading...</div>
-              </div>
-            </div>
-            
-            <div class="dropdown-divider"></div>
-            
-            <div class="dropdown-items">
-              <a href="#" class="dropdown-item" id="profile-menu-item">
-                <i class="fas fa-user"></i>
-                <span>My Profile</span>
-              </a>
-              
-              <a href="#" class="dropdown-item" id="settings-menu-item">
-                <i class="fas fa-cog"></i>
-                <span>Settings</span>
-              </a>
-              
-              <div class="dropdown-divider"></div>
-              
-              <a href="#" class="dropdown-item logout-item" id="logout-menu-item">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Log Out</span>
-              </a>
-            </div>
-          </div>
+          <i class="fas fa-chevron-down"></i>
         </div>
       </header>
 
@@ -276,7 +230,6 @@
 
   <!-- Scripts -->
   <script src="js/shared.js"></script>
-  <script src="js/dropdown.js"></script>
   <script src="js/profile.js"></script>
 </body>
 

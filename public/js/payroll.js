@@ -642,6 +642,8 @@ class PayrollManager {
             console.log('✅ Modal displayed');
             
             // Add visual debugging
+            modal.style.border = '3px solid red';
+            modal.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
             
             // Set default values
             this.setDefaultValues();

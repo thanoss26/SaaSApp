@@ -1150,10 +1150,9 @@ class EmployeeHub {
         const organizationsNav = document.querySelector('a[href="/organizations"]');
         const profileNav = document.querySelector('a[href="/profile"]');
         const settingsNav = document.querySelector('a[href="/settings"]');
-        const subscriptionNav = document.querySelector('a[href="/subscription-settings"]');
 
         // Hide all navigation items first
-        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, profileNav, settingsNav, subscriptionNav].forEach(nav => {
+        [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, profileNav, settingsNav].forEach(nav => {
             if (nav) {
                 nav.style.display = 'none';
                 nav.style.visibility = 'hidden';
@@ -1162,7 +1161,7 @@ class EmployeeHub {
         });
 
         if (this.currentUser.role === 'super_admin') {
-            // Super Admin sees: Dashboard, Analytics, User Management, Profile, Settings (NO SUBSCRIPTION)
+            // Super Admin sees: Dashboard, Analytics, User Management, Profile, Settings
             const profileNav = document.querySelector('a[href="/profile"]');
             [dashboardNav, analyticsNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
@@ -1171,14 +1170,6 @@ class EmployeeHub {
                     nav.style.opacity = '1';
                 }
             });
-            
-            // Hide Subscription for super admin
-            if (subscriptionNav) {
-                subscriptionNav.style.display = 'none';
-                subscriptionNav.style.visibility = 'hidden';
-                subscriptionNav.style.opacity = '0';
-                console.log('❌ Subscription hidden for super admin');
-            }
             
             // Show User Management for super admin
             if (usersNav) {
@@ -1199,9 +1190,9 @@ class EmployeeHub {
             
             console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Profile, Settings');
         } else if (this.currentUser.role === 'admin') {
-            // Admin sees: Dashboard, Analytics, Payroll, Organizations, Profile, Settings, Subscription
+            // Admin sees: Dashboard, Analytics, Payroll, Organizations, Profile, Settings
             const profileNav = document.querySelector('a[href="/profile"]');
-            [dashboardNav, analyticsNav, payrollNav, organizationsNav, profileNav, settingsNav, subscriptionNav].forEach(nav => {
+            [dashboardNav, analyticsNav, payrollNav, organizationsNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
                     nav.style.display = 'flex';
                     nav.style.visibility = 'visible';
@@ -1215,11 +1206,11 @@ class EmployeeHub {
                 console.log('🗑️ Completely removed User Management from shared.js for Admin role');
             }
             
-            console.log('✅ Admin navigation: Dashboard, Analytics, Payroll, Organizations, Profile, Settings, Subscription');
+            console.log('✅ Admin navigation: Dashboard, Analytics, Payroll, Organizations, Profile, Settings');
         } else if (this.currentUser.role === 'manager') {
-            // Manager sees: Dashboard, Analytics, Payroll, Profile, Settings, Subscription (no Organizations)
+            // Manager sees: Dashboard, Analytics, Payroll, Profile, Settings (no Organizations)
             const profileNav = document.querySelector('a[href="/profile"]');
-            [dashboardNav, analyticsNav, payrollNav, profileNav, settingsNav, subscriptionNav].forEach(nav => {
+            [dashboardNav, analyticsNav, payrollNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
                     nav.style.display = 'flex';
                     nav.style.visibility = 'visible';
@@ -1235,11 +1226,11 @@ class EmployeeHub {
                 }
             });
             
-            console.log('✅ Manager navigation: Dashboard, Analytics, Payroll, Profile, Settings, Subscription');
+            console.log('✅ Manager navigation: Dashboard, Analytics, Payroll, Profile, Settings');
         } else if (this.currentUser.role === 'organization_member') {
-            // Organization Member sees: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings, Subscription
+            // Organization Member sees: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings
             const profileNav = document.querySelector('a[href="/profile"]');
-            [dashboardNav, organizationsNav, payrollNav, profileNav, settingsNav, subscriptionNav].forEach(nav => {
+            [dashboardNav, organizationsNav, payrollNav, profileNav, settingsNav].forEach(nav => {
                 if (nav) {
                     nav.style.display = 'flex';
                     nav.style.visibility = 'visible';
@@ -1255,7 +1246,7 @@ class EmployeeHub {
                 }
             });
             
-            console.log('✅ Organization Member navigation: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings, Subscription');
+            console.log('✅ Organization Member navigation: Dashboard, Organizations, Payroll (My Payroll), Profile, Settings');
         } else {
             // Default fallback for other roles
             const profileNav = document.querySelector('a[href="/profile"]');

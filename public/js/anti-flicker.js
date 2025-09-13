@@ -64,13 +64,12 @@
             const payrollNav = document.querySelector('a[href="/payroll"]');
             const organizationsNav = document.querySelector('a[href="/organizations"]');
             const settingsNav = document.querySelector('a[href="/settings"]');
-            const subscriptionNav = document.querySelector('a[href="/subscription-settings"]');
             
             if (profile.role === 'super_admin') {
                 console.log('👑 Setting up navigation for super admin');
                 
-                // Show: Dashboard, Analytics, User Management, Settings (NO SUBSCRIPTION)
-                // COMPLETELY REMOVE: Payroll, Organizations, Subscription
+                // Show: Dashboard, Analytics, User Management, Settings
+                // COMPLETELY REMOVE: Payroll, Organizations
                 [dashboardNav, analyticsNav, usersNav, settingsNav].forEach(nav => {
                     if (nav) {
                         nav.style.display = 'flex';
@@ -79,8 +78,8 @@
                     }
                 });
                 
-                // COMPLETELY REMOVE Payroll, Organizations, and Subscription for super admin
-                [payrollNav, organizationsNav, subscriptionNav].forEach(nav => {
+                // COMPLETELY REMOVE Payroll and Organizations for super admin
+                [payrollNav, organizationsNav].forEach(nav => {
                     if (nav) {
                         // Remove from DOM completely
                         nav.remove();
@@ -92,9 +91,9 @@
             } else {
                 console.log('👤 Setting up navigation for regular user');
                 
-                // Show: Dashboard, Analytics, Payroll, Organizations, Settings, Subscription
+                // Show: Dashboard, Analytics, Payroll, Organizations, Settings
                 // COMPLETELY REMOVE: User Management for Admin and below
-                [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav, subscriptionNav].forEach(nav => {
+                [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
                     if (nav) {
                         nav.style.display = 'flex';
                         nav.style.visibility = 'visible';
@@ -109,7 +108,7 @@
                     console.log('🗑️ Completely removed User Management for Admin role and below');
                 }
                 
-                console.log('✅ Regular user navigation setup complete - User Management completely removed, Subscription shown');
+                console.log('✅ Regular user navigation setup complete - User Management completely removed');
             }
             
             // Hide overlay and show content
@@ -160,7 +159,6 @@
                     const settingsNav = document.querySelector('a[href="/settings"]');
                     const payrollNav = document.querySelector('a[href="/payroll"]');
                     const organizationsNav = document.querySelector('a[href="/organizations"]');
-                    const subscriptionNav = document.querySelector('a[href="/subscription-settings"]');
                     
                     [dashboardNav, analyticsNav, usersNav, settingsNav].forEach(nav => {
                         if (nav) {
@@ -170,8 +168,8 @@
                         }
                     });
                     
-                    // Remove Payroll, Organizations, and Subscription completely
-                    [payrollNav, organizationsNav, subscriptionNav].forEach(nav => {
+                    // Remove Payroll and Organizations completely
+                    [payrollNav, organizationsNav].forEach(nav => {
                         if (nav) {
                             nav.remove();
                             console.log('🗑️ Fallback: Removed navigation item:', nav.href);
@@ -187,10 +185,9 @@
                     const payrollNav = document.querySelector('a[href="/payroll"]');
                     const organizationsNav = document.querySelector('a[href="/organizations"]');
                     const settingsNav = document.querySelector('a[href="/settings"]');
-                    const subscriptionNav = document.querySelector('a[href="/subscription-settings"]');
                     
-                    // Show: Dashboard, Analytics, Payroll, Organizations, Settings, Subscription
-                    [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav, subscriptionNav].forEach(nav => {
+                    // Show: Dashboard, Analytics, Payroll, Organizations, Settings
+                    [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
                         if (nav) {
                             nav.style.display = 'flex';
                             nav.style.visibility = 'visible';

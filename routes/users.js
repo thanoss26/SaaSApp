@@ -4,296 +4,6 @@ const { supabase } = require('../config/supabase');
 const { authenticateToken, requireUserManagement } = require('../middleware/auth');
 const { sendInviteEmail } = require('../utils/emailService');
 
-// Get user statistics for dashboard
-router.get('/statistics', authenticateToken, async (req, res) => {
-    try {
-        console.log('📊 Fetching user statistics for organization:', req.profile.organization_id);
-        
-        // For super admin, get all users; for others, get organization-specific users
-        let userQuery = supabase
-            .from('users')
-            .select('id, role, created_at, updated_at');
-            
-        let employeeQuery = supabase
-            .from('employees')
-            .select('id, employee_status, created_at');
-
-        // Apply organization filter if not super admin
-        if (req.profile.role !== 'super_admin' && req.profile.organization_id) {
-            userQuery = userQuery.eq('organization_id', req.profile.organization_id);
-            employeeQuery = employeeQuery.eq('organization_id', req.profile.organization_id);
-        }
-
-        const [usersResult, employeesResult] = await Promise.all([
-            userQuery,
-            employeeQuery
-        ]);
-
-        if (usersResult.error) {
-            console.error('❌ Error fetching users:', usersResult.error);
-            return res.status(500).json({ error: 'Failed to fetch user statistics' });
-        }
-
-        if (employeesResult.error) {
-            console.error('❌ Error fetching employees:', employeesResult.error);
-            return res.status(500).json({ error: 'Failed to fetch employee statistics' });
-        }
-
-        const users = usersResult.data || [];
-        const employees = employeesResult.data || [];
-        
-        // Calculate statistics
-        const now = new Date();
-        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-        // Total users (users + active employees)
-        const activeEmployees = employees.filter(emp => emp.employee_status === 'active');
-        const totalUsers = users.length + activeEmployees.length;
-
-        // Active users (recently updated within last 24 hours)
-        const activeUsers = users.filter(user => {
-            if (!user.updated_at) return false;
-            const lastActivity = new Date(user.updated_at);
-            return lastActivity >= oneDayAgo;
-        }).length;
-
-        // Admin users
-        const adminUsers = users.filter(user => 
-            user.role === 'admin' || user.role === 'super_admin'
-        ).length;
-
-        // Recent activity (last 7 days)
-        const recentLogins = users.filter(user => {
-            if (!user.updated_at) return false;
-            const lastActivity = new Date(user.updated_at);
-            return lastActivity >= oneWeekAgo;
-        }).length;
-
-        // Calculate growth percentages
-        const usersThisMonth = users.filter(user => {
-            const createdAt = new Date(user.created_at);
-            return createdAt >= oneMonthAgo;
-        }).length;
-
-        const employeesThisMonth = employees.filter(emp => {
-            const createdAt = new Date(emp.created_at);
-            return createdAt >= oneMonthAgo;
-        }).length;
-
-        const newUsersThisMonth = usersThisMonth + employeesThisMonth;
-        const previousTotal = totalUsers - newUsersThisMonth;
-        const totalGrowth = previousTotal > 0 ? Math.round(((newUsersThisMonth / previousTotal) * 100)) : 0;
-
-        // Active users growth (simplified calculation)
-        const activeGrowth = activeUsers > 0 ? Math.min(Math.round((activeUsers / totalUsers) * 100), 15) : 0;
-
-        // Recent logins growth
-        const loginGrowth = recentLogins > 0 ? Math.min(Math.round((recentLogins / totalUsers) * 100), 20) : 0;
-
-        const statistics = {
-            totalUsers: {
-                value: totalUsers,
-                growth: totalGrowth,
-                trend: totalGrowth > 0 ? 'positive' : totalGrowth < 0 ? 'negative' : 'neutral',
-                detail: `+${newUsersThisMonth} new this month`
-            },
-            activeUsers: {
-                value: activeUsers,
-                growth: activeGrowth,
-                trend: activeGrowth > 0 ? 'positive' : 'neutral',
-                detail: 'Online in last 24h'
-            },
-            adminUsers: {
-                value: adminUsers,
-                growth: 0,
-                trend: 'neutral',
-                detail: 'Privileged accounts'
-            },
-            recentLogins: {
-                value: recentLogins,
-                growth: loginGrowth,
-                trend: loginGrowth > 0 ? 'positive' : 'neutral',
-                detail: 'Last 7 days'
-            }
-        };
-
-        console.log('✅ User statistics calculated:', statistics);
-        res.json(statistics);
-
-    } catch (error) {
-        console.error('❌ Error fetching user statistics:', error);
-        res.status(500).json({ error: 'Failed to fetch user statistics' });
-    }
-});
-
-// Get paginated users for table display
-router.get('/paginated', authenticateToken, async (req, res) => {
-    try {
-        const { 
-            page = 1, 
-            limit = 25, 
-            search = '', 
-            role = '', 
-            status = '',
-            sortBy = 'created_at',
-            sortOrder = 'desc'
-        } = req.query;
-
-        console.log('📄 Fetching paginated users:', { page, limit, search, role, status });
-
-        const offset = (parseInt(page) - 1) * parseInt(limit);
-
-        // Build query for users
-        let usersQuery = supabase
-            .from('users')
-            .select(`
-                id,
-                first_name,
-                last_name,
-                email,
-                role,
-                created_at,
-                updated_at,
-                organization_id
-            `);
-
-        // Build query for employees
-        let employeesQuery = supabase
-            .from('employees')
-            .select(`
-                id,
-                first_name,
-                last_name,
-                email,
-                employee_status,
-                created_at,
-                organization_id
-            `);
-
-        // Apply organization filter if not super admin
-        if (req.profile.role !== 'super_admin' && req.profile.organization_id) {
-            usersQuery = usersQuery.eq('organization_id', req.profile.organization_id);
-            employeesQuery = employeesQuery.eq('organization_id', req.profile.organization_id);
-        }
-
-        // Apply search filter
-        if (search) {
-            const searchTerm = `%${search}%`;
-            usersQuery = usersQuery.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},email.ilike.${searchTerm}`);
-            employeesQuery = employeesQuery.or(`first_name.ilike.${searchTerm},last_name.ilike.${searchTerm},email.ilike.${searchTerm}`);
-        }
-
-        // Apply role filter for users
-        if (role && role !== 'employee') {
-            usersQuery = usersQuery.eq('role', role);
-        }
-
-        const [usersResult, employeesResult] = await Promise.all([
-            usersQuery,
-            employeesQuery
-        ]);
-
-        if (usersResult.error) {
-            console.error('❌ Error fetching users:', usersResult.error);
-            return res.status(500).json({ error: 'Failed to fetch users' });
-        }
-
-        if (employeesResult.error) {
-            console.error('❌ Error fetching employees:', employeesResult.error);
-            return res.status(500).json({ error: 'Failed to fetch employees' });
-        }
-
-        // Combine and format data
-        let allUsers = [];
-
-        // Add users
-        (usersResult.data || []).forEach(user => {
-            allUsers.push({
-                id: `user_${user.id}`,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                email: user.email,
-                role: user.role,
-                status: 'active', // Users are considered active if they exist
-                last_login: user.updated_at,
-                created_at: user.created_at,
-                organization: 'No Organization', // Will fetch separately if needed
-                type: 'user'
-            });
-        });
-
-        // Add employees (only if role filter allows or is employee specific)
-        if (!role || role === 'employee') {
-            (employeesResult.data || []).forEach(employee => {
-                allUsers.push({
-                    id: `employee_${employee.id}`,
-                    first_name: employee.first_name,
-                    last_name: employee.last_name,
-                    email: employee.email,
-                    role: 'employee',
-                status: employee.employee_status || 'active',
-                last_login: null, // Employees don't have login tracking
-                created_at: employee.created_at,
-                organization: 'No Organization', // Will fetch separately if needed
-                type: 'employee'
-                });
-            });
-        }
-
-        // Apply status filter
-        if (status) {
-            allUsers = allUsers.filter(user => user.status === status);
-        }
-
-        // Sort users
-        allUsers.sort((a, b) => {
-            let aValue = a[sortBy];
-            let bValue = b[sortBy];
-            
-            if (sortBy === 'name') {
-                aValue = `${a.first_name} ${a.last_name}`;
-                bValue = `${b.first_name} ${b.last_name}`;
-            }
-            
-            if (sortOrder === 'desc') {
-                return aValue < bValue ? 1 : -1;
-            } else {
-                return aValue > bValue ? 1 : -1;
-            }
-        });
-
-        // Apply pagination
-        const total = allUsers.length;
-        const paginatedUsers = allUsers.slice(offset, offset + parseInt(limit));
-
-        // Calculate pagination info
-        const totalPages = Math.ceil(total / parseInt(limit));
-        const hasNextPage = parseInt(page) < totalPages;
-        const hasPrevPage = parseInt(page) > 1;
-
-        const result = {
-            users: paginatedUsers,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total,
-                totalPages,
-                hasNextPage,
-                hasPrevPage
-            }
-        };
-
-        console.log(`✅ Fetched ${paginatedUsers.length} users (${total} total)`);
-        res.json(result);
-
-    } catch (error) {
-        console.error('❌ Error fetching paginated users:', error);
-        res.status(500).json({ error: 'Failed to fetch users' });
-    }
-});
-
 // Get all users/employees
 router.get('/', authenticateToken, async (req, res) => {
     try {
@@ -365,6 +75,38 @@ router.get('/', authenticateToken, async (req, res) => {
 });
 
 // Get user by ID
+router.get('/:id', authenticateToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log('🔍 Fetching user by ID:', id);
+
+        let query = supabase
+            .from('employees')
+            .select('*')
+            .eq('id', id)
+            .eq('is_deleted', false)
+            .single();
+
+        // Filter by organization if user has one
+        if (req.profile.organization_id) {
+            query = query.eq('organization_id', req.profile.organization_id);
+        }
+
+        const { data: user, error } = await query;
+
+        if (error || !user) {
+            console.error('❌ Error fetching user:', error);
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        console.log('✅ User fetched successfully');
+        res.json({ user });
+
+    } catch (error) {
+        console.error('❌ Error in user route:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Create new user/employee (admin/manager/super_admin only)
 router.post('/', authenticateToken, requireUserManagement, async (req, res) => {
@@ -895,110 +637,6 @@ router.post('/validate-invite', async (req, res) => {
 
     } catch (error) {
         console.error('❌ Error in validate invite route:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get all users/employees
-router.get('/', authenticateToken, async (req, res) => {
-    try {
-        console.log('🔍 Fetching employees for organization:', req.profile.organization_id);
-        
-        let query = supabase
-            .from('employees')
-            .select('*')
-            .eq('is_deleted', false)
-            .order('created_at', { ascending: false });
-
-        // Filter by organization if user has one
-        if (req.profile.organization_id) {
-            query = query.eq('organization_id', req.profile.organization_id);
-        }
-
-        const { data: users, error } = await query;
-
-        if (error) {
-            console.error('❌ Error fetching employees:', error);
-            return res.status(500).json({ error: 'Failed to fetch employees' });
-        }
-
-        // Transform data to match frontend expectations
-        const employees = (users || []).map(user => ({
-            id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            email: user.email,
-            phone: user.phone,
-            department: user.department,
-            job_title: user.job_title,
-            employment_type: user.employment_type,
-            work_location: user.work_location,
-            employee_status: user.employee_status,
-            date_of_joining: user.date_of_joining,
-            salary: user.salary,
-            currency: user.currency,
-            pay_frequency: user.pay_frequency,
-            annual_bonus: user.annual_bonus,
-            benefits_package: user.benefits_package,
-            work_schedule: user.work_schedule,
-            work_days: user.work_days,
-            break_time: user.break_time,
-            overtime_eligible: user.overtime_eligible,
-            team_id: user.team_id,
-            certifications: user.certifications,
-            terms_accepted: user.terms_accepted,
-            reporting_manager_id: user.reporting_manager_id,
-            organization_id: user.organization_id,
-            address: user.address,
-            tax_info: user.tax_info,
-            bank_info: user.bank_info,
-            is_active: user.is_active,
-            is_deleted: user.is_deleted,
-            created_by: user.created_by,
-            updated_by: user.updated_by,
-            created_at: user.created_at,
-            updated_at: user.updated_at
-        }));
-
-        console.log(`✅ Fetched ${employees.length} employees`);
-        res.json({ employees });
-
-    } catch (error) {
-        console.error('❌ Error in user route:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
-// Get single user by ID - MUST BE LAST as it catches all paths
-router.get('/:id', authenticateToken, async (req, res) => {
-    try {
-        const { id } = req.params;
-        console.log('🔍 Fetching user by ID:', id);
-
-        let query = supabase
-            .from('employees')
-            .select('*')
-            .eq('id', id)
-            .eq('is_deleted', false)
-            .single();
-
-        // Filter by organization if user has one
-        if (req.profile.organization_id) {
-            query = query.eq('organization_id', req.profile.organization_id);
-        }
-
-        const { data: user, error } = await query;
-
-        if (error || !user) {
-            console.error('❌ Error fetching user:', error);
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        console.log('✅ User fetched successfully');
-        res.json({ user });
-
-    } catch (error) {
-        console.error('❌ Error in user route:', error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });

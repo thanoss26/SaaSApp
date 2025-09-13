@@ -4,7 +4,7 @@ class UserManagement {
         this.currentUser = null;
         this.users = [];
         this.currentPage = 1;
-        this.itemsPerPage = 25;
+        this.itemsPerPage = 10;
         this.totalPages = 1;
         this.totalUsers = 0;
         this.filters = {
@@ -99,29 +99,20 @@ class UserManagement {
     async initializeUserManagement() {
         console.log('🚀 Initializing user management...');
         
-        // Initialize theme
-        this.initializeTheme();
-        
         // Load initial data
         await Promise.all([
             this.loadUsers(),
-            this.loadStats()
+            this.loadStats(),
+            this.loadOrganizations()
         ]);
-        
-        // Load organizations for super admin (optional)
-        if (this.currentUser?.role === 'super_admin') {
-            this.loadOrganizations().catch(error => {
-                console.warn('⚠️ Could not load organizations:', error);
-            });
-        }
         
         // Set up periodic refresh for stats
         setInterval(() => this.loadStats(), 30000); // Refresh every 30 seconds
     }
 
     initializeEventListeners() {
-        // Search functionality - correct ID
-        const searchInput = document.getElementById('searchInput');
+        // Search functionality
+        const searchInput = document.getElementById('userSearch');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.filters.search = e.target.value;
@@ -132,7 +123,7 @@ class UserManagement {
         // Filter controls
         const roleFilter = document.getElementById('roleFilter');
         const statusFilter = document.getElementById('statusFilter');
-        const orgFilter = document.getElementById('orgFilter');
+        const organizationFilter = document.getElementById('organizationFilter');
 
         if (roleFilter) {
             roleFilter.addEventListener('change', (e) => {
@@ -148,24 +139,21 @@ class UserManagement {
             });
         }
 
-        if (orgFilter) {
-            orgFilter.addEventListener('change', (e) => {
+        if (organizationFilter) {
+            organizationFilter.addEventListener('change', (e) => {
                 this.filters.organization = e.target.value;
                 this.loadUsers();
             });
         }
 
-        // View toggle - correct class and IDs
-        const tableViewBtn = document.getElementById('tableViewBtn');
-        const gridViewBtn = document.getElementById('gridViewBtn');
-        
-        if (tableViewBtn) {
-            tableViewBtn.addEventListener('click', () => this.switchView('table'));
-        }
-        
-        if (gridViewBtn) {
-            gridViewBtn.addEventListener('click', () => this.switchView('grid'));
-        }
+        // View toggle
+        const viewButtons = document.querySelectorAll('.view-btn');
+        viewButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                this.switchView(view);
+            });
+        });
 
         // Bulk actions
         const bulkActionsBtn = document.getElementById('bulkActionsBtn');
@@ -173,16 +161,16 @@ class UserManagement {
             bulkActionsBtn.addEventListener('click', () => this.openBulkActionsModal());
         }
 
+        // Add user button
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (addUserBtn) {
+            addUserBtn.addEventListener('click', () => this.openAddUserModal());
+        }
+
         // Export button
         const exportBtn = document.getElementById('exportBtn');
         if (exportBtn) {
             exportBtn.addEventListener('click', () => this.exportUsers());
-        }
-
-        // Theme toggle button
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => this.toggleTheme());
         }
 
         // Select all checkbox
@@ -263,52 +251,20 @@ class UserManagement {
 
         if (prevPageBtn) {
             prevPageBtn.addEventListener('click', () => {
-                this.goToPage(this.currentPage - 1);
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.loadUsers();
+                }
             });
         }
 
         if (nextPageBtn) {
             nextPageBtn.addEventListener('click', () => {
-                this.goToPage(this.currentPage + 1);
-            });
-        }
-    }
-
-    async loadOrganizations() {
-        try {
-            console.log('🏢 Loading organizations for super admin...');
-            
-            const response = await fetch('/api/organizations', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                if (this.currentPage < this.totalPages) {
+                    this.currentPage++;
+                    this.loadUsers();
                 }
             });
-
-            if (response.ok) {
-                const organizations = await response.json();
-                console.log('✅ Organizations loaded:', organizations);
-                
-                // Populate organization filter dropdown if it exists
-                const orgFilter = document.getElementById('orgFilter');
-                if (orgFilter && organizations.length > 0) {
-                    // Clear existing options except first one
-                    while (orgFilter.children.length > 1) {
-                        orgFilter.removeChild(orgFilter.lastChild);
-                    }
-                    
-                    // Add organization options
-                    organizations.forEach(org => {
-                        const option = document.createElement('option');
-                        option.value = org.id;
-                        option.textContent = org.name;
-                        orgFilter.appendChild(option);
-                    });
-                }
-            } else {
-                console.warn('⚠️ Could not load organizations:', response.statusText);
-            }
-        } catch (error) {
-            console.warn('⚠️ Error loading organizations:', error);
         }
     }
 
@@ -324,85 +280,54 @@ class UserManagement {
         try {
             console.log('📊 Loading user management stats...');
             
-            // Fetch real-time statistics from API
-            const response = await fetch('/api/users/statistics', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
+            // For super admin, show platform-wide stats
+            if (this.currentUser?.role === 'super_admin') {
+                const stats = {
+                    totalUsers: 247,
+                    activeUsers: 203,
+                    adminUsers: 12,
+                    recentLogins: 89
+                };
 
-            if (response.ok) {
-                const stats = await response.json();
-                console.log('✅ Stats loaded:', stats);
                 this.updateStatsDisplay(stats);
             } else {
-                console.error('❌ Failed to load stats:', response.statusText);
-                this.showDefaultStats();
+                // For organization users, show organization-specific stats
+                const response = await fetch('/api/users/stats', {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (response.ok) {
+                    const stats = await response.json();
+                    this.updateStatsDisplay(stats);
+                }
             }
         } catch (error) {
             console.error('❌ Error loading stats:', error);
-            this.showDefaultStats();
+            // Show default stats on error
+            this.updateStatsDisplay({
+                totalUsers: 0,
+                activeUsers: 0,
+                adminUsers: 0,
+                recentLogins: 0
+            });
         }
     }
 
-    showDefaultStats() {
-        // Show default stats on error
-        this.updateStatsDisplay({
-            totalUsers: { value: 0, growth: 0, trend: 'neutral', detail: 'No data available' },
-            activeUsers: { value: 0, growth: 0, trend: 'neutral', detail: 'No data available' },
-            adminUsers: { value: 0, growth: 0, trend: 'neutral', detail: 'No data available' },
-            recentLogins: { value: 0, growth: 0, trend: 'neutral', detail: 'No data available' }
-        });
-    }
-
     updateStatsDisplay(stats) {
-        const statCards = ['totalUsers', 'activeUsers', 'adminUsers', 'recentLogins'];
-        
-        statCards.forEach(statKey => {
-            const statData = stats[statKey];
-            if (!statData) return;
+        const elements = {
+            totalUsers: document.getElementById('totalUsers'),
+            activeUsers: document.getElementById('activeUsers'),
+            adminUsers: document.getElementById('adminUsers'),
+            recentLogins: document.getElementById('recentLogins')
+        };
 
-            // Update the value
-            const valueElement = document.getElementById(statKey);
-            if (valueElement) {
-                const value = typeof statData === 'object' ? statData.value : statData;
-                valueElement.textContent = value.toLocaleString();
-            }
-
-            // Update trend if available
-            if (typeof statData === 'object') {
-                const trendElement = valueElement?.closest('.stat-card-modern')?.querySelector('.stat-trend span');
-                const detailElement = valueElement?.closest('.stat-card-modern')?.querySelector('.stat-detail');
-                
-                if (trendElement && statData.growth !== undefined) {
-                    trendElement.textContent = `${statData.growth}%`;
-                }
-                
-                if (detailElement && statData.detail) {
-                    detailElement.textContent = statData.detail;
-                }
-
-                // Update trend class
-                const trendContainer = valueElement?.closest('.stat-card-modern')?.querySelector('.stat-trend');
-                if (trendContainer && statData.trend) {
-                    trendContainer.className = `stat-trend ${statData.trend}`;
-                    
-                    // Update trend icon
-                    const trendIcon = trendContainer.querySelector('i');
-                    if (trendIcon) {
-                        if (statData.trend === 'positive') {
-                            trendIcon.className = 'fas fa-arrow-up';
-                        } else if (statData.trend === 'negative') {
-                            trendIcon.className = 'fas fa-arrow-down';
-                        } else {
-                            trendIcon.className = 'fas fa-minus';
-                        }
-                    }
-                }
+        Object.keys(elements).forEach(key => {
+            if (elements[key] && stats[key] !== undefined) {
+                elements[key].textContent = stats[key].toLocaleString();
             }
         });
-
-        console.log('✅ Stats display updated');
     }
 
     async loadUsers() {
@@ -412,57 +337,14 @@ class UserManagement {
         this.showLoadingState();
 
         try {
-            console.log('👥 Loading users...', {
-                page: this.currentPage,
-                limit: this.itemsPerPage,
-                filters: this.filters,
-                token: localStorage.getItem('token') ? 'Present' : 'Missing'
-            });
+            console.log('👥 Loading users...');
             
-            // Build query parameters
-            const params = new URLSearchParams({
-                page: this.currentPage,
-                limit: this.itemsPerPage,
-                search: this.filters.search,
-                role: this.filters.role,
-                status: this.filters.status,
-                sortBy: this.sortBy,
-                sortOrder: this.sortOrder
-            });
-
-            console.log('📡 API request URL:', `/api/users/paginated?${params}`);
-
-            // Fetch users from API
-            const response = await fetch(`/api/users/paginated?${params}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            console.log('📡 API response status:', response.status);
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('✅ Users loaded:', data);
-                
-                this.users = data.users || [];
-                this.totalUsers = data.pagination?.total || 0;
-                this.totalPages = data.pagination?.totalPages || 1;
-                
-                console.log('📊 User data:', {
-                    userCount: this.users.length,
-                    totalUsers: this.totalUsers,
-                    totalPages: this.totalPages,
-                    currentPage: this.currentPage
-                });
-                
-                this.updateUsersDisplay();
-                this.updatePagination();
-                this.updateResultsCount();
+            // For super admin, load all platform users
+            if (this.currentUser?.role === 'super_admin') {
+                await this.loadAllPlatformUsers();
             } else {
-                const errorData = await response.text();
-                console.error('❌ Failed to load users:', response.statusText, errorData);
-                this.showErrorState();
+                // For organization users, load organization users
+                await this.loadOrganizationUsers();
             }
         } catch (error) {
             console.error('❌ Error loading users:', error);
@@ -472,113 +354,108 @@ class UserManagement {
         }
     }
 
-    updateUsersDisplay() {
-        if (this.currentView === 'table') {
-            this.renderTableView();
-        } else {
-            this.renderGridView();
-        }
-        
-        // Show table or grid view
-        this.showDataView();
-    }
-
-    showDataView() {
-        const loadingState = document.getElementById('loadingState');
-        const tableView = document.getElementById('tableView');
-        const gridView = document.getElementById('gridView');
-        const emptyState = document.getElementById('emptyState');
-
-        if (loadingState) loadingState.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'none';
-        
-        if (this.users.length === 0) {
-            if (emptyState) emptyState.style.display = 'flex';
-            if (tableView) tableView.style.display = 'none';
-            if (gridView) gridView.style.display = 'none';
-        } else {
-            if (this.currentView === 'table') {
-                if (tableView) tableView.style.display = 'block';
-                if (gridView) gridView.style.display = 'none';
-            } else {
-                if (tableView) tableView.style.display = 'none';
-                if (gridView) gridView.style.display = 'block';
+    async loadAllPlatformUsers() {
+        // For demo purposes, showing mock data for super admin
+        const mockUsers = [
+            {
+                id: '1',
+                first_name: 'John',
+                last_name: 'Smith',
+                email: 'john.smith@techcorp.com',
+                role: 'admin',
+                status: 'active',
+                organization_name: 'TechCorp Inc',
+                last_login: '2024-01-18T09:30:00Z',
+                created_at: '2024-01-15T10:00:00Z'
+            },
+            {
+                id: '2',
+                first_name: 'Sarah',
+                last_name: 'Johnson',
+                email: 'sarah.j@innovate.co',
+                role: 'manager',
+                status: 'active',
+                organization_name: 'Innovate Solutions',
+                last_login: '2024-01-18T08:15:00Z',
+                created_at: '2024-01-14T14:30:00Z'
+            },
+            {
+                id: '3',
+                first_name: 'Mike',
+                last_name: 'Davis',
+                email: 'mike.davis@startup.io',
+                role: 'employee',
+                status: 'pending',
+                organization_name: 'StartupIO',
+                last_login: null,
+                created_at: '2024-01-18T16:20:00Z'
             }
-        }
+        ];
+
+        this.users = mockUsers;
+        this.totalUsers = mockUsers.length;
+        this.totalPages = Math.ceil(this.totalUsers / this.itemsPerPage);
+        
+        this.renderUsers();
+        this.updatePagination();
+        this.updateUserCount();
     }
 
-    updateResultsCount() {
-        const resultsCountElement = document.getElementById('resultsCount');
-        if (resultsCountElement) {
-            resultsCountElement.textContent = `Showing ${this.users.length} of ${this.totalUsers} users`;
+    async loadOrganizationUsers() {
+        const queryParams = new URLSearchParams({
+            page: this.currentPage,
+            limit: this.itemsPerPage,
+            search: this.filters.search,
+            role: this.filters.role,
+            status: this.filters.status,
+            sortBy: this.sortBy,
+            sortOrder: this.sortOrder
+        });
+
+        const response = await fetch(`/api/users?${queryParams}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to load users');
         }
+
+        const data = await response.json();
+        this.users = data.users || [];
+        this.totalUsers = data.total || 0;
+        this.totalPages = data.totalPages || 1;
+        
+        this.renderUsers();
+        this.updatePagination();
+        this.updateUserCount();
     }
 
     async loadOrganizations() {
         try {
-            // Load organizations for filter if user is super admin
+            // Only load organizations for organization filter if user is super admin
             if (this.currentUser?.role === 'super_admin') {
-                const orgFilter = document.getElementById('orgFilter');
-                if (orgFilter) {
-                    try {
-                        const response = await fetch('/api/organizations', {
-                            headers: {
-                                'Authorization': `Bearer ${localStorage.getItem('token')}`
-                            }
-                        });
+                const organizationFilter = document.getElementById('organizationFilter');
+                if (organizationFilter) {
+                    // Add mock organizations for demo
+                    const organizations = [
+                        { id: '1', name: 'TechCorp Inc' },
+                        { id: '2', name: 'Innovate Solutions' },
+                        { id: '3', name: 'StartupIO' }
+                    ];
 
-                        if (response.ok) {
-                            const organizations = await response.json();
-                            orgFilter.innerHTML = '<option value="">All Organizations</option>';
-                            organizations.forEach(org => {
-                                const option = document.createElement('option');
-                                option.value = org.id;
-                                option.textContent = org.name;
-                                orgFilter.appendChild(option);
-                            });
-                        }
-                    } catch (orgError) {
-                        console.log('📝 Organizations not available, using fallback');
-                        // Fallback if no organizations endpoint
-                        orgFilter.innerHTML = '<option value="">All Organizations</option>';
-                    }
+                    organizationFilter.innerHTML = '<option value="">All Organizations</option>';
+                    organizations.forEach(org => {
+                        const option = document.createElement('option');
+                        option.value = org.id;
+                        option.textContent = org.name;
+                        organizationFilter.appendChild(option);
+                    });
                 }
             }
         } catch (error) {
             console.error('❌ Error loading organizations:', error);
-        }
-    }
-
-    showLoadingState() {
-        const loadingState = document.getElementById('loadingState');
-        const tableView = document.getElementById('tableView');
-        const gridView = document.getElementById('gridView');
-        const emptyState = document.getElementById('emptyState');
-
-        if (loadingState) loadingState.style.display = 'flex';
-        if (tableView) tableView.style.display = 'none';
-        if (gridView) gridView.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'none';
-    }
-
-    showErrorState() {
-        const loadingState = document.getElementById('loadingState');
-        const tableView = document.getElementById('tableView');
-        const gridView = document.getElementById('gridView');
-        const emptyState = document.getElementById('emptyState');
-
-        if (loadingState) loadingState.style.display = 'none';
-        if (tableView) tableView.style.display = 'none';
-        if (gridView) gridView.style.display = 'none';
-        if (emptyState) {
-            emptyState.style.display = 'flex';
-            const emptyIcon = emptyState.querySelector('.empty-icon-modern i');
-            const emptyTitle = emptyState.querySelector('h3');
-            const emptyText = emptyState.querySelector('p');
-            
-            if (emptyIcon) emptyIcon.className = 'fas fa-exclamation-triangle';
-            if (emptyTitle) emptyTitle.textContent = 'Error loading users';
-            if (emptyText) emptyText.textContent = 'Please try refreshing the page or contact support if the problem persists.';
         }
     }
 
@@ -597,7 +474,7 @@ class UserManagement {
         if (this.users.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="loading-row">
+                    <td colspan="9" class="loading-row">
                         <div>No users found</div>
                     </td>
                 </tr>
@@ -608,35 +485,34 @@ class UserManagement {
         tableBody.innerHTML = this.users.map(user => `
             <tr>
                 <td>
-                    <label class="checkbox-modern">
-                        <input type="checkbox" 
-                               class="user-checkbox" 
-                               data-user-id="${user.id}"
-                               ${this.selectedUsers.has(user.id) ? 'checked' : ''}>
-                        <span class="checkmark"></span>
-                    </label>
+                    <input type="checkbox" 
+                           class="user-checkbox" 
+                           data-user-id="${user.id}"
+                           ${this.selectedUsers.has(user.id) ? 'checked' : ''}>
                 </td>
                 <td>
-                    <div class="user-info-modern">
-                        <div class="user-avatar-modern">
+                    <div class="user-info">
+                        <div class="user-avatar">
                             ${this.getInitials(user.first_name, user.last_name)}
                         </div>
-                        <div class="user-details-modern">
-                            <div class="user-name-modern">${user.first_name} ${user.last_name}</div>
-                            <div class="user-email-modern">${user.email}</div>
+                        <div class="user-details">
+                            <div class="user-name">${user.first_name} ${user.last_name}</div>
+                            <div class="user-email">${user.email}</div>
                         </div>
                     </div>
                 </td>
                 <td>${user.email}</td>
-                <td><span class="role-badge-modern ${user.role}">${this.formatRole(user.role)}</span></td>
-                <td><span class="status-badge-modern ${user.status}">${this.formatStatus(user.status)}</span></td>
-                <td>${user.last_login ? this.formatDate(user.last_login) : 'No recent activity'}</td>
+                <td>${user.organization_name || 'No Organization'}</td>
+                <td><span class="role-badge ${user.role}">${this.formatRole(user.role)}</span></td>
+                <td><span class="status-badge ${user.status}">${this.formatStatus(user.status)}</span></td>
+                <td>${user.last_login ? this.formatDate(user.last_login) : 'Never'}</td>
+                <td>${this.formatDate(user.created_at)}</td>
                 <td>
-                    <div class="actions-cell-modern">
-                        <button class="btn-modern btn-sm btn-outline-modern" onclick="userManagement.editUser('${user.id}')" title="Edit User">
+                    <div class="actions-cell">
+                        <button class="action-btn edit" onclick="userManagement.editUser('${user.id}')" title="Edit User">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-modern btn-sm btn-outline-modern" onclick="userManagement.deleteUser('${user.id}')" title="Delete User">
+                        <button class="action-btn delete" onclick="userManagement.deleteUser('${user.id}')" title="Delete User">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -658,40 +534,40 @@ class UserManagement {
         }
 
         gridContainer.innerHTML = this.users.map(user => `
-            <div class="user-card-modern">
+            <div class="user-card">
                 <div class="user-card-header">
-                    <div class="user-avatar-modern">
+                    <div class="user-avatar">
                         ${this.getInitials(user.first_name, user.last_name)}
                     </div>
-                    <div class="user-info-modern">
-                        <div class="user-name-modern">${user.first_name} ${user.last_name}</div>
-                        <div class="user-email-modern">${user.email}</div>
+                    <div class="user-details">
+                        <h4>${user.first_name} ${user.last_name}</h4>
+                        <p>${user.email}</p>
                     </div>
                 </div>
-                <div class="user-card-body">
-                    <div class="user-detail-row">
-                        <span class="user-detail-label">Role</span>
-                        <span class="role-badge-modern ${user.role}">${this.formatRole(user.role)}</span>
+                <div class="user-card-details">
+                    <div class="user-card-detail">
+                        <label>Organization</label>
+                        <span>${user.organization_name || 'No Organization'}</span>
                     </div>
-                    <div class="user-detail-row">
-                        <span class="user-detail-label">Status</span>
-                        <span class="status-badge-modern ${user.status}">${this.formatStatus(user.status)}</span>
+                    <div class="user-card-detail">
+                        <label>Role</label>
+                        <span class="role-badge ${user.role}">${this.formatRole(user.role)}</span>
                     </div>
-                    <div class="user-detail-row">
-                        <span class="user-detail-label">Last Active</span>
-                        <span class="user-detail-value">${user.last_login ? this.formatDate(user.last_login) : 'No recent activity'}</span>
+                    <div class="user-card-detail">
+                        <label>Status</label>
+                        <span class="status-badge ${user.status}">${this.formatStatus(user.status)}</span>
                     </div>
-                    <div class="user-detail-row">
-                        <span class="user-detail-label">Organization</span>
-                        <span class="user-detail-value">${user.organization || 'No Organization'}</span>
+                    <div class="user-card-detail">
+                        <label>Last Login</label>
+                        <span>${user.last_login ? this.formatDate(user.last_login) : 'Never'}</span>
                     </div>
                 </div>
                 <div class="user-card-actions">
-                    <button class="btn-modern btn-sm btn-outline-modern" onclick="userManagement.editUser('${user.id}')">
+                    <button class="action-btn edit" onclick="userManagement.editUser('${user.id}')">
                         <i class="fas fa-edit"></i>
                         Edit
                     </button>
-                    <button class="btn-modern btn-sm btn-outline-modern" onclick="userManagement.deleteUser('${user.id}')">
+                    <button class="action-btn delete" onclick="userManagement.deleteUser('${user.id}')">
                         <i class="fas fa-trash"></i>
                         Delete
                     </button>
@@ -783,29 +659,16 @@ class UserManagement {
         this.renderUsers();
     }
 
-    renderUsers() {
-        if (this.currentView === 'table') {
-            this.renderTableView();
-        } else {
-            this.renderGridView();
-        }
-    }
-
-    goToPage(page) {
-        if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-            this.currentPage = page;
-            this.loadUsers();
-        }
-    }
-
     updatePagination() {
-        // Update the simple pagination in the quick actions bar
-        const pageInfo = document.getElementById('pageInfo');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const pageNumbers = document.getElementById('pageNumbers');
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
 
-        if (pageInfo) {
-            pageInfo.textContent = `${this.currentPage} of ${this.totalPages}`;
+        if (paginationInfo) {
+            const start = (this.currentPage - 1) * this.itemsPerPage + 1;
+            const end = Math.min(this.currentPage * this.itemsPerPage, this.totalUsers);
+            paginationInfo.textContent = `Showing ${start}-${end} of ${this.totalUsers} users`;
         }
 
         if (prevPageBtn) {
@@ -816,12 +679,19 @@ class UserManagement {
             nextPageBtn.disabled = this.currentPage >= this.totalPages;
         }
 
-        // Update the detailed pagination info at the bottom
-        const paginationInfo = document.getElementById('paginationInfo');
-        if (paginationInfo) {
-            const start = (this.currentPage - 1) * this.itemsPerPage + 1;
-            const end = Math.min(this.currentPage * this.itemsPerPage, this.totalUsers);
-            paginationInfo.textContent = `Showing ${start} to ${end} of ${this.totalUsers} entries`;
+        if (pageNumbers) {
+            const pages = this.generatePageNumbers();
+            pageNumbers.innerHTML = pages.map(page => {
+                if (page === '...') {
+                    return '<span class="page-ellipsis">...</span>';
+                }
+                return `
+                    <button class="page-number ${page === this.currentPage ? 'active' : ''}"
+                            onclick="userManagement.goToPage(${page})">
+                        ${page}
+                    </button>
+                `;
+            }).join('');
         }
     }
 
@@ -927,28 +797,27 @@ class UserManagement {
     }
 
     formatDate(dateString) {
-        if (!dateString) return 'Never';
-        
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-        
-        if (diffInHours < 1) {
-            return 'Just now';
-        } else if (diffInHours < 24) {
-            return `${diffInHours}h ago`;
-        } else if (diffInHours < 48) {
-            return 'Yesterday';
-        } else {
-            return date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short',
-                day: 'numeric'
-            });
-        }
+        return new Date(dateString).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     }
 
     // Modal methods
+    openAddUserModal() {
+        const modal = document.getElementById('addUserModal');
+        if (modal) {
+            modal.classList.add('show');
+            // Reset form
+            const form = document.getElementById('addUserForm');
+            if (form) {
+                form.reset();
+            }
+        }
+    }
 
     openBulkActionsModal() {
         const modal = document.getElementById('bulkActionsModal');
@@ -1105,116 +974,9 @@ class UserManagement {
     }
 
     async exportUsers() {
-        try {
-            console.log('📤 Exporting users...');
-            
-            // Show loading state
-            const exportBtn = document.getElementById('exportBtn');
-            const originalText = exportBtn.innerHTML;
-            exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
-            exportBtn.disabled = true;
-            
-            // Fetch all users (not paginated)
-            const params = new URLSearchParams({
-                page: 1,
-                limit: 1000, // Get a large number to export all
-                search: this.filters.search,
-                role: this.filters.role,
-                status: this.filters.status,
-                sortBy: this.sortBy,
-                sortOrder: this.sortOrder
-            });
-
-            const response = await fetch(`/api/users/paginated?${params}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch users for export');
-            }
-
-            const data = await response.json();
-            const users = data.users || [];
-            
-            if (users.length === 0) {
-                this.showNotification('No users to export', 'warning');
-                return;
-            }
-
-            // Create CSV content
-            const csvContent = this.generateCSV(users);
-            
-            // Create and download file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `users_export_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            console.log(`✅ Exported ${users.length} users to CSV`);
-            this.showNotification(`Successfully exported ${users.length} users`, 'success');
-            
-        } catch (error) {
-            console.error('❌ Error exporting users:', error);
-            this.showNotification('Failed to export users', 'error');
-        } finally {
-            // Restore button state
-            const exportBtn = document.getElementById('exportBtn');
-            exportBtn.innerHTML = '<i class="fas fa-download"></i> Export';
-            exportBtn.disabled = false;
-        }
-    }
-
-    generateCSV(users) {
-        // Define CSV headers
-        const headers = [
-            'ID',
-            'First Name',
-            'Last Name', 
-            'Email',
-            'Role',
-            'Status',
-            'Last Activity',
-            'Created Date',
-            'Organization',
-            'Type'
-        ];
-        
-        // Convert users to CSV rows
-        const rows = users.map(user => [
-            user.id,
-            user.first_name || '',
-            user.last_name || '',
-            user.email || '',
-            this.formatRole(user.role),
-            this.formatStatus(user.status),
-            user.last_login ? this.formatDate(user.last_login) : 'No recent activity',
-            user.created_at ? new Date(user.created_at).toLocaleDateString() : '',
-            user.organization || 'No Organization',
-            user.type || 'user'
-        ]);
-        
-        // Combine headers and rows
-        const allRows = [headers, ...rows];
-        
-        // Convert to CSV string
-        return allRows.map(row => 
-            row.map(field => {
-                // Escape quotes and wrap in quotes if contains comma, quote, or newline
-                const stringField = String(field || '');
-                if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
-                    return '"' + stringField.replace(/"/g, '""') + '"';
-                }
-                return stringField;
-            }).join(',')
-        ).join('\n');
+        // TODO: Implement user export functionality
+        console.log('Exporting all users...');
+        this.showNotification('Export functionality coming soon', 'info');
     }
 
     async exportSelectedUsers(userIds) {
@@ -1224,120 +986,8 @@ class UserManagement {
     }
 
     showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
-        notification.innerHTML = `
-            <div class="notification-content">
-                <i class="fas ${this.getNotificationIcon(type)}"></i>
-                <span>${message}</span>
-            </div>
-            <button class="notification-close" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        // Add styles
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            min-width: 300px;
-            max-width: 500px;
-            padding: 16px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            animation: slideIn 0.3s ease-out;
-            font-family: inherit;
-            font-size: 14px;
-            ${this.getNotificationStyles(type)}
-        `;
-        
-        // Add to page
-        document.body.appendChild(notification);
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.animation = 'slideOut 0.3s ease-in';
-                setTimeout(() => notification.remove(), 300);
-            }
-        }, 5000);
-        
+        // TODO: Implement notification system
         console.log(`${type.toUpperCase()}: ${message}`);
-    }
-
-    getNotificationIcon(type) {
-        const icons = {
-            'success': 'fa-check-circle',
-            'error': 'fa-exclamation-circle',
-            'warning': 'fa-exclamation-triangle',
-            'info': 'fa-info-circle'
-        };
-        return icons[type] || icons.info;
-    }
-
-    getNotificationStyles(type) {
-        const styles = {
-            'success': 'background: #10b981; color: white;',
-            'error': 'background: #ef4444; color: white;',
-            'warning': 'background: #f59e0b; color: white;',
-            'info': 'background: #3b82f6; color: white;'
-        };
-        return styles[type] || styles.info;
-    }
-
-    // Theme management methods
-    initializeTheme() {
-        const savedTheme = localStorage.getItem('theme') || 'light';
-        this.applyTheme(savedTheme);
-        this.updateThemeIcon(savedTheme);
-    }
-
-    toggleTheme() {
-        const currentTheme = localStorage.getItem('theme') || 'light';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        
-        this.applyTheme(newTheme);
-        this.updateThemeIcon(newTheme);
-        localStorage.setItem('theme', newTheme);
-        
-        console.log(`🎨 Theme switched to: ${newTheme}`);
-    }
-
-    applyTheme(theme) {
-        const html = document.documentElement;
-        const body = document.body;
-        
-        if (theme === 'dark') {
-            html.classList.add('dark');
-            html.setAttribute('data-theme', 'dark');
-            body.classList.add('dark');
-        } else {
-            html.classList.remove('dark');
-            html.setAttribute('data-theme', 'light');
-            body.classList.remove('dark');
-        }
-    }
-
-    updateThemeIcon(theme) {
-        const themeToggle = document.getElementById('themeToggle');
-        if (themeToggle) {
-            const icon = themeToggle.querySelector('i');
-            if (icon) {
-                if (theme === 'dark') {
-                    icon.className = 'fas fa-sun';
-                    themeToggle.title = 'Switch to Light Mode';
-                } else {
-                    icon.className = 'fas fa-moon';
-                    themeToggle.title = 'Switch to Dark Mode';
-                }
-            }
-        }
     }
 }
 
