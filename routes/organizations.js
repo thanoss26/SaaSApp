@@ -4,6 +4,49 @@ const { v4: uuidv4 } = require('uuid');
 const { supabase, supabaseAdmin } = require('../config/supabase');
 const { authenticateToken, requireOrganization, requireInvitePermission, requireInviteUsersAccess, requireOrganizationOverviewAccess } = require('../middleware/auth');
 
+// GET /api/organizations - Get all organizations (super admin only)
+router.get('/', authenticateToken, async (req, res) => {
+    try {
+        console.log('🏢 GET /api/organizations - Fetching organizations');
+        
+        // Get user profile to check role
+        const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', req.user.id)
+            .single();
+
+        if (profileError) {
+            console.error('❌ Error fetching user profile:', profileError);
+            return res.status(500).json({ error: 'Failed to fetch user profile' });
+        }
+
+        // Only super admins can view all organizations
+        if (profile.role !== 'super_admin') {
+            console.log('❌ User role not super admin:', profile.role);
+            return res.status(403).json({ error: 'Only super admins can view all organizations' });
+        }
+
+        // Fetch all organizations
+        const { data: organizations, error } = await supabase
+            .from('organizations')
+            .select('id, name, created_at')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('❌ Error fetching organizations:', error);
+            return res.status(500).json({ error: 'Failed to fetch organizations' });
+        }
+
+        console.log(`✅ Fetched ${organizations?.length || 0} organizations`);
+        res.json(organizations || []);
+
+    } catch (error) {
+        console.error('❌ Error in organizations GET route:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 // POST /api/organizations - Create organization (redirects to auth route)
 router.post('/', authenticateToken, async (req, res) => {
     try {

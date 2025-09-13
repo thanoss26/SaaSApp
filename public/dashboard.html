@@ -5,10 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chronos HR - Employee Management Dashboard</title>
-  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
+  <link rel="stylesheet" href="css/dashboard.css?v=1.1.0">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
       <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
-    <link rel="stylesheet" href="css/mailbox.css">
+    <link rel="stylesheet" href="css/mailbox.css?v=2.0.0">
+    <link rel="stylesheet" href="css/dark-mode.css?v=1.0.6">
+  <script>
+    // Immediate theme application to prevent flash of light content
+    (function() {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <style>
     .org-required-section {
       padding: 60px 20px;
@@ -152,6 +163,10 @@
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- PRIORITY: Load dropdown functionality early -->
+  <script src="js/dropdown.js"></script>
+  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -173,9 +188,6 @@
         <div class="enhanced-sidebar-controls">
           <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
             <i class="fas fa-bars"></i>
-          </button>
-          <button class="enhanced-theme-toggle" id="theme-toggle">
-            <i class="fas fa-moon" id="theme-icon"></i>
           </button>
         </div>
       </div>
@@ -219,6 +231,11 @@
       <script src="js/anti-flicker.js"></script>
 
       <div class="enhanced-sidebar-footer">
+        <div class="footer-theme-toggle">
+          <button class="enhanced-theme-toggle" id="theme-toggle">
+            <i class="fas fa-moon" id="theme-icon"></i>
+          </button>
+        </div>
         <div class="enhanced-sidebar-user">
           <div class="user-avatar">TV</div>
           <div class="user-details">
@@ -301,14 +318,50 @@
         
 
         
-        <div class="dashboard-user">
+        <div class="dashboard-user" id="dashboardUserTrigger">
           <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=48" alt="User"
             class="user-avatar" />
           <div class="user-info">
             <span class="user-name">Loading...</span>
             <span class="user-role">Loading...</span>
           </div>
-          <i class="fas fa-chevron-down"></i>
+          <i class="fas fa-chevron-down dropdown-arrow" id="dropdownArrow"></i>
+          
+          <!-- Dropdown Menu -->
+          <div class="user-dropdown-menu" id="userDropdownMenu" style="display: none;">
+            <div class="dropdown-header">
+              <div class="dropdown-user-info">
+                <div class="dropdown-avatar">
+                  <img src="https://ui-avatars.com/api/?name=U&background=4e8cff&color=fff&size=40" alt="User" class="user-avatar" />
+                </div>
+                <div class="dropdown-details">
+                  <span class="dropdown-name user-name">Loading...</span>
+                  <span class="dropdown-email user-email">Loading...</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="dropdown-divider"></div>
+            
+            <div class="dropdown-items">
+              <a href="profile.html" class="dropdown-item" id="profile-menu-item">
+                <i class="fas fa-user"></i>
+                <span>My Profile</span>
+              </a>
+              
+              <a href="settings.html" class="dropdown-item" id="settings-menu-item">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+              </a>
+              
+              <div class="dropdown-divider"></div>
+              
+              <a href="login.html" class="dropdown-item logout-item" id="logout-menu-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Log Out</span>
+              </a>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -323,7 +376,7 @@
             <div class="stat-content">
               <div class="stat-value" id="totalEmployees">0</div>
               <div class="stat-label" data-i18n="dashboard:stats.totalEmployees">Total Employees</div>
-              <div class="stat-change positive">+12% this month</div>
+              <div class="stat-change neutral" id="totalEmployeesGrowth">No change</div>
             </div>
           </div>
           <div class="stat-card-extended">
@@ -333,7 +386,7 @@
             <div class="stat-content">
               <div class="stat-value" id="activeEmployees">0</div>
               <div class="stat-label" data-i18n="dashboard:stats.activeEmployees">Active Employees</div>
-              <div class="stat-change positive">+8% this month</div>
+              <div class="stat-change neutral" id="activeEmployeesGrowth">No change</div>
             </div>
           </div>
           <div class="stat-card-extended">
@@ -343,7 +396,7 @@
             <div class="stat-content">
               <div class="stat-value" id="departments">0</div>
               <div class="stat-label" data-i18n="dashboard:stats.departments">Departments</div>
-              <div class="stat-change neutral">No change</div>
+              <div class="stat-change neutral" id="departmentsGrowth">No change</div>
             </div>
           </div>
           <div class="stat-card-extended">
@@ -353,10 +406,12 @@
             <div class="stat-content">
               <div class="stat-value" id="attendanceRate">0%</div>
               <div class="stat-label" data-i18n="dashboard:stats.attendanceRate">Attendance Rate</div>
-              <div class="stat-change positive">+2.1% this week</div>
+              <div class="stat-change neutral" id="attendanceRateGrowth">No change</div>
             </div>
           </div>
         </div>
+
+        <!-- Loading states are now handled by dropdown.js -->
 
         <!-- Main Charts Row -->
         <div class="dashboard-charts">
@@ -374,7 +429,16 @@
               </div>
             </div>
             <div class="chart-body">
-              <canvas id="employeeGrowthChart" height="300"></canvas>
+              <canvas id="employeeGrowthChart" height="300" style="display: none;"></canvas>
+              <div class="no-data-state">
+                <div class="no-data-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="no-data-text">
+                  <h4>No Growth Data Available</h4>
+                  <p>Employee growth trends will appear here when data is available</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -388,8 +452,17 @@
               </div>
             </div>
             <div class="chart-body">
-              <canvas id="departmentChart" height="250"></canvas>
-              <div id="departmentList" class="department-list hidden">
+              <canvas id="departmentChart" height="250" style="display: none;"></canvas>
+              <div class="no-data-state">
+                <div class="no-data-icon">
+                  <i class="fas fa-sitemap"></i>
+                </div>
+                <div class="no-data-text">
+                  <h4>No Department Data</h4>
+                  <p>Department distribution is not applicable for super admin role</p>
+                </div>
+              </div>
+              <div id="departmentList" class="department-list hidden" style="display: none;">
                 <div class="department-item">
                   <div class="dept-info">
                     <div class="dept-color" style="background: #4e8cff;"></div>
@@ -462,11 +535,20 @@
             <div class="chart-header">
               <h3>Weekly Attendance Trend</h3>
               <div class="chart-controls">
-                <span class="attendance-summary">Avg: 94.8%</span>
+                <span class="attendance-summary" id="attendanceAverage">N/A</span>
               </div>
             </div>
             <div class="chart-body">
-              <canvas id="attendanceChart" height="200"></canvas>
+              <canvas id="attendanceChart" height="200" style="display: none;"></canvas>
+              <div class="no-data-state">
+                <div class="no-data-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="no-data-text">
+                  <h4>No Attendance Data</h4>
+                  <p>Attendance tracking is not applicable for super admin role</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -483,7 +565,16 @@
               </div>
             </div>
             <div class="chart-body">
-              <canvas id="performanceChart" height="200"></canvas>
+              <canvas id="performanceChart" height="200" style="display: none;"></canvas>
+              <div class="no-data-state">
+                <div class="no-data-icon">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="no-data-text">
+                  <h4>No Performance Data</h4>
+                  <p>Performance metrics are not applicable for super admin role</p>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -493,50 +584,22 @@
               <h3 data-i18n="dashboard:charts.recentActivity">Recent Activity</h3>
               <a href="#" class="view-all" data-i18n="dashboard:views.viewAll">View all</a>
             </div>
-            <div class="activity-feed">
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="fas fa-user-plus"></i>
+            <div class="activity-feed" id="activityFeed">
+              <!-- Default no-data state -->
+              <div class="no-data-state">
+                <div class="no-data-icon">
+                  <i class="fas fa-inbox"></i>
                 </div>
-                <div class="activity-content">
-                  <div class="activity-title">New employee joined</div>
-                  <div class="activity-desc">Sarah Johnson joined Engineering team</div>
-                  <div class="activity-time">2 hours ago</div>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="fas fa-trophy"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Performance milestone</div>
-                  <div class="activity-desc">Marketing team exceeded Q4 targets</div>
-                  <div class="activity-time">4 hours ago</div>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="fas fa-calendar"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Meeting scheduled</div>
-                  <div class="activity-desc">All-hands meeting tomorrow at 10 AM</div>
-                  <div class="activity-time">6 hours ago</div>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">
-                  <i class="fas fa-chart-up"></i>
-                </div>
-                <div class="activity-content">
-                  <div class="activity-title">Attendance improved</div>
-                  <div class="activity-desc">Weekly attendance up by 3.2%</div>
-                  <div class="activity-time">1 day ago</div>
+                <div class="no-data-text">
+                  <h4>No Recent Activity</h4>
+                  <p>Platform activity will appear here when data is available</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        
+        <!-- Activity feed is now handled by dropdown.js -->
       </section>
 
       <!-- Organization Required Section -->
@@ -567,7 +630,10 @@
   <script src="js/shared.js"></script>
       <script src="js/sidebar.js"></script>
     <script src="js/mailbox.js"></script>
-    <script src="js/dashboard.js"></script>
+    <script src="js/dashboard.js?v=1.0.5"></script>
+    
+    <!-- All immediate fixes are now handled by dropdown.js -->
 </body>
 
 </html>
+

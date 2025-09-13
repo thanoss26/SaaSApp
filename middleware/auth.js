@@ -146,6 +146,13 @@ const requireOrganizationOverviewAccess = (req, res, next) => {
     return next();
   }
   
+  // Employee can access limited analytics
+  if (req.profile.role === 'employee') {
+    // Add flag to request for limited access
+    req.limitedAccess = true;
+    return next();
+  }
+  
   // Organization member can only access limited (self) overview
   if (req.profile.role === 'organization_member') {
     // Add flag to request for limited access
@@ -200,6 +207,13 @@ const requireAnalyticsAccess = (req, res, next) => {
   
   // Admin can access organization-wide analytics
   if (req.profile.role === 'admin') {
+    return next();
+  }
+  
+  // Employee can access limited analytics
+  if (req.profile.role === 'employee') {
+    // Add flag to request for limited access
+    req.limitedAccess = true;
     return next();
   }
   

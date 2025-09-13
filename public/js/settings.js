@@ -119,23 +119,41 @@ class SettingsManager {
         // Only update profile form fields, not sidebar elements
         // Sidebar elements are handled by shared.js
         
-        const firstNameInput = document.getElementById('firstName');
-        const lastNameInput = document.getElementById('lastName');
-        const emailInput = document.getElementById('email');
-        const phoneInput = document.getElementById('phone');
-        const bioInput = document.getElementById('bio');
-        const avatarPreview = document.getElementById('avatarPreview');
+        // Update account information display
+        const accountEmail = document.getElementById('account-email');
+        const accountRole = document.getElementById('account-role');
+        const accountCreated = document.getElementById('account-created');
+        const accountStatus = document.getElementById('account-status');
 
-        if (firstNameInput) firstNameInput.value = this.currentUser.first_name || '';
-        if (lastNameInput) lastNameInput.value = this.currentUser.last_name || '';
-        if (emailInput) emailInput.value = this.currentUser.email || '';
-        if (phoneInput) phoneInput.value = this.currentUser.phone || '';
-        if (bioInput) bioInput.value = this.currentUser.bio || '';
-        
-        // Update avatar preview
-        if (avatarPreview) {
-            const initials = this.getInitials(this.currentUser.first_name, this.currentUser.last_name);
-            avatarPreview.textContent = initials;
+        if (accountEmail) accountEmail.textContent = this.currentUser.email || 'Not available';
+        if (accountRole) {
+            const roleDisplay = this.currentUser.role === 'super_admin' ? 'Super Administrator' : 
+                               this.currentUser.role || 'User';
+            accountRole.innerHTML = `<span class="role-badge ${this.currentUser.role}">${roleDisplay}</span>`;
+        }
+        if (accountCreated) {
+            const createdDate = this.currentUser.created_at ? 
+                new Date(this.currentUser.created_at).toLocaleDateString() : 'Unknown';
+            accountCreated.textContent = createdDate;
+        }
+        if (accountStatus) {
+            const status = this.currentUser.is_active ? 'Active' : 'Inactive';
+            accountStatus.innerHTML = `<span class="status-badge ${status.toLowerCase()}">${status}</span>`;
+        }
+
+        // Update preferences
+        const timezoneSelect = document.getElementById('timezone');
+        const emailNotificationsToggle = document.getElementById('emailNotifications');
+        const accessibilityToggle = document.getElementById('accessibilityMode');
+
+        if (timezoneSelect && this.currentUser.timezone) {
+            timezoneSelect.value = this.currentUser.timezone;
+        }
+        if (emailNotificationsToggle) {
+            emailNotificationsToggle.checked = this.currentUser.email_notifications !== false;
+        }
+        if (accessibilityToggle) {
+            accessibilityToggle.checked = this.currentUser.accessibility_mode === true;
         }
 
         // Update role badge
@@ -626,9 +644,9 @@ class SettingsManager {
 
     // Form Handlers
     initializeFormHandlers() {
-        // Profile form
-        const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
-        profileInputs.forEach(input => {
+        // Account form
+        const accountInputs = document.querySelectorAll('#account input, #account select, #account textarea');
+        accountInputs.forEach(input => {
             input.addEventListener('change', () => {
                 this.markFormAsChanged();
             });
@@ -951,14 +969,13 @@ class SettingsManager {
         
         const isSuperAdmin = this.currentUser?.role === 'super_admin';
         
-        // Profile data
-        const profileInputs = document.querySelectorAll('#profile input, #profile select, #profile textarea');
-        profileInputs.forEach(input => {
+        // Account data
+        const accountInputs = document.querySelectorAll('#account input, #account select, #account textarea');
+        accountInputs.forEach(input => {
             if (input.id && input.value !== '') {
                 const key = input.id;
-                if (['firstName', 'lastName', 'email', 'phone', 'bio'].includes(key)) {
-                    data.profile[key === 'firstName' ? 'first_name' : 
-                                  key === 'lastName' ? 'last_name' : key] = input.value;
+                if (['timezone', 'emailNotifications', 'accessibilityMode'].includes(key)) {
+                    data.profile[key] = input.type === 'checkbox' ? input.checked : input.value;
                 }
             }
         });

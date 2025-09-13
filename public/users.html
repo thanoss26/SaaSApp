@@ -6,8 +6,10 @@
     <title>Chronos HR - User Management</title>
     <link rel="stylesheet" href="css/shared.css">
     <link rel="stylesheet" href="css/enhanced-sidebar.css">
-    <link rel="stylesheet" href="css/mailbox.css">
-    <link rel="stylesheet" href="css/users.css">
+    <link rel="stylesheet" href="css/mailbox.css?v=2.0.0">
+    <link rel="stylesheet" href="css/dark-mode.css?v=1.1.7">
+    <script src="js/theme-init.js"></script>
+    <link rel="stylesheet" href="css/users.css?v=1.2.1">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -162,9 +164,6 @@
                     <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <button class="enhanced-theme-toggle" id="theme-toggle">
-                        <i class="fas fa-moon" id="theme-icon"></i>
-                    </button>
                 </div>
             </div>
 
@@ -203,6 +202,11 @@
             <script src="js/anti-flicker.js"></script>
 
             <div class="enhanced-sidebar-footer">
+                <div class="footer-theme-toggle">
+                    <button class="enhanced-theme-toggle" id="themeToggle">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
                 <div class="enhanced-sidebar-user">
                     <div class="user-avatar">TV</div>
                     <div class="user-details">
@@ -294,152 +298,270 @@
 
             <!-- User Management Content -->
             <div class="users-content" id="userManagementContent">
-                <!-- Topbar -->
-                <header class="users-topbar">
-                    <h1 class="users-title">User Management</h1>
-                    <div class="users-search">
-                        <input type="text" placeholder="Search users..." id="searchInput" />
-                        <i class="fas fa-search"></i>
+                <!-- Enhanced Header -->
+                <header class="users-header-modern">
+                    <div class="header-top">
+                        <div class="header-title-section">
+                            <div class="header-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="header-text">
+                                <h1 class="users-title-modern">User Management</h1>
+                                <p class="users-subtitle">Manage and organize your team members efficiently</p>
+                            </div>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn-modern btn-primary-modern" id="exportBtn">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                        </div>
                     </div>
-                    <div class="users-actions">
-                        <button class="btn btn-primary" id="addUserBtn">
-                            <i class="fas fa-user-plus"></i>
-                            Add User
-                        </button>
-                        <button class="btn btn-outline" id="bulkActionsBtn">
-                            <i class="fas fa-ellipsis-v"></i>
-                            Actions
-                        </button>
+                    
+                    <div class="header-controls">
+                        <div class="search-section-modern">
+                            <div class="search-input-wrapper">
+                                <input type="text" placeholder="Search users by name, email, or role..." id="searchInput" class="search-input-modern" />
+                                <i class="fas fa-search search-icon"></i>
+                            </div>
+                            <div class="search-filters">
+                                <button class="filter-btn" id="filterToggle">
+                                    <i class="fas fa-filter"></i>
+                                    Filters
+                                </button>
+                                <button class="view-toggle-btn active" data-view="table" id="tableViewBtn">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                                <button class="view-toggle-btn" data-view="grid" id="gridViewBtn">
+                                    <i class="fas fa-th"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-panel" id="filterPanel" style="display: none;">
+                            <div class="filter-row">
+                                <div class="filter-group">
+                                    <label>Role</label>
+                                    <select id="roleFilter" class="filter-select-modern">
+                                        <option value="">All Roles</option>
+                                        <option value="super_admin">Super Admin</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="employee">Employee</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Status</label>
+                                    <select id="statusFilter" class="filter-select-modern">
+                                        <option value="">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="inactive">Inactive</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Organization</label>
+                                    <select id="orgFilter" class="filter-select-modern">
+                                        <option value="">All Organizations</option>
+                                    </select>
+                                </div>
+                                <div class="filter-actions">
+                                    <button class="btn-modern btn-outline-modern" id="clearFilters">
+                                        <i class="fas fa-times"></i>
+                                        Clear
+                                    </button>
+                                    <button class="btn-modern btn-primary-modern" id="applyFilters">
+                                        <i class="fas fa-check"></i>
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
-                <!-- Stats Section -->
-                <section class="users-stats">
-                    <div class="users-stats-grid">
-                        <div class="stat-card-extended">
-                            <div class="stat-icon">
-                                <i class="fas fa-users"></i>
+                <!-- Enhanced Stats Section -->
+                <section class="users-stats-modern">
+                    <div class="stats-grid-modern">
+                        <div class="stat-card-modern total-users">
+                            <div class="stat-card-header">
+                                <div class="stat-icon-modern">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>12%</span>
+                                </div>
                             </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="totalUsers">0</div>
-                                <div class="stat-label">Total Users</div>
-                                <div class="stat-change positive">+12% this month</div>
-                            </div>
-                        </div>
-                        <div class="stat-card-extended">
-                            <div class="stat-icon">
-                                <i class="fas fa-user-check"></i>
-                            </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="activeUsers">0</div>
-                                <div class="stat-label">Active Users</div>
-                                <div class="stat-change positive">+8% this month</div>
+                            <div class="stat-content-modern">
+                                <div class="stat-value-modern" id="totalUsers">0</div>
+                                <div class="stat-label-modern">Total Users</div>
+                                <div class="stat-detail">+8 new this month</div>
                             </div>
                         </div>
-                        <div class="stat-card-extended">
-                            <div class="stat-icon">
-                                <i class="fas fa-user-shield"></i>
+                        
+                        <div class="stat-card-modern active-users">
+                            <div class="stat-card-header">
+                                <div class="stat-icon-modern">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>8%</span>
+                                </div>
                             </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="adminUsers">0</div>
-                                <div class="stat-label">Admin Users</div>
-                                <div class="stat-change neutral">No change</div>
+                            <div class="stat-content-modern">
+                                <div class="stat-value-modern" id="activeUsers">0</div>
+                                <div class="stat-label-modern">Active Users</div>
+                                <div class="stat-detail">Online in last 24h</div>
                             </div>
                         </div>
-                        <div class="stat-card-extended">
-                            <div class="stat-icon">
-                                <i class="fas fa-clock"></i>
+                        
+                        <div class="stat-card-modern admin-users">
+                            <div class="stat-card-header">
+                                <div class="stat-icon-modern">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="stat-trend neutral">
+                                    <i class="fas fa-minus"></i>
+                                    <span>0%</span>
+                                </div>
                             </div>
-                            <div class="stat-content">
-                                <div class="stat-value" id="recentLogins">0</div>
-                                <div class="stat-label">Recent Logins</div>
-                                <div class="stat-change positive">+15% this week</div>
+                            <div class="stat-content-modern">
+                                <div class="stat-value-modern" id="adminUsers">0</div>
+                                <div class="stat-label-modern">Admin Users</div>
+                                <div class="stat-detail">Privileged accounts</div>
+                            </div>
+                        </div>
+                        
+                        <div class="stat-card-modern recent-activity">
+                            <div class="stat-card-header">
+                                <div class="stat-icon-modern">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-trend positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>15%</span>
+                                </div>
+                            </div>
+                            <div class="stat-content-modern">
+                                <div class="stat-value-modern" id="recentLogins">0</div>
+                                <div class="stat-label-modern">Recent Logins</div>
+                                <div class="stat-detail">Last 7 days</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions Bar -->
+                    <div class="quick-actions-bar">
+                        <div class="quick-actions-left">
+                            <span class="results-count" id="resultsCount">Showing 0 users</span>
+                            <div class="bulk-selection" id="bulkSelection" style="display: none;">
+                                <span id="selectedCount">0 selected</span>
+                                <button class="btn-modern btn-outline-modern btn-sm" id="bulkActionsBtn">
+                                    <i class="fas fa-cog"></i>
+                                    Actions
+                                </button>
+                            </div>
+                        </div>
+                        <div class="quick-actions-right">
+                            <div class="pagination-simple" id="paginationSimple">
+                                <button class="pagination-btn" id="prevPage" disabled>
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="page-info" id="pageInfo">1 of 1</span>
+                                <button class="pagination-btn" id="nextPage" disabled>
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- Controls Section -->
-                <section class="users-controls">
-                    <div class="controls-left">
-                        <div class="view-toggle">
-                            <button class="view-btn active" data-view="table">
-                                <i class="fas fa-table"></i>
-                                Table
-                            </button>
-                            <button class="view-btn" data-view="grid">
-                                <i class="fas fa-th"></i>
-                                Grid
-                            </button>
+                <!-- Modern Users Data Section -->
+                <section class="users-data-section">
+                    <div class="data-container-modern">
+                        <!-- Loading State -->
+                        <div class="loading-state-modern" id="loadingState">
+                            <div class="loading-spinner-modern"></div>
+                            <div class="loading-text">
+                                <h3>Loading Users</h3>
+                                <p>Fetching user data from the database...</p>
+                            </div>
                         </div>
-                        <div class="filter-controls">
-                            <select id="roleFilter" class="filter-select">
-                                <option value="">All Roles</option>
-                                <option value="super_admin">Super Admin</option>
-                                <option value="admin">Admin</option>
-                                <option value="employee">Employee</option>
-                            </select>
-                            <select id="statusFilter" class="filter-select">
-                                <option value="">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                        
+                        <!-- Table View -->
+                        <div class="table-view-modern" id="tableView" style="display: none;">
+                            <div class="table-wrapper-modern">
+                                <table class="users-table-modern">
+                                    <thead>
+                                        <tr>
+                                            <th class="checkbox-col">
+                                                <label class="checkbox-modern">
+                                                    <input type="checkbox" id="selectAll">
+                                                    <span class="checkmark"></span>
+                                                </label>
+                                            </th>
+                                            <th class="user-col">
+                                                <div class="header-content">
+                                                    <span>User</span>
+                                                    <i class="fas fa-sort sort-icon"></i>
+                                                </div>
+                                            </th>
+                                            <th class="email-col">
+                                                <div class="header-content">
+                                                    <span>Email</span>
+                                                    <i class="fas fa-sort sort-icon"></i>
+                                                </div>
+                                            </th>
+                                            <th class="role-col">
+                                                <div class="header-content">
+                                                    <span>Role</span>
+                                                    <i class="fas fa-sort sort-icon"></i>
+                                                </div>
+                                            </th>
+                                            <th class="status-col">
+                                                <div class="header-content">
+                                                    <span>Status</span>
+                                                    <i class="fas fa-sort sort-icon"></i>
+                                                </div>
+                                            </th>
+                                            <th class="activity-col">
+                                                <div class="header-content">
+                                                    <span>Last Activity</span>
+                                                    <i class="fas fa-sort sort-icon"></i>
+                                                </div>
+                                            </th>
+                                            <th class="actions-col">
+                                                <span>Actions</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="usersTableBody">
+                                        <!-- Users will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
-                    </div>
-                    <div class="controls-right">
-                        <div class="entries-per-page">
-                            <label>Show:</label>
-                            <select id="entriesPerPage">
-                                <option value="10">10</option>
-                                <option value="25" selected>25</option>
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                            </select>
-                            <span>entries</span>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Users Table -->
-                <section class="users-table-section">
-                    <div class="table-container">
-                        <div class="table-loading" id="tableLoading">
-                            <div class="loading-spinner"></div>
-                            <p>Loading users...</p>
-                        </div>
-                        <table class="users-table" id="usersTable" style="display: none;">
-                            <thead>
-                                <tr>
-                                    <th>
-                                        <input type="checkbox" id="selectAll">
-                                    </th>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Organization</th>
-                                    <th>Role</th>
-                                    <th>Status</th>
-                                    <th>Last Login</th>
-                                    <th>Created</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="usersTableBody">
-                                <!-- Users will be populated here -->
-                            </tbody>
-                        </table>
                         
                         <!-- Grid View -->
-                        <div class="users-grid" id="usersGrid" style="display: none;">
-                            <!-- Users will be populated here -->
+                        <div class="grid-view-modern" id="gridView" style="display: none;">
+                            <div class="users-grid-modern" id="usersGrid">
+                                <!-- User cards will be populated here -->
+                            </div>
                         </div>
                         
                         <!-- Empty State -->
-                        <div class="empty-state" id="emptyState" style="display: none;">
-                            <div class="empty-icon">
-                                <i class="fas fa-users"></i>
+                        <div class="empty-state-modern" id="emptyState" style="display: none;">
+                            <div class="empty-illustration">
+                                <div class="empty-icon-modern">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h3>No users found</h3>
+                                <p>Try adjusting your search criteria or filters to find users</p>
+                                <button class="btn-modern btn-primary-modern" id="clearSearchBtn">
+                                    <i class="fas fa-times"></i>
+                                    Clear Search
+                                </button>
                             </div>
-                            <h3>No users found</h3>
-                            <p>Try adjusting your search or filter criteria</p>
                         </div>
                     </div>
                 </section>
@@ -456,76 +578,175 @@
             </div>
         </main>
 
-        <!-- Add User Modal -->
-        <div class="modal" id="addUserModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Add New User</h2>
-                    <button class="modal-close" id="closeAddUserModal">
+        <!-- Enhanced Add User Modal -->
+        <div class="modal-modern" id="addUserModal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content-modern">
+                <div class="modal-header-modern">
+                    <div class="modal-title-section">
+                        <div class="modal-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h2>Add New User</h2>
+                            <p>Create a new user account for your organization</p>
+                        </div>
+                    </div>
+                    <button class="modal-close-modern" id="closeAddUserModal">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <form id="addUserForm">
-                        <div class="form-group">
-                            <label for="firstName">First Name</label>
-                            <input type="text" id="firstName" name="firstName" required>
+                <div class="modal-body-modern">
+                    <form id="addUserForm" class="form-modern">
+                        <div class="form-grid">
+                            <div class="form-group-modern">
+                                <label for="firstName">
+                                    <i class="fas fa-user"></i>
+                                    First Name
+                                </label>
+                                <input type="text" id="firstName" name="firstName" class="input-modern" placeholder="Enter first name" required>
+                            </div>
+                            <div class="form-group-modern">
+                                <label for="lastName">
+                                    <i class="fas fa-user"></i>
+                                    Last Name
+                                </label>
+                                <input type="text" id="lastName" name="lastName" class="input-modern" placeholder="Enter last name" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="lastName">Last Name</label>
-                            <input type="text" id="lastName" name="lastName" required>
+                        
+                        <div class="form-group-modern">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                Email Address
+                            </label>
+                            <input type="email" id="email" name="email" class="input-modern" placeholder="user@company.com" required>
                         </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" required>
+                        
+                        <div class="form-grid">
+                            <div class="form-group-modern">
+                                <label for="role">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Role
+                                </label>
+                                <select id="role" name="role" class="select-modern" required>
+                                    <option value="">Select a role</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="employee">Employee</option>
+                                </select>
+                            </div>
+                            <div class="form-group-modern">
+                                <label for="department">
+                                    <i class="fas fa-building"></i>
+                                    Department
+                                </label>
+                                <select id="department" name="department" class="select-modern">
+                                    <option value="">Select department</option>
+                                    <option value="hr">Human Resources</option>
+                                    <option value="it">Information Technology</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="marketing">Marketing</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="role">Role</label>
-                            <select id="role" name="role" required>
-                                <option value="">Select Role</option>
-                                <option value="admin">Admin</option>
-                                <option value="employee">Employee</option>
-                            </select>
+                        
+                        <div class="form-group-modern">
+                            <label for="password">
+                                <i class="fas fa-lock"></i>
+                                Temporary Password
+                            </label>
+                            <div class="password-input-wrapper">
+                                <input type="password" id="password" name="password" class="input-modern" placeholder="Enter temporary password" required>
+                                <button type="button" class="password-toggle" id="passwordToggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="input-hint">User will be required to change password on first login</small>
                         </div>
-                        <div class="form-group">
-                            <label for="password">Temporary Password</label>
-                            <input type="password" id="password" name="password" required>
-                        </div>
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" id="cancelAddUser">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Add User</button>
+                        
+                        <div class="form-actions-modern">
+                            <button type="button" class="btn-modern btn-outline-modern" id="cancelAddUser">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn-modern btn-primary-modern">
+                                <i class="fas fa-user-plus"></i>
+                                Add User
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Bulk Actions Modal -->
-        <div class="modal" id="bulkActionsModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2>Bulk Actions</h2>
-                    <button class="modal-close" id="closeBulkActionsModal">
+        <!-- Enhanced Bulk Actions Modal -->
+        <div class="modal-modern" id="bulkActionsModal">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content-modern bulk-modal">
+                <div class="modal-header-modern">
+                    <div class="modal-title-section">
+                        <div class="modal-icon">
+                            <i class="fas fa-cog"></i>
+                        </div>
+                        <div>
+                            <h2>Bulk Actions</h2>
+                            <p>Perform actions on <span id="selectedUsersCount">0</span> selected users</p>
+                        </div>
+                    </div>
+                    <button class="modal-close-modern" id="closeBulkActionsModal">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="bulk-actions-list">
-                        <button class="bulk-action-btn" data-action="activate">
-                            <i class="fas fa-user-check"></i>
-                            Activate Selected Users
+                <div class="modal-body-modern">
+                    <div class="bulk-actions-grid">
+                        <button class="bulk-action-card" data-action="activate">
+                            <div class="action-icon success">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Activate Users</h4>
+                                <p>Enable selected user accounts</p>
+                            </div>
                         </button>
-                        <button class="bulk-action-btn" data-action="deactivate">
-                            <i class="fas fa-user-times"></i>
-                            Deactivate Selected Users
+                        
+                        <button class="bulk-action-card" data-action="deactivate">
+                            <div class="action-icon warning">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Deactivate Users</h4>
+                                <p>Disable selected user accounts</p>
+                            </div>
                         </button>
-                        <button class="bulk-action-btn" data-action="export">
-                            <i class="fas fa-download"></i>
-                            Export Selected Users
+                        
+                        <button class="bulk-action-card" data-action="export">
+                            <div class="action-icon info">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Export Data</h4>
+                                <p>Download user information as CSV</p>
+                            </div>
                         </button>
-                        <button class="bulk-action-btn danger" data-action="delete">
-                            <i class="fas fa-trash"></i>
-                            Delete Selected Users
+                        
+                        <button class="bulk-action-card" data-action="reset-password">
+                            <div class="action-icon info">
+                                <i class="fas fa-key"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Reset Passwords</h4>
+                                <p>Send password reset emails</p>
+                            </div>
+                        </button>
+                        
+                        <button class="bulk-action-card danger" data-action="delete">
+                            <div class="action-icon danger">
+                                <i class="fas fa-trash"></i>
+                            </div>
+                            <div class="action-content">
+                                <h4>Delete Users</h4>
+                                <p>Permanently remove accounts</p>
+                            </div>
                         </button>
                     </div>
                 </div>

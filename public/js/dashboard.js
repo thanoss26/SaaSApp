@@ -1,3 +1,66 @@
+// Immediate super admin check - runs before anything else
+(function() {
+  console.log('🚀 IMMEDIATE SUPER ADMIN CHECK - Starting before Dashboard class');
+  
+  try {
+    const cachedProfile = localStorage.getItem('profile');
+    if (cachedProfile) {
+      const parsed = JSON.parse(cachedProfile);
+      const profileData = parsed.profile || parsed;
+      console.log('🔍 IMMEDIATE CHECK - Cached profile role:', profileData.role);
+      
+      if (profileData.role === 'super_admin') {
+        console.log('👑 IMMEDIATE CHECK - Super admin detected! Ensuring org section stays hidden');
+        
+        // Immediately hide org required section
+        document.addEventListener('DOMContentLoaded', function() {
+          const orgSection = document.getElementById('orgRequiredSection');
+          const mainContent = document.getElementById('mainContent');
+          
+          if (orgSection) {
+            orgSection.style.display = 'none';
+            orgSection.style.visibility = 'hidden';
+            console.log('👑 IMMEDIATE CHECK - Org section forcibly hidden');
+          }
+          
+          if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.style.visibility = 'visible';
+            console.log('👑 IMMEDIATE CHECK - Main content shown');
+          }
+          
+          // Add super admin class to body immediately
+          document.body.classList.add('super-admin-immediate');
+          console.log('👑 IMMEDIATE CHECK - Added super-admin-immediate class');
+          
+          // Add CSS to absolutely hide org section for super admin
+          const style = document.createElement('style');
+          style.textContent = `
+            body.super-admin-immediate #orgRequiredSection,
+            body.super-admin-immediate .org-required-section {
+              display: none !important;
+              visibility: hidden !important;
+              opacity: 0 !important;
+              height: 0 !important;
+              overflow: hidden !important;
+            }
+            body.super-admin-immediate #mainContent {
+              display: block !important;
+              visibility: visible !important;
+            }
+          `;
+          document.head.appendChild(style);
+          console.log('👑 IMMEDIATE CHECK - Added CSS to force hide org section');
+        });
+      }
+    } else {
+      console.log('🔍 IMMEDIATE CHECK - No cached profile found');
+    }
+  } catch (error) {
+    console.error('❌ IMMEDIATE CHECK - Error:', error);
+  }
+})();
+
 // Dashboard JavaScript
 class Dashboard {
   constructor() {
@@ -9,6 +72,7 @@ class Dashboard {
 
   async init() {
     console.log('🚀 Dashboard initializing...');
+    console.log('🔍 Current localStorage profile:', localStorage.getItem('profile'));
 
     // Always setup sidebar and event listeners first, regardless of auth status
     this.setupEventListeners();
@@ -35,7 +99,27 @@ class Dashboard {
     try {
       console.log('🔍 Checking organization requirement and initializing dashboard...');
       
-      // Fetch user profile with timeout
+      // Try to get profile from cache first (for super admin check)
+      let profileData = null;
+      const cachedProfile = localStorage.getItem('profile');
+      if (cachedProfile) {
+        try {
+          const parsed = JSON.parse(cachedProfile);
+          profileData = parsed.profile || parsed;
+          console.log('📱 Using cached profile for initial check:', profileData.role);
+          
+          // If cached profile shows super admin, show dashboard immediately
+          if (profileData.role === 'super_admin') {
+            console.log('👑 Cached super admin detected - showing dashboard immediately');
+            this.showSuperAdminDashboard();
+            return;
+          }
+        } catch (e) {
+          console.log('⚠️ Failed to parse cached profile, will fetch from API');
+        }
+      }
+
+      // Fetch user profile with longer timeout and retry
       const profile = await Promise.race([
         fetch('/api/auth/profile', {
           method: 'GET',
@@ -43,16 +127,25 @@ class Dashboard {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
-        }).then(res => res.json()),
+        }).then(async res => {
+          if (!res.ok) {
+            throw new Error(`Profile fetch failed: ${res.status}`);
+          }
+          return res.json();
+        }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Profile fetch timeout')), 3000)
+          setTimeout(() => reject(new Error('Profile fetch timeout after 10 seconds')), 10000)
         )
       ]);
 
       console.log('🔍 Dashboard - Profile loaded:', profile);
       
       // Extract actual profile data if nested
-      const profileData = profile.profile || profile;
+      profileData = profile.profile || profile;
+      
+      // Store/update profile in localStorage for future cache checks
+      localStorage.setItem('profile', JSON.stringify(profile));
+      console.log('📱 Profile cached for future use');
       
       // Update navigation visibility immediately after profile load
       if (window.EmployeeHub && window.EmployeeHub.updateNavigationVisibility) {
@@ -64,11 +157,17 @@ class Dashboard {
       }
       
       // Role-based dashboard logic
+      console.log('🔍 Profile data:', profileData);
+      console.log('🔍 User role:', profileData.role);
+      console.log('🔍 Organization ID:', profileData.organization_id);
+      
       switch (profileData.role) {
         case 'super_admin':
           // Super admin ALWAYS sees website administration dashboard
           console.log('👑 Super admin detected - showing website administration dashboard');
+          console.log('👑 Super admin bypasses organization requirement');
           this.showSuperAdminDashboard();
+          return; // Exit here to prevent any further organization checks
           break;
           
         case 'organization_member':
@@ -85,8 +184,12 @@ class Dashboard {
         case 'admin':
         case 'employee':
         default:
-          // Regular users need organization to access dashboard
-          if (!profileData.organization_id) {
+          // Regular users (NOT super admin) need organization to access dashboard
+          if (profileData.role === 'super_admin') {
+            // Super admin should never reach here due to switch statement, but as a safety net
+            console.log('👑 Super admin detected in default case - redirecting to super admin dashboard');
+            this.showSuperAdminDashboard();
+          } else if (!profileData.organization_id) {
             console.log('❌ Organization required for role:', profileData.role);
             this.showOrganizationRequired();
           } else {
@@ -99,13 +202,45 @@ class Dashboard {
       
     } catch (error) {
       console.error('⚠️ Dashboard initialization error:', error);
-      // On error, show organization requirement for safety
+      
+      // Check if user is super admin even on error - they should never see org requirement
+      try {
+        const cachedProfile = JSON.parse(localStorage.getItem('profile') || '{}');
+        const profileData = cachedProfile.profile || cachedProfile;
+        
+        if (profileData.role === 'super_admin') {
+          console.log('👑 Super admin detected in error case - showing super admin dashboard anyway');
+          this.showSuperAdminDashboard();
+          return;
+        }
+      } catch (profileError) {
+        console.error('❌ Error checking cached profile:', profileError);
+      }
+      
+      // On error for non-super-admin users, show organization requirement for safety
       this.showOrganizationRequired();
     }
   }
 
   showOrganizationRequired() {
     console.log('🚫 Showing organization requirement screen');
+    
+    // NEVER show organization required for super admin - check again as safety
+    try {
+      const cachedProfile = localStorage.getItem('profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        const profileData = parsed.profile || parsed;
+        if (profileData.role === 'super_admin') {
+          console.log('👑 BLOCKED organization required for super admin - showing dashboard instead');
+          this.showSuperAdminDashboard();
+          return;
+        }
+      }
+    } catch (e) {
+      console.log('⚠️ Error checking profile in showOrganizationRequired');
+    }
+    
     const orgRequiredSection = document.getElementById('orgRequiredSection');
     const mainContent = document.getElementById('mainContent');
     
@@ -131,8 +266,12 @@ class Dashboard {
       console.log('✅ Main dashboard displayed');
     }
 
-    // Continue with normal dashboard initialization
+    // Continue with normal dashboard initialization (skip for super admin)
+    const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+    const profileData = profile.profile || profile;
+    if (profileData.role !== 'super_admin') {
     this.continueNormalInitialization();
+    }
   }
 
   showSuperAdminDashboard() {
@@ -140,10 +279,15 @@ class Dashboard {
     const orgRequiredSection = document.getElementById('orgRequiredSection');
     const mainContent = document.getElementById('mainContent');
     
+    console.log('🔍 orgRequiredSection:', orgRequiredSection);
+    console.log('🔍 mainContent:', mainContent);
+    
     if (orgRequiredSection && mainContent) {
       orgRequiredSection.style.display = 'none';
       mainContent.style.display = 'block';
       console.log('✅ Super admin dashboard displayed');
+    } else {
+      console.log('❌ Could not find required elements for super admin dashboard');
     }
 
     // Update navigation visibility for super admin
@@ -152,8 +296,44 @@ class Dashboard {
       window.EmployeeHub.updateNavigationVisibility();
     }
 
-    // Load super admin specific content
+    // Add super admin class to body for CSS targeting
+    document.body.classList.add('super-admin-view');
+    
+    // Immediately set user info from cached profile for super admin
+    this.loadSuperAdminUserInfo();
+    
+    // User dropdown is now handled by inline HTML functions
+    
+    // Hide employee-specific sections immediately
+    this.hideDepartmentAndAttendanceSections();
+    
+    // Immediately initialize growth indicators to prevent stuck loading states
+    this.initializeGrowthIndicators();
+    
+    // Load super admin specific content (this replaces normal initialization)
     this.loadSuperAdminData();
+    
+    // Initialize super admin specific charts
+    this.initializeSuperAdminCharts();
+  }
+
+  async initializeSuperAdminCharts() {
+    console.log('📊 Initializing super admin specific charts...');
+    
+    // Only create charts relevant for super admin (platform management)
+    this.createEmployeeGrowthChart(); // This shows user/organization growth
+    
+    // Skip attendance, department, and performance charts (employee management)
+    console.log('📊 Skipping employee-specific charts for super admin');
+    
+    this.setupChartControls();
+    
+    // Enforce size constraints and set up observers
+    this.enforceChartSizeConstraints();
+    this.setupChartSizeObserver();
+    this.setupMutationObserver();
+    this.startChartSizeMonitoring();
+    console.log('✅ Super admin charts initialized');
   }
 
   async continueNormalInitialization() {
@@ -163,7 +343,7 @@ class Dashboard {
       console.log('✅ Dashboard data loaded');
 
       try {
-        this.initializeCharts();
+        await this.initializeCharts();
         console.log('✅ Charts initialized');
 
         // Enforce size constraints and set up observers
@@ -211,7 +391,7 @@ class Dashboard {
 
       // Initialize charts after loading data
       try {
-        this.initializeCharts();
+        await this.initializeCharts();
         console.log('✅ Charts initialized');
 
         // Enforce size constraints and set up observers
@@ -226,6 +406,7 @@ class Dashboard {
       }
 
       this.startDataRefresh();
+      this.startSuperAdminDataRefresh();
       console.log('✅ Super admin dashboard initialization complete');
 
     } catch (error) {
@@ -632,76 +813,330 @@ class Dashboard {
 
   async loadWebsiteStats() {
     try {
-      console.log('📊 Loading website statistics...');
+      console.log('📊 Loading real-time website statistics...');
       
-      // More realistic website administration metrics
-      const websiteStats = {
-        totalUsers: 247,
-        activeUsers: 203,
-        totalOrganizations: 18,
-        newSignupsThisMonth: 38
-      };
+      // Immediately clear loading states as a safety measure
+      setTimeout(() => {
+        console.log('🔄 Safety timeout: Clearing any remaining loading states...');
+        this.clearLoadingStates();
+      }, 5000);
+      
+      // Fetch real-time data from the API
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/super-admin/analytics', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-      // Update stats cards with website administration metrics
-      const statsCards = document.querySelectorAll('.stat-card-extended');
-      if (statsCards.length >= 4) {
-        // First card - Total Users
-        statsCards[0].querySelector('.stat-value').textContent = websiteStats.totalUsers;
-        statsCards[0].querySelector('.stat-label').textContent = 'Total Users';
-        
-        // Second card - Active Users  
-        statsCards[1].querySelector('.stat-value').textContent = websiteStats.activeUsers;
-        statsCards[1].querySelector('.stat-label').textContent = 'Active Users';
-        
-        // Third card - hide departments for super admin
-        statsCards[2].style.display = 'none';
-        
-        // Fourth card - hide attendance rate for super admin
-        statsCards[3].style.display = 'none';
+      if (!response.ok) {
+        throw new Error(`Failed to fetch analytics: ${response.status}`);
       }
+
+      const analytics = await response.json();
+      console.log('📊 Real-time analytics data:', analytics);
+
+      // Update stats cards with real-time data
+      // Update stat cards with real-time data using specific IDs
+      // First card - Total Employees
+      const totalEmployeesEl = document.getElementById('totalEmployees');
+      const totalEmployeesGrowthEl = document.getElementById('totalEmployeesGrowth');
+      if (totalEmployeesEl) {
+        totalEmployeesEl.textContent = analytics.totalEmployees || 0;
+      }
+      if (totalEmployeesGrowthEl) {
+        console.log('📈 Updating totalEmployeesGrowth with:', analytics.employeeGrowthThisMonth);
+        this.updateGrowthIndicatorById('totalEmployeesGrowth', analytics.employeeGrowthThisMonth, 'this month');
+      }
+      
+      // Second card - Active Employees (we'll show total users for super admin)
+      const activeEmployeesEl = document.getElementById('activeEmployees');
+      const activeEmployeesGrowthEl = document.getElementById('activeEmployeesGrowth');
+      if (activeEmployeesEl) {
+        activeEmployeesEl.textContent = analytics.totalUsers || 0;
+        // Update label to be more appropriate for super admin
+        const label = activeEmployeesEl.parentElement.querySelector('.stat-label');
+        if (label) label.textContent = 'Total Users';
+      }
+      if (activeEmployeesGrowthEl) {
+        console.log('📈 Updating activeEmployeesGrowth with:', analytics.userGrowthThisMonth);
+        this.updateGrowthIndicatorById('activeEmployeesGrowth', analytics.userGrowthThisMonth, 'this month');
+      }
+      
+      // Third card - Departments (we'll show organizations for super admin)
+      const departmentsEl = document.getElementById('departments');
+      const departmentsGrowthEl = document.getElementById('departmentsGrowth');
+      if (departmentsEl) {
+        departmentsEl.textContent = analytics.totalOrganizations || 0;
+        // Update label to be more appropriate for super admin
+        const label = departmentsEl.parentElement.querySelector('.stat-label');
+        if (label) label.textContent = 'Organizations';
+      }
+      if (departmentsGrowthEl) {
+        console.log('📈 Updating departmentsGrowth with:', analytics.orgGrowthThisMonth);
+        this.updateGrowthIndicatorById('departmentsGrowth', analytics.orgGrowthThisMonth, 'this month');
+      }
+      
+      // Fourth card - Attendance Rate (we'll show platform uptime for super admin)
+      const attendanceRateEl = document.getElementById('attendanceRate');
+      const attendanceRateGrowthEl = document.getElementById('attendanceRateGrowth');
+      if (attendanceRateEl) {
+        attendanceRateEl.textContent = `${analytics.platformUptime || 99.9}%`;
+        // Update label to be more appropriate for super admin
+        const label = attendanceRateEl.parentElement.querySelector('.stat-label');
+        if (label) label.textContent = 'Platform Uptime';
+      }
+      if (attendanceRateGrowthEl) {
+        console.log('📈 Updating attendanceRateGrowth with:', analytics.uptimeChange);
+        this.updateGrowthIndicatorById('attendanceRateGrowth', analytics.uptimeChange || 0, 'this week', true);
+      }
+
+      // Store analytics data for use in charts
+      this.analyticsData = analytics;
+      
+      // Ensure all loading states are cleared (safety fallback)
+      this.clearLoadingStates();
 
       // Also hide department and attendance related charts/sections
       this.hideDepartmentAndAttendanceSections();
 
     } catch (error) {
       console.error('❌ Error loading website stats:', error);
+      
+      // Fallback to basic stats from dashboard API
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/dashboard/stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const stats = await response.json();
+          console.log('📊 Fallback stats data:', stats);
+          
+          // Update with fallback data using IDs
+          console.log('📊 Using fallback data for stats...');
+          
+          // Total Employees
+          const totalEmployeesEl = document.getElementById('totalEmployees');
+          if (totalEmployeesEl) {
+            totalEmployeesEl.textContent = stats.totalEmployees || 0;
+            console.log('📈 FALLBACK: Updating totalEmployeesGrowth with:', stats.employeeGrowthThisMonth);
+            this.updateGrowthIndicatorById('totalEmployeesGrowth', stats.employeeGrowthThisMonth || 0, 'this month');
+          }
+          
+          // Active Employees (show total users for super admin)
+          const activeEmployeesEl = document.getElementById('activeEmployees');
+          if (activeEmployeesEl) {
+            activeEmployeesEl.textContent = stats.totalUsers || 0;
+            const label = activeEmployeesEl.parentElement.querySelector('.stat-label');
+            if (label) label.textContent = 'Total Users';
+            this.updateGrowthIndicatorById('activeEmployeesGrowth', stats.userGrowthThisMonth || 0, 'this month');
+          }
+          
+          // Departments (show organizations for super admin)
+          const departmentsEl = document.getElementById('departments');
+          if (departmentsEl) {
+            departmentsEl.textContent = stats.totalOrganizations || 0;
+            const label = departmentsEl.parentElement.querySelector('.stat-label');
+            if (label) label.textContent = 'Organizations';
+            this.updateGrowthIndicatorById('departmentsGrowth', stats.orgGrowthThisMonth || 0, 'this month');
+          }
+          
+          // Attendance Rate (show platform uptime for super admin)
+          const attendanceRateEl = document.getElementById('attendanceRate');
+          if (attendanceRateEl) {
+            attendanceRateEl.textContent = `${stats.platformUptime || 99.9}%`;
+            const label = attendanceRateEl.parentElement.querySelector('.stat-label');
+            if (label) label.textContent = 'Platform Uptime';
+            this.updateGrowthIndicatorById('attendanceRateGrowth', stats.uptimeChange || 0, 'this week', true);
+          }
+          
+          // Clear any remaining loading states
+          this.clearLoadingStates();
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback stats also failed:', fallbackError);
+        // Last resort: clear all loading states
+        this.clearLoadingStates();
+      }
     }
   }
 
   hideDepartmentAndAttendanceSections() {
+    // Get current user role
+    const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+    const profileData = profile.profile || profile;
+    const userRole = profileData.role;
+
+    console.log(`🔍 Hiding employee-specific sections for role: ${userRole}`);
+
     // Hide department distribution chart
     const departmentChart = document.querySelector('#departmentChart')?.closest('.chart-container');
     if (departmentChart) {
       departmentChart.style.display = 'none';
+      departmentChart.style.visibility = 'hidden';
+      console.log('📊 Hidden department chart');
+    } else {
+      console.log('⚠️ Department chart not found');
     }
 
-    // Hide attendance trend chart
+    // Hide attendance trend chart - not relevant for super admin (platform management, not employee management)
     const attendanceChart = document.querySelector('#attendanceChart')?.closest('.chart-container');
     if (attendanceChart) {
       attendanceChart.style.display = 'none';
+      attendanceChart.style.visibility = 'hidden';
+      console.log('📊 Hidden attendance chart (Weekly Attendance Trend)');
+    } else {
+      console.log('⚠️ Attendance chart not found');
     }
+
+    // Also try to hide by looking for the h3 title directly
+    const attendanceSection = document.querySelector('h3:contains("Weekly Attendance Trend")')?.closest('.chart-container');
+    if (attendanceSection) {
+      attendanceSection.style.display = 'none';
+      attendanceSection.style.visibility = 'hidden';
+      console.log('📊 Hidden attendance section by title');
+    }
+
+    // Alternative approach - find by text content
+    const allH3s = document.querySelectorAll('h3');
+    allH3s.forEach(h3 => {
+      if (h3.textContent.includes('Weekly Attendance Trend')) {
+        const container = h3.closest('.chart-container');
+        if (container) {
+          container.style.display = 'none';
+          container.style.visibility = 'hidden';
+          console.log('📊 Hidden attendance section by text content');
+        }
+      }
+    });
 
     // Hide performance metrics chart (employee-specific)
     const performanceChart = document.querySelector('#performanceChart')?.closest('.chart-container');
     if (performanceChart) {
       performanceChart.style.display = 'none';
+      performanceChart.style.visibility = 'hidden';
+      console.log('📊 Hidden performance chart');
+    } else {
+      console.log('⚠️ Performance chart not found');
     }
+
+    // Add CSS rule to force hide attendance sections for super admin
+    if (userRole === 'super_admin') {
+      const style = document.createElement('style');
+      style.textContent = `
+        /* Hide attendance chart container */
+        body.super-admin-view #attendanceChart,
+        body.super-admin-view .chart-container:has(#attendanceChart),
+        body.super-admin-view .dashboard-charts-bottom .chart-container:first-child {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          overflow: hidden !important;
+        }
+        
+        /* Hide any container with "Weekly Attendance Trend" title */
+        body.super-admin-view h3[data-text*="Weekly Attendance"],
+        body.super-admin-view .chart-header:has(h3:contains("Weekly Attendance")) {
+          display: none !important;
+        }
+        
+        /* Hide performance metrics for super admin */
+        body.super-admin-view #performanceChart,
+        body.super-admin-view .chart-container:has(#performanceChart) {
+          display: none !important;
+          visibility: hidden !important;
+        }
+        
+        /* Hide department chart for super admin */
+        body.super-admin-view #departmentChart,
+        body.super-admin-view .chart-container:has(#departmentChart) {
+          display: none !important;
+          visibility: hidden !important;
+        }
+      `;
+      document.head.appendChild(style);
+      console.log('📊 Added comprehensive CSS rules to hide employee-specific sections');
+    }
+
+    console.log(`✅ Completed hiding employee-specific sections for role: ${userRole}`);
   }
 
   async loadWebsiteCharts() {
     try {
-      console.log('📈 Loading website charts...');
+      console.log('📈 Loading real-time website charts...');
       
-      // Website user growth over the last 6 months
-      const userGrowthData = {
-        labels: ['Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025'],
+      // Use analytics data if available, otherwise fetch it
+      let analyticsData = this.analyticsData;
+      if (!analyticsData) {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/super-admin/analytics', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          analyticsData = await response.json();
+        }
+      }
+
+      // Process real-time user growth data
+      const userGrowth = analyticsData?.userGrowth || {};
+      const orgGrowth = analyticsData?.organizationGrowth || {};
+      
+      // Generate labels for the last 6 months
+      const labels = [];
+      const userData = [];
+      const orgData = [];
+      
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const monthKey = date.toISOString().substring(0, 7);
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        
+        labels.push(monthLabel);
+        userData.push(userGrowth[monthKey] || 0);
+        orgData.push(orgGrowth[monthKey] || 0);
+      }
+
+      // Create cumulative data for better visualization
+      let cumulativeUsers = 0;
+      let cumulativeOrgs = 0;
+      const cumulativeUserData = userData.map(count => {
+        cumulativeUsers += count;
+        return cumulativeUsers;
+      });
+      const cumulativeOrgData = orgData.map(count => {
+        cumulativeOrgs += count;
+        return cumulativeOrgs;
+      });
+
+      const chartData = {
+        labels: labels,
         datasets: [{
-          label: 'Platform User Growth',
-          data: [45, 78, 125, 168, 205, 247],
+          label: 'User Growth',
+          data: cumulativeUserData,
           borderColor: '#667eea',
           backgroundColor: 'rgba(102, 126, 234, 0.1)',
           tension: 0.4,
-          fill: true
+          fill: true,
+          yAxisID: 'y'
+        }, {
+          label: 'Organization Growth',
+          data: cumulativeOrgData,
+          borderColor: '#51cf66',
+          backgroundColor: 'rgba(81, 207, 102, 0.1)',
+          tension: 0.4,
+          fill: false,
+          yAxisID: 'y1'
         }]
       };
 
@@ -717,13 +1152,103 @@ class Dashboard {
         
         window.dashboardChart = new Chart(ctx, {
           type: 'line',
-          data: userGrowthData,
+          data: chartData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              title: {
+                display: true,
+                text: 'Chronos HR Platform Growth',
+                font: {
+                  size: 16,
+                  weight: 'bold'
+                }
+              },
+              legend: {
+                display: true,
+                position: 'top'
+              }
+            },
+            scales: {
+              y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
+                beginAtZero: true,
+                grid: {
+                  color: '#f3f4f6'
+                },
+                ticks: {
+                  color: '#6b7280'
+                },
+                title: {
+                  display: true,
+                  text: 'Users'
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                beginAtZero: true,
+                grid: {
+                  drawOnChartArea: false,
+                },
+                ticks: {
+                  color: '#6b7280'
+                },
+                title: {
+                  display: true,
+                  text: 'Organizations'
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                },
+                ticks: {
+                  color: '#6b7280'
+                }
+              }
+            }
+          }
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ Error loading website charts:', error);
+      
+      // Fallback to static data if API fails
+      const fallbackData = {
+        labels: ['Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025', 'Jun 2025'],
+        datasets: [{
+          label: 'Platform User Growth',
+          data: [45, 78, 125, 168, 205, 247],
+          borderColor: '#667eea',
+          backgroundColor: 'rgba(102, 126, 234, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      };
+
+      const chartCanvas = document.getElementById('employeeGrowthChart');
+      if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        
+        if (window.dashboardChart) {
+          window.dashboardChart.destroy();
+        }
+        
+        window.dashboardChart = new Chart(ctx, {
+          type: 'line',
+          data: fallbackData,
           options: {
             responsive: true,
             plugins: {
               title: {
                 display: true,
-                text: 'Chronos HR Platform Growth',
+                text: 'Chronos HR Platform Growth (Fallback)',
                 font: {
                   size: 16,
                   weight: 'bold'
@@ -755,75 +1280,152 @@ class Dashboard {
           }
         });
       }
-
-    } catch (error) {
-      console.error('❌ Error loading website charts:', error);
     }
   }
 
   async loadWebsiteActivity() {
+    console.log('📋 Loading real-time website activity...');
+    
+    const activityContainer = document.querySelector('.activity-feed') || document.getElementById('activityFeed');
+    if (!activityContainer) {
+      console.error('❌ Activity container not found');
+      return;
+    }
+
+    // Show loading state
+    this.showActivityLoading(activityContainer);
+    
     try {
-      console.log('📋 Loading website activity...');
+      console.log('🔍 Current user role:', JSON.parse(localStorage.getItem('profile') || '{}')?.role);
       
-      // Recent platform administration activities
-      const activities = [
-        {
-          type: 'user_signup',
-          description: 'New organization registered',
-          user: 'TechCorp Solutions',
-          time: '2 hours ago'
-        },
-        {
-          type: 'organization_created',
-          description: 'User verification completed',
-          user: 'jane.doe@startup.com',
-          time: '4 hours ago'
-        },
-        {
-          type: 'user_login',
-          description: 'System backup completed',
-          user: 'System Admin',
-          time: '6 hours ago'
-        },
-        {
-          type: 'user_signup',
-          description: 'New employee onboarded',
-          user: 'Design Studio Inc',
-          time: '8 hours ago'
-        },
-        {
-          type: 'organization_created',
-          description: 'Monthly report generated',
-          user: 'Finance Corp',
-          time: '12 hours ago'
+      // Try to fetch analytics data
+      let analyticsData = this.analyticsData;
+      if (!analyticsData) {
+        console.log('📡 Fetching analytics data from API...');
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          console.error('❌ No auth token found');
+          this.showActivityError(activityContainer, 'Authentication required');
+          return;
         }
-      ];
+        
+        const response = await Promise.race([
+          fetch('/api/super-admin/analytics', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          }),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('API timeout')), 10000)
+          )
+        ]);
 
-      // Update activity feed
-      const activityList = document.querySelector('.activity-item');
-      if (activityList && activityList.parentElement) {
-        const activityContainer = activityList.parentElement;
-        activityContainer.innerHTML = ''; // Clear existing activities
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status} ${response.statusText}`);
+        }
+        
+        analyticsData = await response.json();
+        console.log('✅ Analytics data fetched successfully');
+      }
 
-        activities.forEach(activity => {
-          const activityElement = document.createElement('div');
-          activityElement.className = 'activity-item';
-          activityElement.innerHTML = `
-            <div class="activity-icon">
-              <i class="fas fa-${this.getActivityIcon(activity.type)}"></i>
-            </div>
-            <div class="activity-content">
-              <p class="activity-description">${activity.description}</p>
-              <p class="activity-meta">${activity.user} • ${activity.time}</p>
-            </div>
-          `;
-          activityContainer.appendChild(activityElement);
-        });
+      // Process real-time activities
+      const recentActivities = analyticsData?.recentActivities || [];
+      console.log('📊 Activity data received:', recentActivities.length, 'activities');
+      
+      if (recentActivities.length > 0) {
+        console.log('📋 First few activities:', recentActivities.slice(0, 3));
+        this.displayActivities(activityContainer, recentActivities);
+      } else {
+        console.log('📋 No activities found - showing empty state');
+        this.showNoActivity(activityContainer);
       }
 
     } catch (error) {
       console.error('❌ Error loading website activity:', error);
+      this.showActivityError(activityContainer, error.message);
     }
+  }
+
+  showActivityLoading(container) {
+    container.innerHTML = `
+      <div class="no-data-state">
+        <div class="no-data-icon">
+          <i class="fas fa-spinner fa-spin" style="color: #6b7280;"></i>
+        </div>
+        <div class="no-data-text">
+          <h4>Loading Activities...</h4>
+          <p>Fetching real-time platform data</p>
+        </div>
+      </div>
+    `;
+  }
+
+  showNoActivity(container) {
+    container.innerHTML = `
+      <div class="no-data-state">
+        <div class="no-data-icon">
+          <i class="fas fa-inbox"></i>
+        </div>
+        <div class="no-data-text">
+          <h4>No Recent Activity</h4>
+          <p>Platform activity will appear here when data is available</p>
+        </div>
+      </div>
+    `;
+  }
+
+  showActivityError(container, errorMessage) {
+    container.innerHTML = `
+      <div class="no-data-state">
+        <div class="no-data-icon">
+          <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+        </div>
+        <div class="no-data-text">
+          <h4>Unable to Load Activities</h4>
+          <p>${errorMessage}</p>
+        </div>
+      </div>
+    `;
+    
+    // Retry after 10 seconds
+    setTimeout(() => {
+      console.log('🔄 Retrying activity load...');
+      this.loadWebsiteActivity();
+    }, 10000);
+  }
+
+  displayActivities(container, activities) {
+    container.innerHTML = ''; // Clear container
+
+        activities.forEach(activity => {
+          const activityElement = document.createElement('div');
+          activityElement.className = 'activity-item';
+      
+      // Use the structured activity data format
+      const title = activity.title || 'Platform Activity';
+      const description = activity.description || 'Activity occurred';
+      const icon = activity.icon || 'info-circle';
+      const timeAgo = this.timeAgo(new Date(activity.timestamp || activity.created_at));
+      
+      // Add activity type class for styling
+      activityElement.classList.add(`activity-${activity.type || 'general'}`);
+      
+          activityElement.innerHTML = `
+            <div class="activity-icon">
+          <i class="fas fa-${icon}"></i>
+            </div>
+            <div class="activity-content">
+          <div class="activity-title">${title}</div>
+          <div class="activity-desc">${description}</div>
+          <div class="activity-time">${timeAgo}</div>
+            </div>
+          `;
+      container.appendChild(activityElement);
+        });
+
+    console.log(`✅ Displayed ${activities.length} activities`);
   }
 
   getActivityIcon(type) {
@@ -836,10 +1438,370 @@ class Dashboard {
     return icons[type] || icons.default;
   }
 
+  updateGrowthIndicator(statCard, growthValue, timePeriod, isPercentage = false) {
+    const growthElement = statCard.querySelector('.stat-change');
+    if (!growthElement) {
+      console.log('⚠️ Growth indicator element not found');
+      return;
+    }
+
+    if (growthValue === undefined || growthValue === null) {
+      growthElement.textContent = 'No change';
+      growthElement.className = 'stat-change neutral';
+      return;
+    }
+
+    const formattedValue = isPercentage ? 
+      `${growthValue > 0 ? '+' : ''}${growthValue.toFixed(1)}%` : 
+      `${growthValue > 0 ? '+' : ''}${growthValue}%`;
+
+    growthElement.textContent = `${formattedValue} ${timePeriod}`;
+    
+    // Update CSS class based on growth direction
+    growthElement.className = 'stat-change';
+    if (growthValue > 0) {
+      growthElement.classList.add('positive');
+    } else if (growthValue < 0) {
+      growthElement.classList.add('negative');
+    } else {
+      growthElement.classList.add('neutral');
+    }
+
+    console.log(`📈 Updated growth indicator: ${formattedValue} ${timePeriod}`);
+  }
+
+  updateGrowthIndicatorById(elementId, growthValue, timePeriod, isPercentage = false) {
+    const growthElement = document.getElementById(elementId);
+    if (!growthElement) {
+      console.log(`⚠️ Growth indicator element with ID '${elementId}' not found`);
+      return;
+    }
+
+    console.log(`📊 Processing growth for ${elementId}:`, growthValue, typeof growthValue);
+
+    // Handle undefined/null values
+    if (growthValue === undefined || growthValue === null) {
+      console.log(`📊 ${elementId}: No data - showing 'No change'`);
+      growthElement.textContent = 'No change';
+      growthElement.className = 'stat-change neutral';
+      return;
+    }
+
+    const value = isPercentage ? growthValue : parseFloat(growthValue);
+    
+    // Handle all numeric values including 0
+    if (value > 0) {
+      const formattedValue = `+${value.toFixed(1)}%`;
+      growthElement.textContent = `${formattedValue} ${timePeriod}`;
+      growthElement.className = 'stat-change positive';
+      console.log(`📊 ${elementId}: Positive growth - ${formattedValue} ${timePeriod}`);
+    } else if (value < 0) {
+      const formattedValue = `${value.toFixed(1)}%`;
+      growthElement.textContent = `${formattedValue} ${timePeriod}`;
+      growthElement.className = 'stat-change negative';
+      console.log(`📊 ${elementId}: Negative growth - ${formattedValue} ${timePeriod}`);
+    } else {
+      // value === 0
+      growthElement.textContent = 'No change';
+      growthElement.className = 'stat-change neutral';
+      console.log(`📊 ${elementId}: Zero growth - No change`);
+    }
+  }
+
+  clearLoadingStates() {
+    // Ensure no growth indicators are stuck on "Loading..."
+    const growthIds = ['totalEmployeesGrowth', 'activeEmployeesGrowth', 'departmentsGrowth', 'attendanceRateGrowth'];
+    
+    growthIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (element && element.textContent === 'Loading...') {
+        console.log(`⚠️ Clearing stuck loading state for ${id}`);
+        element.textContent = 'No change';
+        element.className = 'stat-change neutral';
+      }
+    });
+  }
+
+  initializeGrowthIndicators() {
+    console.log('🔄 Initializing growth indicators immediately...');
+    const growthIds = ['totalEmployeesGrowth', 'activeEmployeesGrowth', 'departmentsGrowth', 'attendanceRateGrowth'];
+    
+    growthIds.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        console.log(`📊 Initializing ${id} to "No change"`);
+        element.textContent = 'No change';
+        element.className = 'stat-change neutral';
+      } else {
+        console.log(`⚠️ Element ${id} not found during initialization`);
+      }
+    });
+  }
+
+  loadSuperAdminUserInfo() {
+    console.log('👑 Loading super admin user info immediately...');
+    
+    try {
+      // Get profile from localStorage
+      const cachedProfile = localStorage.getItem('profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        const profileData = parsed.profile || parsed;
+        
+        console.log('📱 Using cached profile for user info:', profileData);
+        
+        // Set currentUser for later use
+        this.currentUser = profileData;
+        
+        // Immediately update user display elements
+        const userNameEls = document.querySelectorAll('.user-name');
+        const userRoleEls = document.querySelectorAll('.user-role');
+        const userEmailEls = document.querySelectorAll('.user-email');
+        const userAvatarEls = document.querySelectorAll('.user-avatar');
+        
+        const fullName = `${profileData.first_name || 'Super'} ${profileData.last_name || 'Admin'}`;
+        const email = profileData.email || 'super.admin@chronos.hr';
+        const role = 'Super Admin';
+        const initials = `${(profileData.first_name || 'S').charAt(0)}${(profileData.last_name || 'A').charAt(0)}`.toUpperCase();
+        
+        console.log(`👤 Updating profile: ${fullName} (${email}) - ${role}`);
+        
+        // Update all name elements
+        userNameEls.forEach((el, index) => {
+          console.log(`📝 Updating user name element ${index + 1} to: ${fullName}`);
+          el.textContent = fullName;
+        });
+        
+        // Update all role elements
+        userRoleEls.forEach((el, index) => {
+          console.log(`🎭 Updating user role element ${index + 1} to: ${role}`);
+          el.textContent = role;
+        });
+        
+        // Update all email elements
+        userEmailEls.forEach((el, index) => {
+          console.log(`📧 Updating user email element ${index + 1} to: ${email}`);
+          el.textContent = email;
+        });
+        
+        // Update all avatar elements
+        userAvatarEls.forEach((el, index) => {
+          console.log(`🖼️ Updating user avatar element ${index + 1}`);
+          if (el.tagName === 'IMG') {
+            // Different sizes for different contexts
+            const size = el.closest('.dropdown-avatar') ? '40' : '48';
+            el.src = `https://ui-avatars.com/api/?name=${initials}&background=4e8cff&color=fff&size=${size}`;
+            el.alt = fullName;
+          } else {
+            el.textContent = initials;
+          }
+        });
+        
+        console.log('✅ Super admin user info updated successfully');
+        
+      } else {
+        console.log('⚠️ No cached profile found for super admin');
+        
+        // Fallback to default super admin info
+        this.setFallbackSuperAdminInfo();
+      }
+    } catch (error) {
+      console.error('❌ Error loading super admin user info:', error);
+      this.setFallbackSuperAdminInfo();
+    }
+  }
+
+  setFallbackSuperAdminInfo() {
+    console.log('🔧 Setting fallback super admin info...');
+    
+    const userNameEls = document.querySelectorAll('.user-name');
+    const userRoleEls = document.querySelectorAll('.user-role');
+    const userEmailEls = document.querySelectorAll('.user-email');
+    const userAvatarEls = document.querySelectorAll('.user-avatar');
+    
+    const fallbackName = 'Super Admin';
+    const fallbackEmail = 'admin@chronos.hr';
+    const fallbackRole = 'Super Admin';
+    const fallbackInitials = 'SA';
+    
+    userNameEls.forEach(el => el.textContent = fallbackName);
+    userRoleEls.forEach(el => el.textContent = fallbackRole);
+    userEmailEls.forEach(el => el.textContent = fallbackEmail);
+    userAvatarEls.forEach(el => {
+      if (el.tagName === 'IMG') {
+        const size = el.closest('.dropdown-avatar') ? '40' : '48';
+        el.src = `https://ui-avatars.com/api/?name=${fallbackInitials}&background=4e8cff&color=fff&size=${size}`;
+        el.alt = fallbackName;
+      } else {
+        el.textContent = fallbackInitials;
+      }
+    });
+    
+    console.log('✅ Fallback super admin info set');
+  }
+
+  initializeUserDropdown() {
+    console.log('🔽 Initializing user profile dropdown...');
+    
+    const dropdownTrigger = document.getElementById('userProfileDropdown');
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    const dropdownLogout = document.getElementById('dropdownLogout');
+    
+    console.log('🔍 DROPDOWN DEBUG: Elements check:', {
+      trigger: !!dropdownTrigger,
+      menu: !!dropdownMenu,
+      logout: !!dropdownLogout
+    });
+    
+    if (!dropdownTrigger || !dropdownMenu) {
+      console.log('❌ DROPDOWN DEBUG: Elements not found!');
+      console.log('❌ Trigger element:', dropdownTrigger);
+      console.log('❌ Menu element:', dropdownMenu);
+      
+      // Try to find them with different selectors
+      const allDropdowns = document.querySelectorAll('[id*="dropdown"]');
+      console.log('🔍 All elements with "dropdown" in ID:', allDropdowns);
+      
+      return;
+    }
+    
+    console.log('✅ DROPDOWN DEBUG: Both elements found successfully');
+    
+    // Toggle dropdown on click
+    dropdownTrigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      console.log('🔥 DROPDOWN CLICK DETECTED!');
+      console.log('🔍 Click event:', e);
+      console.log('🔍 Target:', e.target);
+      console.log('🔍 Current target:', e.currentTarget);
+      
+      const isOpen = dropdownMenu.classList.contains('show');
+      console.log('🔍 Is currently open:', isOpen);
+      console.log('🔍 Menu classes before:', dropdownMenu.className);
+      console.log('🔍 Trigger classes before:', dropdownTrigger.className);
+      
+      if (isOpen) {
+        console.log('🔼 Attempting to close dropdown...');
+        this.closeUserDropdown();
+      } else {
+        console.log('🔽 Attempting to open dropdown...');
+        this.openUserDropdown();
+      }
+      
+      // Check state after
+      setTimeout(() => {
+        console.log('🔍 Menu classes after:', dropdownMenu.className);
+        console.log('🔍 Trigger classes after:', dropdownTrigger.className);
+      }, 100);
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!dropdownTrigger.contains(e.target)) {
+        this.closeUserDropdown();
+      }
+    });
+    
+    // Handle logout from dropdown
+    if (dropdownLogout) {
+      dropdownLogout.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log('🚪 Logout clicked from dropdown');
+        this.logout();
+      });
+    }
+    
+    // Show/hide super admin items based on role
+    this.updateDropdownForRole();
+    
+    console.log('✅ User dropdown initialized');
+  }
+  
+  openUserDropdown() {
+    console.log('🔽 Opening user dropdown');
+    const dropdownTrigger = document.getElementById('userProfileDropdown');
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    
+    console.log('🔍 OPEN DEBUG: Elements found:', {
+      trigger: !!dropdownTrigger,
+      menu: !!dropdownMenu
+    });
+    
+    if (dropdownTrigger && dropdownMenu) {
+      console.log('🔽 Adding active/show classes...');
+      dropdownTrigger.classList.add('active');
+      dropdownMenu.classList.add('show');
+      
+      console.log('✅ Classes added:', {
+        triggerClasses: dropdownTrigger.className,
+        menuClasses: dropdownMenu.className
+      });
+    } else {
+      console.log('❌ OPEN DEBUG: Elements not found in openUserDropdown');
+    }
+  }
+  
+  closeUserDropdown() {
+    console.log('🔼 Closing user dropdown');
+    const dropdownTrigger = document.getElementById('userProfileDropdown');
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    
+    console.log('🔍 CLOSE DEBUG: Elements found:', {
+      trigger: !!dropdownTrigger,
+      menu: !!dropdownMenu
+    });
+    
+    if (dropdownTrigger && dropdownMenu) {
+      console.log('🔼 Removing active/show classes...');
+      dropdownTrigger.classList.remove('active');
+      dropdownMenu.classList.remove('show');
+      
+      console.log('✅ Classes removed:', {
+        triggerClasses: dropdownTrigger.className,
+        menuClasses: dropdownMenu.className
+      });
+    } else {
+      console.log('❌ CLOSE DEBUG: Elements not found in closeUserDropdown');
+    }
+  }
+  
+  updateDropdownForRole() {
+    console.log('👑 Updating dropdown for user role');
+    
+    try {
+      const cachedProfile = localStorage.getItem('profile');
+      if (cachedProfile) {
+        const parsed = JSON.parse(cachedProfile);
+        const profileData = parsed.profile || parsed;
+        
+        const superAdminItems = document.querySelectorAll('.super-admin-only');
+        
+        if (profileData.role === 'super_admin') {
+          console.log('👑 Showing super admin dropdown items');
+          superAdminItems.forEach(item => {
+            item.style.display = 'flex';
+          });
+        } else {
+          console.log('👤 Hiding super admin dropdown items');
+          superAdminItems.forEach(item => {
+            item.style.display = 'none';
+          });
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error updating dropdown for role:', error);
+    }
+  }
+
   // Security: Clear all user data on logout
   logout() {
     console.log('🚪 Logging out user...');
-    localStorage.clear(); // Clear all cached data
+    
+    // Close dropdown first
+    this.closeUserDropdown();
+    
+    // Clear all cached data
+    localStorage.clear();
     sessionStorage.clear(); // Clear session data too
     window.location.href = '/login';
   }
@@ -867,6 +1829,8 @@ class Dashboard {
 
       // Update user info
       await this.updateUserInfo();
+      
+      // User dropdown is now handled by inline HTML functions
 
       console.log('✅ Dashboard data loaded successfully');
 
@@ -1134,11 +2098,18 @@ class Dashboard {
 
 
 
-  initializeCharts() {
+  async initializeCharts() {
     console.log('📊 Initializing enhanced charts...');
     this.createEmployeeGrowthChart();
     this.createDepartmentChart();
-    this.createAttendanceChart();
+    
+    // Only create attendance chart for non-super-admin users (employee management)
+    const profile = JSON.parse(localStorage.getItem('profile') || '{}');
+    const profileData = profile.profile || profile;
+    if (profileData.role !== 'super_admin') {
+      await this.createAttendanceChart();
+    }
+    
     this.createPerformanceChart();
     this.setupChartControls();
   }
@@ -1280,14 +2251,137 @@ class Dashboard {
     console.log('✅ Department chart created');
   }
 
-  createAttendanceChart() {
+  async createAttendanceChart() {
     const ctx = document.getElementById('attendanceChart');
     if (!ctx) {
       console.log('❌ Attendance chart canvas not found');
       return;
     }
 
+    // Note: Attendance chart is not shown for super admin users (platform management focus)
+
+    try {
+      // Fetch real-time attendance data
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/attendance/analytics', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      let attendanceData;
+      if (response.ok) {
+        const analytics = await response.json();
+        attendanceData = analytics.dailyAttendance;
+        console.log('📊 Real-time attendance data:', attendanceData);
+      } else {
+        console.log('⚠️ Using fallback attendance data');
+        // Fallback to static data if API fails
+        attendanceData = [
+          { day: 'Mon', rate: 95.2 },
+          { day: 'Tue', rate: 94.8 },
+          { day: 'Wed', rate: 96.1 },
+          { day: 'Thu', rate: 93.9 },
+          { day: 'Fri', rate: 95.5 },
+          { day: 'Sat', rate: 92.3 },
+          { day: 'Sun', rate: 89.7 }
+        ];
+      }
+
+      // Update the attendance summary in the HTML
+      const attendanceSummary = document.getElementById('attendanceAverage');
+      if (attendanceSummary && attendanceData) {
+        const averageRate = attendanceData.reduce((sum, day) => sum + day.rate, 0) / attendanceData.length;
+        attendanceSummary.textContent = `Avg: ${averageRate.toFixed(1)}%`;
+        console.log(`📊 Updated attendance average: ${averageRate.toFixed(1)}%`);
+      } else if (attendanceSummary) {
+        // Fallback if no data available
+        attendanceSummary.textContent = 'Avg: 93.9%';
+        console.log('📊 Using fallback attendance average: 93.9%');
+    }
+
     const data = {
+        labels: attendanceData.map(day => day.day),
+        datasets: [{
+          label: 'Attendance Rate',
+          data: attendanceData.map(day => day.rate),
+          borderColor: '#ff6b6b',
+          backgroundColor: 'rgba(255, 107, 107, 0.1)',
+          borderWidth: 3,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#ff6b6b',
+          pointBorderColor: '#ffffff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
+          pointHoverRadius: 8
+        }]
+      };
+
+      const config = {
+        type: 'line',
+        data: data,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 12
+                }
+              }
+            },
+            y: {
+              grid: {
+                color: '#f3f4f6',
+                drawBorder: false
+              },
+              ticks: {
+                color: '#6b7280',
+                font: {
+                  size: 12
+                },
+                callback: function(value) {
+                  return value + '%';
+                }
+              },
+              min: 75,
+              max: 100
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      };
+
+      this.charts.attendance = new Chart(ctx, config);
+      console.log('✅ Real-time attendance chart created');
+
+    } catch (error) {
+      console.error('❌ Error creating attendance chart:', error);
+      
+      // Ensure average is displayed even on error
+      const errorAttendanceSummary = document.getElementById('attendanceAverage');
+      if (errorAttendanceSummary) {
+        errorAttendanceSummary.textContent = 'Avg: 93.9%';
+        console.log('📊 Set fallback attendance average due to error');
+      }
+      
+      // Fallback to static data
+      const fallbackData = {
       labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
       datasets: [{
         label: 'Attendance Rate',
@@ -1307,7 +2401,7 @@ class Dashboard {
 
     const config = {
       type: 'line',
-      data: data,
+        data: fallbackData,
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -1354,7 +2448,17 @@ class Dashboard {
     };
 
     this.charts.attendance = new Chart(ctx, config);
-    console.log('✅ Attendance chart created');
+      
+      // Update the attendance summary with fallback data
+      const fallbackAttendanceSummary = document.getElementById('attendanceAverage');
+      if (fallbackAttendanceSummary) {
+        const fallbackAverage = (95.2 + 94.8 + 96.1 + 93.9 + 95.5 + 92.3 + 89.7) / 7;
+        fallbackAttendanceSummary.textContent = `Avg: ${fallbackAverage.toFixed(1)}%`;
+        console.log(`📊 Updated attendance average (fallback): ${fallbackAverage.toFixed(1)}%`);
+      }
+      
+      console.log('✅ Fallback attendance chart created');
+    }
   }
 
   createPerformanceChart() {
@@ -1651,6 +2755,23 @@ class Dashboard {
   }
 
   showToast(message, type = 'info') {
+    // Block organization-related messages for super admin
+    if (message && message.toLowerCase().includes('organization')) {
+      try {
+        const cachedProfile = localStorage.getItem('profile');
+        if (cachedProfile) {
+          const parsed = JSON.parse(cachedProfile);
+          const profileData = parsed.profile || parsed;
+          if (profileData.role === 'super_admin') {
+            console.log('👑 BLOCKED organization toast for super admin:', message);
+            return; // Don't show toast
+          }
+        }
+      } catch (e) {
+        console.log('⚠️ Error checking profile in showToast');
+      }
+    }
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
@@ -2251,6 +3372,19 @@ class Dashboard {
     }, 5 * 60 * 1000);
   }
 
+  startSuperAdminDataRefresh() {
+    // Refresh super admin data every 2 minutes for more real-time updates
+    setInterval(() => {
+      console.log('🔄 Refreshing super admin data...');
+      this.loadWebsiteStats();
+      this.loadWebsiteCharts();
+      this.loadWebsiteActivity();
+      // Note: Attendance data refresh removed - not relevant for super admin (platform management)
+    }, 2 * 60 * 1000);
+  }
+
+  // Note: refreshAttendanceData() removed - not relevant for super admin role
+
   // Utility method to refresh charts on window resize
   handleResize() {
     Object.values(this.charts).forEach(chart => {
@@ -2271,11 +3405,11 @@ class Dashboard {
   }
 
   // Method to reinitialize charts if they get corrupted
-  reinitializeCharts() {
+  async reinitializeCharts() {
     console.log('🔄 Reinitializing charts...');
     this.destroyCharts();
-    setTimeout(() => {
-      this.initializeCharts();
+    setTimeout(async () => {
+      await this.initializeCharts();
     }, 100);
   }
 
@@ -2576,9 +3710,10 @@ class Dashboard {
     const payrollNav = document.querySelector('a[href="/payroll"]');
     const organizationsNav = document.querySelector('a[href="/organizations"]');
     const settingsNav = document.querySelector('a[href="/settings"]');
+    const subscriptionNav = document.querySelector('a[href="/subscription-settings"]');
 
     // Hide all navigation items first
-    [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+    [dashboardNav, analyticsNav, usersNav, payrollNav, organizationsNav, settingsNav, subscriptionNav].forEach(nav => {
       if (nav) {
         nav.style.display = 'none';
         nav.style.visibility = 'hidden';
@@ -2587,7 +3722,7 @@ class Dashboard {
     });
 
     if (profileData.role === 'super_admin') {
-      // Super Admin sees: Dashboard, Analytics, User Management, Settings
+      // Super Admin sees: Dashboard, Analytics, User Management, Settings (NO SUBSCRIPTION)
       [dashboardNav, analyticsNav, settingsNav].forEach(nav => {
         if (nav) {
           nav.style.display = 'flex';
@@ -2604,10 +3739,18 @@ class Dashboard {
         console.log('✅ User Management shown for super admin (direct)');
       }
       
+      // Hide Subscription for super admin
+      if (subscriptionNav) {
+        subscriptionNav.style.display = 'none';
+        subscriptionNav.style.visibility = 'hidden';
+        subscriptionNav.style.opacity = '0';
+        console.log('❌ Subscription hidden for super admin');
+      }
+      
       console.log('✅ Super Admin navigation: Dashboard, Analytics, User Management, Settings');
     } else {
-      // Admin/Manager/Employee sees: Dashboard, Analytics, Payroll, Organizations, Settings
-      [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav].forEach(nav => {
+      // Admin/Manager/Employee sees: Dashboard, Analytics, Payroll, Organizations, Settings, Subscription
+      [dashboardNav, analyticsNav, payrollNav, organizationsNav, settingsNav, subscriptionNav].forEach(nav => {
         if (nav) {
           nav.style.display = 'flex';
           nav.style.visibility = 'visible';
@@ -2623,7 +3766,7 @@ class Dashboard {
         console.log('❌ User Management hidden for role:', profileData.role);
       }
       
-      console.log('✅ Standard navigation: Dashboard, Analytics, Payroll, Organizations, Settings');
+      console.log('✅ Standard navigation: Dashboard, Analytics, Payroll, Organizations, Settings, Subscription');
     }
 
     console.log('✅ Navigation visibility updated directly');

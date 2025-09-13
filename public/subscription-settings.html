@@ -10,6 +10,17 @@
   <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
   <link rel="stylesheet" href="css/shared.css?v=1.0.1">
   <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
+  <link rel="stylesheet" href="css/dark-mode.css?v=1.0.6">
+  <script>
+    // Immediate theme application to prevent flash of light content
+    (function() {
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="css/subscription-settings.css">
   
   <!-- Fonts -->

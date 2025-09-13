@@ -664,7 +664,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log('- Position:', closeBtn.getBoundingClientRect());
                 
                 // Test if it's clickable
-                closeBtn.style.border = '2px solid red';
                 setTimeout(() => {
                     closeBtn.style.border = '';
                 }, 2000);

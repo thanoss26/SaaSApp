@@ -8,15 +8,21 @@ class EnhancedSidebar {
         this.currentPage = this.getCurrentPage();
         this.theme = localStorage.getItem('theme') || 'light';
         console.log('🎨 Current theme:', this.theme);
+        
+        // Apply theme immediately before initialization
+        this.applyTheme();
+        this.updateThemeIcon();
+        
         this.init();
     }
 
     async init() {
         console.log('🚀 EnhancedSidebar: Initializing...');
+        this.applyTheme(); // Apply theme first
+        this.updateThemeIcon(); // Update icon based on current theme
         this.setupEventListeners();
         this.setActivePage();
         this.loadCollapsedState();
-        this.applyTheme();
         console.log('✅ EnhancedSidebar: Initialized successfully');
     }
 
@@ -52,11 +58,7 @@ class EnhancedSidebar {
                 this.toggleTheme();
             });
             
-            // Make it extra visible for debugging
-            themeToggle.style.backgroundColor = '#ff0000';
-            themeToggle.style.border = '3px solid #00ff00';
-            themeToggle.style.zIndex = '9999';
-            console.log('🚨 Made theme toggle RED with GREEN border for visibility!');
+            console.log('✅ Theme toggle found and ready');
         } else {
             console.log('❌ Theme toggle not found');
             // Check if sidebar exists at all
@@ -127,6 +129,16 @@ class EnhancedSidebar {
         console.log('🎨 Applying theme:', this.theme);
         document.documentElement.setAttribute('data-theme', this.theme);
         document.body.setAttribute('data-theme', this.theme);
+        
+        // Apply dark class for CSS targeting
+        if (this.theme === 'dark') {
+            document.body.classList.add('dark');
+            document.documentElement.classList.add('dark');
+        } else {
+            document.body.classList.remove('dark');
+            document.documentElement.classList.remove('dark');
+        }
+        
         console.log('✅ Theme applied');
     }
 
