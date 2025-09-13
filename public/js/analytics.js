@@ -110,20 +110,8 @@ function showWebsiteAnalytics() {
 
     // Update navigation for super admin - hide irrelevant nav items
     const navItems = document.querySelectorAll('.nav-item');
-    navItems.forEach(item => {
-        const href = item.getAttribute('href');
-        const span = item.querySelector('span');
-        
-        if (href === '/payroll') {
-            // Replace payroll with user management
-            item.setAttribute('href', '/users');
-            item.querySelector('i').className = 'fas fa-users';
-            span.textContent = 'User Management';
-        } else if (href === '/organizations') {
-            // Keep organizations for super admin (they manage all orgs)
-            span.textContent = 'All Organizations';
-        }
-    });
+    // Navigation visibility is now handled by shared.js
+    // No need to modify navigation items here
 
     // Update export button for website analytics
     const exportBtn = document.querySelector('.topbar-right .btn-primary');

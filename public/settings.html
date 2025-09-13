@@ -1,45 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Settings - ChronosHR</title>
-  
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/dashboard.css?v=1.0.1">
-  <link rel="stylesheet" href="css/shared.css?v=1.0.1">
-  <link rel="stylesheet" href="css/enhanced-sidebar.css?v=1.0.1">
-  <link rel="stylesheet" href="css/dark-mode.css?v=1.0.6">
-  <script>
-    // Immediate theme application to prevent flash of light content
-    (function() {
-      const theme = localStorage.getItem('theme') || 'light';
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-    })();
-  </script>
-  <link rel="stylesheet" href="css/settings.css">
-  
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- i18next -->
-  <script src="js/i18n-cdn.js"></script>
-  <script src="js/global-language-switcher.js"></script>
+    <title>Chronos HR - Settings</title>
+    <link rel="stylesheet" href="css/shared.css">
+    <link rel="stylesheet" href="css/enhanced-sidebar.css">
+    <link rel="stylesheet" href="css/mailbox.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/global-language-switcher.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* CRITICAL FIX: Override the !important rules for super admin */
+        .enhanced-sidebar-nav a[href="/users"].super-admin-visible {
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Hide Payroll and Organizations for super admin */
+        .enhanced-sidebar-nav a[href="/payroll"].super-admin-hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        .enhanced-sidebar-nav a[href="/organizations"].super-admin-hidden {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+        }
+        
+        /* ANTI-FLICKER LOADING OVERLAY */
+        .anti-flicker-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f8fafc;
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        
+        .anti-flicker-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .anti-flicker-text {
+            color: #64748b;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Hide main content until navigation is ready */
+        .app-container {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .app-container.navigation-ready {
+            opacity: 1;
+        }
+    </style>
 </head>
-
-<body class="dashboard-bg">
+<body class="settings-bg">
     <!-- ANTI-FLICKER LOADING OVERLAY -->
     <div class="anti-flicker-overlay" id="anti-flicker-overlay">
         <div class="anti-flicker-spinner"></div>
         <div class="anti-flicker-text">Setting up navigation...</div>
     </div>
 
-  <div class="dashboard-layout">
+    <div class="settings-layout">
         <!-- Sidebar -->
         <aside class="enhanced-sidebar" id="enhanced-sidebar">
             <div class="enhanced-sidebar-header">
@@ -50,9 +97,6 @@
                 <div class="enhanced-sidebar-controls">
                     <button class="enhanced-sidebar-toggle" id="enhanced-sidebar-toggle">
                         <i class="fas fa-bars"></i>
-                    </button>
-                    <button class="enhanced-theme-toggle" id="theme-toggle">
-                        <i class="fas fa-moon" id="theme-icon"></i>
                     </button>
                 </div>
             </div>
@@ -82,9 +126,9 @@
                     <i class="fas fa-cog"></i>
                     <span>Settings</span>
                 </a>
-        <a href="/subscription-settings" class="nav-item" data-page="subscription-settings">
-          <i class="fas fa-credit-card"></i>
-          <span>Subscription</span>
+                <a href="/subscription-settings" class="nav-item" data-page="subscription-settings">
+                    <i class="fas fa-credit-card"></i>
+                    <span>Subscription</span>
                 </a>
                 <a href="#" class="nav-item" data-page="mailbox" id="mailbox-nav">
                     <i class="fas fa-envelope"></i>
@@ -103,10 +147,15 @@
                         <div class="user-email">Loading...</div>
                     </div>
                 </div>
-                        <button class="enhanced-logout-btn" id="logout-btn">
-          <i class="fas fa-sign-out-alt"></i>
-          <span>Log out</span>
-        </button>
+                <div class="enhanced-sidebar-footer-controls">
+                    <button class="enhanced-theme-toggle" id="theme-toggle">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                    <button class="enhanced-logout-btn" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Log out</span>
+                    </button>
+                </div>
             </div>
             </aside>
 
@@ -167,56 +216,993 @@
     </div>
 
     <!-- Main Content -->
-    <main class="dashboard-main">
+        <main class="settings-main">
             <!-- Topbar -->
-      <header class="dashboard-topbar">
-        <h1 class="dashboard-title">Settings</h1>
-        <div class="dashboard-search">
-          <input type="text" placeholder="Search settings..." />
-          <i class="fas fa-search"></i>
-        </div>
-        <div class="dashboard-user">
-          <div class="user-avatar">TV</div>
-          <div class="user-info">
-            <div class="user-name">Loading...</div>
-            <div class="user-role">Loading...</div>
-          </div>
+            <header class="settings-topbar">
+                <h1 class="settings-title">Settings</h1>
+                <div class="settings-actions">
+                    <button class="btn btn-outline" id="discardChanges">
+                        <i class="fas fa-undo"></i>
+                        Discard
+                    </button>
+                    <button class="btn btn-primary" id="saveAllBtn">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
                 </div>
             </header>
 
             <!-- Settings Content -->
-      <div class="settings-container">
-        <!-- Account Settings -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h2><i class="fas fa-user-cog"></i> Account Settings</h2>
+            <div class="settings-content">
+                <!-- Settings Navigation -->
+                <nav class="settings-nav">
+                    <button class="settings-tab active" data-tab="profile">
+                        <i class="fas fa-user"></i>
+                        <span>Profile</span>
+                    </button>
+                    <button class="settings-tab" data-tab="security">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Security</span>
+                    </button>
+                    <button class="settings-tab" data-tab="system">
+                        <i class="fas fa-server"></i>
+                        <span>System</span>
+                    </button>
+                    <button class="settings-tab" data-tab="notifications">
+                        <i class="fas fa-bell"></i>
+                        <span>Notifications</span>
+                    </button>
+                    <button class="settings-tab" data-tab="appearance">
+                        <i class="fas fa-palette"></i>
+                        <span>Appearance</span>
+                    </button>
+                    <button class="settings-tab" data-tab="integrations">
+                        <i class="fas fa-plug"></i>
+                        <span>Integrations</span>
+                    </button>
+                    <button class="settings-tab" data-tab="payment">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Payment & Banking</span>
+                    </button>
+                    <button class="settings-tab" data-tab="advanced">
+                        <i class="fas fa-cogs"></i>
+                        <span>Advanced</span>
+                    </button>
+                </nav>
+
+                <!-- Settings Panels -->
+                <div class="settings-panels">
+                    <!-- Profile Settings -->
+                    <div class="settings-panel active" id="profile">
+                        <div class="panel-header">
+                            <h2>Profile Settings</h2>
+                            <p>Manage your personal information and account details</p>
                         </div>
+                        
                         <div class="settings-card">
-            <h3>Profile Information</h3>
-            <p>Update your personal information and preferences.</p>
-            <button class="btn btn-primary">Edit Profile</button>
+                            <div class="card-header">
+                                <h3>Personal Information</h3>
+                                <p>Update your basic profile information</p>
+                            </div>
+                            
+                            <div class="profile-section">
+                                <div class="avatar-section">
+                                    <div class="avatar-container">
+                                        <div class="avatar-preview">
+                                            <div class="user-avatar-large" id="avatarPreview">TV</div>
+                                            <div class="avatar-overlay">
+                                                <i class="fas fa-camera"></i>
+                                            </div>
+                                        </div>
+                                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+                                        <button class="btn btn-outline btn-sm" id="avatar-btn">
+                                            Change Photo
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="firstName">First Name</label>
+                                            <input type="text" id="firstName" value="" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="lastName">Last Name</label>
+                                            <input type="text" id="lastName" value="" class="form-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="email">Email Address</label>
+                                            <input type="email" id="email" value="" class="form-input" readonly>
+                                            <small class="form-help">Email cannot be changed</small>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="phone">Phone Number</label>
+                                            <input type="tel" id="phone" value="" class="form-input" placeholder="+1 (555) 123-4567">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="bio">Bio</label>
+                                        <textarea id="bio" class="form-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Role Information</h3>
+                                <p>Your role and permissions within the platform</p>
+                            </div>
+                            
+                            <div class="role-info">
+                                <div class="role-badge super-admin">
+                                    <i class="fas fa-crown"></i>
+                                    Super Administrator
+                                </div>
+                                <p class="role-description">
+                                    You have full administrative access to the platform, including user management, 
+                                    system configuration, and all organizational data.
+                                </p>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Security Settings -->
-        <div class="settings-section">
-          <div class="section-header">
-            <h2><i class="fas fa-shield-alt"></i> Security</h2>
+                    <div class="settings-panel" id="security">
+                        <div class="panel-header">
+                            <h2>Security Settings</h2>
+                            <p>Manage your account security and authentication</p>
                         </div>
+
                         <div class="settings-card">
-            <h3>Password & Authentication</h3>
-            <p>Manage your password and authentication settings.</p>
-            <button class="btn btn-primary">Change Password</button>
+                            <div class="card-header">
+                                <h3>Password</h3>
+                                <p>Update your account password</p>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="form-group">
+                                    <label for="currentPassword">Current Password</label>
+                                    <input type="password" id="currentPassword" class="form-input">
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="newPassword">New Password</label>
+                                        <input type="password" id="newPassword" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="confirmPassword">Confirm Password</label>
+                                        <input type="password" id="confirmPassword" class="form-input">
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button class="btn btn-primary">Update Password</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Two-Factor Authentication</h3>
+                                <p>Add an extra layer of security to your account</p>
+                            </div>
+                            
+                            <div class="security-option">
+                                <div class="option-info">
+                                    <div class="option-icon">
+                                        <i class="fas fa-mobile-alt"></i>
+                                    </div>
+                                    <div class="option-details">
+                                        <h4>Authenticator App</h4>
+                                        <p>Use an authenticator app to generate codes</p>
+                                    </div>
+                                </div>
+                                <div class="option-action">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="twoFactorAuth">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Session Management</h3>
+                                <p>Manage your active sessions across devices</p>
+                            </div>
+                            
+                            <div class="session-list">
+                                <div class="session-item current">
+                                    <div class="session-info">
+                                        <div class="session-device">
+                                            <i class="fas fa-laptop"></i>
+                                            <span>Current Session - MacBook Pro</span>
+                                        </div>
+                                        <div class="session-details">
+                                            <span class="session-location">San Francisco, CA</span>
+                                            <span class="session-time">Active now</span>
+                                        </div>
+                                    </div>
+                                    <div class="session-actions">
+                                        <span class="current-badge">Current</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Settings -->
+                    <div class="settings-panel" id="system">
+                        <div class="panel-header">
+                            <h2>System Settings</h2>
+                            <p id="system-description">Configure platform-wide settings and preferences</p>
+                        </div>
+
+                        <!-- Super Admin System Settings -->
+                        <div id="super-admin-system" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Platform Configuration</h3>
+                                    <p>General platform settings and configurations</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="platformName">Platform Name</label>
+                                            <input type="text" id="platformName" value="Chronos HR" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="supportEmail">Support Email</label>
+                                            <input type="email" id="supportEmail" value="support@chronoshr.com" class="form-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="maxUsers">Maximum Users</label>
+                                            <input type="number" id="maxUsers" value="1000" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="sessionTimeout">Session Timeout (minutes)</label>
+                                            <input type="number" id="sessionTimeout" value="60" class="form-input">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>User Registration</h3>
+                                    <p>Control how new users can join the platform</p>
+                                </div>
+                                
+                                <div class="system-options">
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Allow Self Registration</h4>
+                                            <p>Users can create their own accounts</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="allowSelfRegistration">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Email Verification Required</h4>
+                                            <p>New users must verify their email address</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="requireEmailVerification" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="system-option">
+                                        <div class="option-info">
+                                            <h4>Admin Approval Required</h4>
+                                            <p>New registrations require admin approval</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="requireAdminApproval" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Data Management</h3>
+                                    <p>Manage platform data and backups</p>
+                                </div>
+                                
+                                <div class="data-actions">
+                                    <div class="action-item">
+                                        <div class="action-info">
+                                            <h4>Export All Data</h4>
+                                            <p>Download a complete backup of all platform data</p>
+                                        </div>
+                                        <button class="btn btn-outline">
+                                            <i class="fas fa-download"></i>
+                                            Export
+                                        </button>
+                                    </div>
+                                    <div class="action-item">
+                                        <div class="action-info">
+                                            <h4>System Analytics</h4>
+                                            <p>View detailed system usage and performance metrics</p>
+                                        </div>
+                                        <button class="btn btn-outline">
+                                            <i class="fas fa-chart-line"></i>
+                                            View Analytics
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regular User System Message -->
+                        <div id="user-system" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>System Information</h3>
+                                    <p>Platform information and your account details</p>
+                                </div>
+                                
+                                <div class="system-info">
+                                    <div class="info-item">
+                                        <div class="info-label">Platform Name</div>
+                                        <div class="info-value">Chronos HR</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Your Role</div>
+                                        <div class="info-value" id="user-role-display">Loading...</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Account Status</div>
+                                        <div class="info-value" id="user-status-display">Loading...</div>
+                                    </div>
+                                    <div class="info-item">
+                                        <div class="info-label">Member Since</div>
+                                        <div class="info-value" id="user-created-display">Loading...</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Account Preferences</h3>
+                                    <p>Personalize your experience</p>
+                                </div>
+                                
+                                <div class="user-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Email Notifications</h4>
+                                            <p>Receive important updates via email</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="userEmailNotifications" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Dashboard Widgets</h4>
+                                            <p>Show additional widgets on your dashboard</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="userDashboardWidgets" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Settings -->
+                    <div class="settings-panel" id="notifications">
+                        <div class="panel-header">
+                            <h2>Notification Settings</h2>
+                            <p>Control how and when you receive notifications</p>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Email Notifications</h3>
+                                <p>Manage your email notification preferences</p>
+                            </div>
+                            
+                            <div class="notification-options">
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>System Alerts</h4>
+                                        <p>Critical system issues and updates</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="systemAlerts" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>User Activity</h4>
+                                        <p>New user registrations and account changes</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="userActivity" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>Security Events</h4>
+                                        <p>Login attempts and security-related events</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="securityEvents" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="option-info">
+                                        <h4>Weekly Reports</h4>
+                                        <p>Platform usage and analytics summary</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="weeklyReports">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Notification Schedule</h3>
+                                <p>Set your preferred times for receiving notifications</p>
+                            </div>
+                            
+                            <div class="form-section">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="quietHoursStart">Quiet Hours Start</label>
+                                        <input type="time" id="quietHoursStart" value="22:00" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="quietHoursEnd">Quiet Hours End</label>
+                                        <input type="time" id="quietHoursEnd" value="08:00" class="form-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Appearance Settings -->
+                    <div class="settings-panel" id="appearance">
+                        <div class="panel-header">
+                            <h2>Appearance Settings</h2>
+                            <p>Customize the look and feel of your interface</p>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Theme</h3>
+                                <p>Choose your preferred color scheme</p>
+                            </div>
+                            
+                            <div class="theme-options">
+                                <div class="theme-option active" data-theme="light">
+                                    <div class="theme-preview light">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
+                                    </div>
+                                    <span>Light</span>
+                                </div>
+                                <div class="theme-option" data-theme="dark">
+                                    <div class="theme-preview dark">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
+                                    </div>
+                                    <span>Dark</span>
+                                </div>
+                                <div class="theme-option" data-theme="auto">
+                                    <div class="theme-preview auto">
+                                        <div class="theme-sidebar"></div>
+                                        <div class="theme-content">
+                                            <div class="theme-header"></div>
+                                            <div class="theme-body"></div>
+                                        </div>
+                                    </div>
+                                    <span>Auto</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <div class="card-header">
+                                <h3>Layout Preferences</h3>
+                                <p>Customize your workspace layout</p>
+                            </div>
+                            
+                            <div class="layout-options">
+                                <div class="layout-option">
+                                    <div class="option-info">
+                                        <h4>Compact Mode</h4>
+                                        <p>Reduce spacing and padding for more content</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="compactMode">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="layout-option">
+                                    <div class="option-info">
+                                        <h4>Sidebar Auto-hide</h4>
+                                        <p>Automatically hide sidebar on smaller screens</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="sidebarAutoHide" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integrations Settings -->
+                    <div class="settings-panel" id="integrations">
+                        <div class="panel-header">
+                            <h2>Integrations</h2>
+                            <p>Connect with external services and applications</p>
+                        </div>
+
+                        <div class="integrations-grid">
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fab fa-slack"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Slack</h3>
+                                    <p>Send notifications to Slack channels</p>
+                                    <span class="integration-status disconnected">Not Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-primary">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fab fa-microsoft"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Microsoft Teams</h3>
+                                    <p>Integrate with Microsoft Teams</p>
+                                    <span class="integration-status disconnected">Not Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-primary">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Email Service</h3>
+                                    <p>Configure SMTP settings for emails</p>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline">Configure</button>
+                                </div>
+                            </div>
+
+                            <div class="integration-card">
+                                <div class="integration-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <div class="integration-info">
+                                    <h3>Database Backup</h3>
+                                    <p>Automated database backups</p>
+                                    <span class="integration-status connected">Connected</span>
+                                </div>
+                                <div class="integration-actions">
+                                    <button class="btn btn-outline">Configure</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment & Banking Settings -->
+                    <div class="settings-panel" id="payment">
+                        <div class="panel-header">
+                            <h2>Payment & Banking</h2>
+                            <p id="payment-description">Configure payment settings and bank account details</p>
+                        </div>
+
+                        <!-- Super Admin Payment Settings -->
+                        <div id="super-admin-payment" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Organization Bank Account</h3>
+                                    <p>Enter your organization's bank account details</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="bankName">Bank Name</label>
+                                            <input type="text" id="bankName" value="Chronos Bank" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="accountNumber">Account Number</label>
+                                            <input type="text" id="accountNumber" value="1234567890" class="form-input">
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="routingNumber">Routing Number</label>
+                                            <input type="text" id="routingNumber" value="111000025" class="form-input">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="iban">IBAN</label>
+                                            <input type="text" id="iban" value="DE89370400440532013000" class="form-input">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Payment Gateway Configuration</h3>
+                                    <p>Configure your payment processing settings</p>
+                                </div>
+                                
+                                <div class="payment-options">
+                                    <div class="payment-option">
+                                        <div class="option-info">
+                                            <h4>Stripe</h4>
+                                            <p>Process payments using Stripe</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="stripeEnabled">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="payment-option">
+                                        <div class="option-info">
+                                            <h4>Stripe API Key</h4>
+                                            <p>Enter your Stripe API key</p>
+                                            <input type="text" id="stripeApiKey" class="form-input" placeholder="sk_live_42424242424242424242424242424242">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regular User Payment Settings -->
+                        <div id="user-payment" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Personal Bank Account</h3>
+                                    <p>Add your personal IBAN for receiving payments</p>
+                                </div>
+                                
+                                <div class="form-section">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="userBankName">Bank Name</label>
+                                            <input type="text" id="userBankName" class="form-input" placeholder="Your Bank Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="userIban">IBAN</label>
+                                            <input type="text" id="userIban" class="form-input" placeholder="DE89370400440532013000">
+                                            <small class="form-help">Your International Bank Account Number for receiving payments</small>
+                                        </div>
+                                    </div>
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label for="userAccountHolder">Account Holder Name</label>
+                                            <input type="text" id="userAccountHolder" class="form-input" placeholder="Your Full Name">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="userPhone">Phone Number</label>
+                                            <input type="tel" id="userPhone" class="form-input" placeholder="+1 (555) 123-4567">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Payment Preferences</h3>
+                                    <p>Configure how you prefer to receive payments</p>
+                                </div>
+                                
+                                <div class="payment-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Preferred Payment Method</h4>
+                                            <p>Choose your preferred way to receive payments</p>
+                                        </div>
+                                        <select id="preferredPaymentMethod" class="form-select">
+                                            <option value="iban">IBAN Transfer</option>
+                                            <option value="bank">Bank Transfer</option>
+                                            <option value="paypal">PayPal</option>
+                                            <option value="revolut">Revolut</option>
+                                        </select>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Payment Notifications</h4>
+                                            <p>Receive notifications when payments are processed</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="paymentNotifications" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings -->
+                    <div class="settings-panel" id="advanced">
+                        <div class="panel-header">
+                            <h2>Advanced Settings</h2>
+                            <p id="advanced-description">Advanced configuration options and developer settings</p>
+                        </div>
+
+                        <!-- Super Admin Advanced Settings -->
+                        <div id="super-admin-advanced" class="admin-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>API Configuration</h3>
+                                    <p>Manage API keys and access tokens</p>
+                                </div>
+                                
+                                <div class="api-section">
+                                    <div class="api-key-item">
+                                        <div class="api-info">
+                                            <h4>Master API Key</h4>
+                                            <p>Full access to all API endpoints</p>
+                                            <code class="api-key">pk_live_51H2...</code>
+                                        </div>
+                                        <div class="api-actions">
+                                            <button class="btn btn-outline btn-sm">Regenerate</button>
+                                        </div>
+                                    </div>
+                                    <div class="api-key-item">
+                                        <div class="api-info">
+                                            <h4>Webhook Secret</h4>
+                                            <p>Secret key for webhook verification</p>
+                                            <code class="api-key">whsec_1234567890abcdef...</code>
+                                        </div>
+                                        <div class="api-actions">
+                                            <button class="btn btn-outline btn-sm">Regenerate</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Developer Options</h3>
+                                    <p>Options for development and debugging</p>
+                                </div>
+                                
+                                <div class="developer-options">
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Debug Mode</h4>
+                                            <p>Enable detailed logging and error reporting</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="debugMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Maintenance Mode</h4>
+                                            <p>Put the platform into maintenance mode</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="maintenanceMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="developer-option">
+                                        <div class="option-info">
+                                            <h4>Performance Monitoring</h4>
+                                            <p>Enable real-time performance monitoring</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="performanceMonitoring" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card danger">
+                                <div class="card-header">
+                                    <h3>Danger Zone</h3>
+                                    <p>Irreversible actions that affect the entire platform</p>
+                                </div>
+                                
+                                <div class="danger-actions">
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Reset All Data</h4>
+                                            <p>This will permanently delete all data on the platform</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('reset')">Reset Platform</button>
+                                    </div>
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Purge User Sessions</h4>
+                                            <p>Force all users to log out immediately</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('purge-sessions')">Purge Sessions</button>
+                                    </div>
+                                    <div class="danger-action">
+                                        <div class="action-info">
+                                            <h4>Delete Organization</h4>
+                                            <p>Permanently delete the entire organization and all data</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('delete-org')">Delete Organization</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Regular User Advanced Settings -->
+                        <div id="user-advanced" class="user-only" style="display: none;">
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Account Management</h3>
+                                    <p>Manage your account settings and preferences</p>
+                                </div>
+                                
+                                <div class="account-options">
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Export My Data</h4>
+                                            <p>Download a copy of all your personal data</p>
+                                        </div>
+                                        <button class="btn btn-outline">Export Data</button>
+                                    </div>
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Account Activity</h4>
+                                            <p>View your recent account activity and login history</p>
+                                        </div>
+                                        <button class="btn btn-outline">View Activity</button>
+                                    </div>
+                                    <div class="account-option">
+                                        <div class="option-info">
+                                            <h4>Privacy Settings</h4>
+                                            <p>Control your privacy and data sharing preferences</p>
+                                        </div>
+                                        <button class="btn btn-outline">Manage Privacy</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card">
+                                <div class="card-header">
+                                    <h3>Personal Preferences</h3>
+                                    <p>Customize your experience</p>
+                                </div>
+                                
+                                <div class="personal-preferences">
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                                                                <h4 data-i18n="settings:language.title">Language</h4>
+                                    <p data-i18n="settings:language.description">Choose your preferred language</p>
+                                        </div>
+                                        <div class="language-switcher">
+                                            <div class="language-btn">
+                                                <span class="current-lang">English</span>
+                                                <span class="chevron">▼</span>
+                                            </div>
+                                            <div class="language-dropdown">
+                                                <div class="language-option" data-lang="en">
+                                                    <img src="https://flagcdn.com/w20/gb.png" alt="English" class="flag">
+                                                    <span class="lang-name">English</span>
+                                                </div>
+                                                <div class="language-option" data-lang="el">
+                                                    <img src="https://flagcdn.com/w20/gr.png" alt="Greek" class="flag">
+                                                    <span class="lang-name">Ελληνικά</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Time Zone</h4>
+                                            <p>Set your local time zone</p>
+                                        </div>
+                                        <select id="userTimezone" class="form-select">
+                                            <option value="UTC">UTC</option>
+                                            <option value="America/New_York">Eastern Time</option>
+                                            <option value="America/Chicago">Central Time</option>
+                                            <option value="America/Denver">Mountain Time</option>
+                                            <option value="America/Los_Angeles">Pacific Time</option>
+                                            <option value="Europe/London">London</option>
+                                            <option value="Europe/Paris">Paris</option>
+                                            <option value="Asia/Tokyo">Tokyo</option>
+                                        </select>
+                                    </div>
+                                    <div class="preference-option">
+                                        <div class="option-info">
+                                            <h4>Accessibility</h4>
+                                            <p>Enable accessibility features</p>
+                                        </div>
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="accessibilityMode">
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="settings-card danger">
+                                <div class="card-header">
+                                    <h3>Account Actions</h3>
+                                    <p>Actions that affect your personal account</p>
+                                </div>
+                                
+                                <div class="account-actions">
+                                    <div class="account-action">
+                                        <div class="action-info">
+                                            <h4>Deactivate Account</h4>
+                                            <p>Temporarily disable your account (can be reactivated)</p>
+                                        </div>
+                                        <button class="btn btn-outline">Deactivate</button>
+                                    </div>
+                                    <div class="account-action">
+                                        <div class="action-info">
+                                            <h4>Delete Account</h4>
+                                            <p>Permanently delete your account and all associated data</p>
+                                        </div>
+                                        <button class="btn btn-danger" onclick="handleDangerousAction('delete-account')">Delete Account</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
-  <!-- Scripts -->
+    <!-- i18next CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/i18next@25.3.2/dist/umd/i18next.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-browser-languagedetector@8.2.0/i18nextBrowserLanguageDetector.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next-http-backend@3.0.2/i18nextHttpBackend.min.js"></script>
+    
+    <!-- Global Language Switcher -->
+    <script src="js/global-language-switcher.js"></script>
     <script src="js/shared.js"></script>
+    <script src="js/sidebar.js"></script>
+    <script src="js/mailbox.js"></script>
     <script src="js/settings.js"></script>
-  <script src="js/theme-init.js"></script>
 </body>
 </html>
